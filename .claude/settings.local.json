@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "WebFetch(domain:developers.strava.com)"
+      "WebFetch(domain:developers.strava.com)",
+      "Bash(Get-ChildItem *)"
     ]
   }
 }
