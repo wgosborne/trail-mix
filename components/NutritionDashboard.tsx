@@ -56,7 +56,7 @@ export function NutritionDashboard({
 
   return (
     <div>
-      <WeekNavigator weekStart={weekStart} onWeekChange={onWeekChange} />
+      <WeekNavigator onWeekChange={onWeekChange} />
 
       {/* Strava Calories */}
       <div className="bg-blue-50 p-4 rounded-lg shadow mb-4 border border-blue-200">
