@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { GroceryForm } from '@/components/GroceryForm';
 import { GroceryInventory } from '@/components/GroceryInventory';
 import { WeekNavigator } from '@/components/WeekNavigator';
+import { ReceiptUploader } from '@/components/ReceiptUploader';
 import { useGuestGroceries } from '@/hooks/useGuestGroceries';
 import { useState, useEffect } from 'react';
 
@@ -36,12 +37,20 @@ interface DisplayGrocery {
   };
 }
 
+interface ParsedItem {
+  name: string;
+  quantity: number;
+  unit: string;
+}
+
 export default function CameraTab() {
   const { data: session } = useSession();
   const guestGroceries = useGuestGroceries();
   const [loading, setLoading] = useState(false);
   const [authGroceries, setAuthGroceries] = useState<AuthGrocery[]>([]);
   const [authLoading, setAuthLoading] = useState(false);
+  const [extractedItems, setExtractedItems] = useState<ParsedItem[]>([]);
+  const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
   const [weekStart, setWeekStart] = useState<string>(() => {
     const d = new Date();
     const dayOfWeek = d.getUTCDay();
@@ -160,6 +169,36 @@ export default function CameraTab() {
     setWeekStart(newWeekStart);
   };
 
+  const handleItemsExtracted = (items: ParsedItem[]) => {
+    setExtractedItems(items);
+    setSelectedItemIndex(items.length > 0 ? 0 : null);
+  };
+
+  const handleAddExtractedItem = async (grocery: any) => {
+    // Add the grocery
+    await handleAddGrocery(grocery);
+
+    // Move to next extracted item
+    if (selectedItemIndex !== null && selectedItemIndex < extractedItems.length - 1) {
+      setSelectedItemIndex(selectedItemIndex + 1);
+    } else {
+      // All items processed, clear the list
+      setExtractedItems([]);
+      setSelectedItemIndex(null);
+    }
+  };
+
+  const handleSkipExtractedItem = () => {
+    if (selectedItemIndex !== null && selectedItemIndex < extractedItems.length - 1) {
+      setSelectedItemIndex(selectedItemIndex + 1);
+    } else {
+      setExtractedItems([]);
+      setSelectedItemIndex(null);
+    }
+  };
+
+  const currentExtractedItem = selectedItemIndex !== null ? extractedItems[selectedItemIndex] : null;
+
   // Transform auth groceries to display format
   const transformAuthGrocery = (g: AuthGrocery): DisplayGrocery => ({
     id: g.id,
@@ -208,7 +247,70 @@ export default function CameraTab() {
       {session?.user && <WeekNavigator onWeekChange={handleWeekChange} />}
 
       <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-        <GroceryForm onSubmit={handleAddGrocery} loading={loading} />
+        <ReceiptUploader onItemsExtracted={handleItemsExtracted} />
+      </div>
+
+      {extractedItems.length > 0 && currentExtractedItem && (
+        <div style={{ marginTop: '20px', marginBottom: '20px', padding: '16px', backgroundColor: '#F5F8FF', border: '1px solid #D67BB8', borderRadius: '10px' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A', marginBottom: '8px' }}>
+              Extracted Item {selectedItemIndex! + 1} of {extractedItems.length}
+            </h3>
+            <p style={{ fontSize: '13px', color: '#666666' }}>
+              {currentExtractedItem.name} - {currentExtractedItem.quantity} {currentExtractedItem.unit}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={handleSkipExtractedItem}
+              style={{
+                flex: 1,
+                padding: '10px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 600,
+                border: '1px solid #E8E4DC',
+                backgroundColor: '#FFFFFF',
+                color: '#2C2C2A',
+                cursor: 'pointer',
+              }}
+            >
+              Skip
+            </button>
+            <button
+              onClick={() => {
+                // Trigger the form with this item's data
+                const formElement = document.getElementById('grocery-form') as HTMLFormElement;
+                if (formElement) {
+                  formElement.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              style={{
+                flex: 1,
+                padding: '10px 16px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 600,
+                border: '1px solid #8B7FB8',
+                backgroundColor: '#8B7FB8',
+                color: '#FFFFFF',
+                cursor: 'pointer',
+              }}
+            >
+              Add with Nutrition
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginTop: '20px', marginBottom: '20px' }} id="grocery-form">
+        <GroceryForm
+          onSubmit={extractedItems.length > 0 ? handleAddExtractedItem : handleAddGrocery}
+          loading={loading}
+          initialFoodName={currentExtractedItem?.name}
+          initialQuantity={currentExtractedItem?.quantity}
+          initialUnit={currentExtractedItem?.unit}
+        />
       </div>
 
       <div style={{ marginTop: '24px' }}>

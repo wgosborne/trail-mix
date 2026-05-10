@@ -4,15 +4,19 @@ export default function GroceriesLayout({ children }: { children: React.ReactNod
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#FFFFFF'
+      backgroundColor: '#FFFFFF',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
-      <TabNavigation />
       <div style={{
-        padding: '0',
-        maxWidth: '100%'
+        flex: 1,
+        paddingBottom: '80px',
+        maxWidth: '100%',
+        overflow: 'auto'
       }}>
         {children}
       </div>
+      <TabNavigation />
     </div>
   );
 }

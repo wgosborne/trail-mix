@@ -6,6 +6,9 @@ import { NutritionSearch } from './NutritionSearch';
 interface GroceryFormProps {
   onSubmit: (grocery: any) => void;
   loading?: boolean;
+  initialFoodName?: string;
+  initialQuantity?: number;
+  initialUnit?: string;
 }
 
 interface Nutrition {
@@ -15,10 +18,10 @@ interface Nutrition {
   fat: number;
 }
 
-export function GroceryForm({ onSubmit, loading }: GroceryFormProps) {
-  const [foodName, setFoodName] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [unit, setUnit] = useState('lbs');
+export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantity, initialUnit }: GroceryFormProps) {
+  const [foodName, setFoodName] = useState(initialFoodName || '');
+  const [quantity, setQuantity] = useState(initialQuantity?.toString() || '');
+  const [unit, setUnit] = useState(initialUnit || 'lbs');
   const [calories, setCalories] = useState('');
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');

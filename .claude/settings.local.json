@@ -10,7 +10,8 @@
       "Bash(pkill -f \"node.*next\")",
       "PowerShell(Get-Process *)",
       "Bash(npm install *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

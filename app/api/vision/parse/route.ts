@@ -31,10 +31,10 @@ export async function POST(request: NextRequest) {
               type: 'text',
               text: `You are a receipt parser. Extract ALL grocery items from this receipt. For each item, provide:
 1. Item name (product description)
-2. Quantity (number)
-3. Unit (lbs, oz, count, cups, etc.)
+2. Quantity (number - just the number, e.g., 2, 5.5)
+3. Unit (lbs, oz, count, cups, g, kg, ml, etc.)
 
-Return ONLY valid JSON (no markdown, no code blocks):
+Return ONLY valid JSON (no markdown, no code blocks, no explanation):
 {
   "items": [
     { "name": "Chicken Breast", "quantity": 2, "unit": "lbs" },
@@ -42,7 +42,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
   ]
 }
 
-If this is not a grocery receipt, still attempt extraction. If extraction fails, return: { "items": [] }`,
+If this is not a grocery receipt, still attempt extraction. If extraction fails or no items found, return: { "items": [] }`,
             },
           ],
         },
@@ -62,10 +62,24 @@ If this is not a grocery receipt, still attempt extraction. If extraction fails,
       jsonText = jsonText.replace(/```\n?/, '').replace(/```\n?$/, '');
     }
 
+    // Validate and parse JSON
     const parsed = JSON.parse(jsonText);
+
+    // Ensure items array exists and contains valid entries
+    if (!Array.isArray(parsed.items)) {
+      parsed.items = [];
+    }
+
+    // Filter and validate items
+    parsed.items = parsed.items.filter((item: any) => {
+      return item.name && typeof item.name === 'string' &&
+             item.quantity && typeof item.quantity === 'number' && item.quantity > 0 &&
+             item.unit && typeof item.unit === 'string';
+    });
+
     return NextResponse.json(parsed);
   } catch (error) {
     console.error('Vision parsing error:', error);
-    return NextResponse.json({ error: 'Parsing failed', items: [] }, { status: 500 });
+    return NextResponse.json({ items: [] }, { status: 200 });
   }
 }
