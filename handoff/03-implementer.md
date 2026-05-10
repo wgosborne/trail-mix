@@ -14,7 +14,7 @@
 | Phase 3: USDA Nutrition API Integration | ✅ COMPLETE | 100% |
 | Phase 4: Claude Vision Receipt Parsing | ✅ COMPLETE | 100% |
 | Phase 5: Strava Integration & Settings Page | ✅ COMPLETE | 100% |
-| Phase 6: Dashboard Implementation | PENDING | 0% |
+| Phase 6: Dashboard Implementation | ✅ COMPLETE | 100% |
 
 ---
 
@@ -1773,3 +1773,242 @@ interface GroceryFormProps {
 
 Users can now quickly add groceries from receipt photos instead of manual entry.
 
+
+---
+
+## Phase 6: Dashboard & Nutrition Summary - COMPLETE
+
+**Completed on:** 2026-05-10
+
+### What Was Completed in Phase 6
+
+#### 1. Nutrition Summary API Route
+**File:** `app/api/nutrition/route.ts`
+
+- ✅ GET endpoint accepts `week` query parameter (YYYY-MM-DD format)
+- ✅ Authentication check (returns 401 if not logged in)
+- ✅ Fetches user's macro goals from database:
+  - dailyCalGoal (default 2000)
+  - dailyProteinG (default 150)
+  - dailyCarbsG (default 200)
+  - dailyFatG (default 65)
+- ✅ Queries user's groceries for the specified week
+- ✅ Calculates totals with percentConsumed:
+  - caloriesBought, caloriesConsumed
+  - proteinBought, proteinConsumed
+  - carbsBought, carbsConsumed
+  - fatBought, fatConsumed
+- ✅ Returns proper JSON response with week, totals, and goals
+- ✅ Error handling for authentication failures
+
+#### 2. NutritionDashboard Component Enhancement
+**File:** `components/NutritionDashboard.tsx`
+
+- ✅ Accepts props: weekStart, onWeekChange, stravaCaloriesBurned
+- ✅ Displays WeekNavigator component for week selection
+- ✅ Shows Strava calories section with disclaimer (±25-50% margin of error)
+- ✅ Displays macros consumed this week with progress bars:
+  - Protein: current/weekly-goal in grams
+  - Carbs: current/weekly-goal in grams
+  - Fat: current/weekly-goal in grams
+  - Calories: current/weekly-goal in calories
+- ✅ Color-coded progress bars:
+  - Green if ≥100% of goal
+  - Blue if ≥80% of goal
+  - Yellow if <80% of goal
+- ✅ Shows weekly alignment (deficit/surplus):
+  - Green box if surplus (ate less than burned)
+  - Orange box if shortfall (burned more than ate)
+- ✅ Loading state with proper messaging
+- ✅ Error state with user-friendly messages
+- ✅ MacroBar helper component with detailed progress display
+
+#### 3. Dashboard Page Implementation
+**File:** `app/groceries/dashboard/page.tsx`
+
+- ✅ Client-side component with authentication checking
+- ✅ Shows sign-in message for guest users
+- ✅ Renders StravaConnect component for authenticated users
+- ✅ Renders NutritionDashboard component
+- ✅ Manages weekStart state
+- ✅ Manages stravaCaloriesBurned state
+- ✅ Handles week navigation callbacks
+- ✅ Passes Strava calories data to NutritionDashboard
+- ✅ Uses useSession() hook for authentication detection
+- ✅ Loading state during session check
+- ✅ Proper section organization with header styling
+
+#### 4. StravaConnect Component Enhancement
+**File:** `components/StravaConnect.tsx`
+
+- ✅ New props for better parent communication:
+  - weekStart: allows syncing for specific weeks
+  - onCaloriesUpdate: callback to update parent with calorie data
+- ✅ Updated sync handler to pass calorie data up to parent
+- ✅ Support for week-specific activity fetching
+- ✅ Maintains all existing activity display functionality
+
+#### 5. User Profile API Endpoint
+**File:** `app/api/user/profile/route.ts`
+
+- ✅ GET endpoint for authenticated users
+- ✅ Returns user profile with macro goals:
+  - id, email, name
+  - stravaUserId, stravaToken (boolean)
+  - dailyCalGoal, dailyProteinG, dailyCarbsG, dailyFatG
+- ✅ Authentication check (401 if not logged in)
+- ✅ Error handling (404 if user not found)
+
+#### 6. User Goals API Endpoint
+**File:** `app/api/user/goals/route.ts`
+
+- ✅ PUT endpoint for authenticated users
+- ✅ Updates daily macro goals (all optional):
+  - dailyCalGoal (1000-5000)
+  - dailyProteinG (20-500)
+  - dailyCarbsG (50-800)
+  - dailyFatG (10-200)
+- ✅ Validation on all numeric ranges
+- ✅ Returns updated goals on success
+- ✅ Proper error messages for invalid input
+
+### Technical Details
+
+**API Response Format:**
+```typescript
+// GET /api/nutrition?week=2026-05-10
+{
+  week: { start: "2026-05-10", end: "2026-05-16" },
+  totals: {
+    caloriesBought: 15000,
+    caloriesConsumed: 12000,
+    proteinBought: 1500,
+    proteinConsumed: 1200,
+    carbsBought: 2100,
+    carbsConsumed: 1680,
+    fatBought: 525,
+    fatConsumed: 420
+  },
+  goals: {
+    dailyCalories: 2000,
+    dailyProtein: 150,
+    dailyCarbs: 200,
+    dailyFat: 65
+  }
+}
+```
+
+**Component Props:**
+```typescript
+interface NutritionDashboardProps {
+  weekStart: string;           // YYYY-MM-DD
+  onWeekChange: (week: string) => void;
+  stravaCaloriesBurned?: number;
+}
+
+interface StravaConnectProps {
+  isConnected: boolean;
+  weekStart?: string;
+  onCaloriesUpdate?: (caloriesBurned: number) => void;
+}
+```
+
+**Color Coding Logic:**
+- Green: percent >= 100% (exceeding goal)
+- Blue: percent >= 80% (on track)
+- Yellow: percent < 80% (below target)
+
+### Testing Summary
+
+- ✅ Build compiles with no TypeScript errors
+- ✅ All new API routes functional and tested
+- ✅ Component integration verified
+- ✅ Authentication checks working
+- ✅ Error handling tested
+- ✅ Week navigation working
+- ✅ Calorie data flow from Strava to Dashboard
+
+### Files Modified/Created
+
+**New Files:**
+- `app/api/user/profile/route.ts` - User profile endpoint
+- `app/api/user/goals/route.ts` - Macro goals update endpoint
+
+**Modified Files:**
+- `components/NutritionDashboard.tsx` - Enhanced with full functionality
+- `components/StravaConnect.tsx` - Added weekStart and onCaloriesUpdate props
+- `app/groceries/dashboard/page.tsx` - Complete implementation with auth
+
+### Build Status
+- ✅ TypeScript compilation: No errors
+- ✅ Next.js build: Successful
+- ✅ All routes registered and functional
+- ✅ No breaking changes to existing features
+
+### Architecture Summary
+
+The dashboard phase successfully integrates:
+1. **Nutrition Summary:** Weekly macro tracking with database-backed goals
+2. **Strava Integration:** Calorie data from connected activities
+3. **Visual Alignment:** Side-by-side comparison of nutrition and training
+4. **Authentication:** Proper guards for authenticated vs guest users
+5. **User Settings:** API endpoints for macro goal customization
+
+### How to Test Phase 6
+
+#### Test Authenticated Dashboard
+1. Sign in or create account
+2. Navigate to Dashboard tab
+3. Should see training data section (Strava)
+4. Should see nutrition tracking section
+5. Week navigation works properly
+6. Color coding displays correctly
+
+#### Test Guest Mode Message
+1. Click "Use as Guest" on splash page
+2. Navigate to Dashboard tab
+3. Should see sign-in message with explanation
+4. Sign-in button available
+
+#### Test API Endpoints
+```bash
+# Get user profile
+curl -H "Authorization: Bearer {token}" http://localhost:3001/api/user/profile
+
+# Update macro goals
+curl -X PUT http://localhost:3001/api/user/goals \
+  -H "Content-Type: application/json" \
+  -d '{"dailyCalGoal": 2200, "dailyProteinG": 160}'
+
+# Get nutrition summary for week
+curl -H "Authorization: Bearer {token}" \
+  "http://localhost:3001/api/nutrition?week=2026-05-10"
+```
+
+### Next Steps (Optional for MVP)
+
+- Add macro goal settings UI to Settings tab
+- Add historical week comparison charts
+- Add meal-by-meal breakdown
+- Add nutrition goal customization panel
+
+---
+
+## Conclusion
+
+**Phase 6 is COMPLETE and TESTED.** Dashboard & Nutrition Summary fully integrated:
+- Nutrition API endpoint production-ready ✅
+- NutritionDashboard component fully functional ✅
+- Dashboard page with authentication working ✅
+- Strava calorie data flowing to dashboard ✅
+- Weekly macro progress visualization ✅
+- User goals API endpoints ready ✅
+
+**Ready for Designer review.** Phase 6 implementation complete with:
+1. Weekly nutrition summary with macro breakdown
+2. Strava training data integration
+3. Training vs nutrition alignment visualization
+4. Authentication guards for protected sections
+5. API endpoints for macro goal management
+
+Users can now see their weekly nutrition summary, compare it with their Strava training data, and understand their overall training/nutrition alignment.

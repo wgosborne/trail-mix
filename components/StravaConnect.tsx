@@ -12,11 +12,13 @@ interface StravaActivity {
 
 interface StravaConnectProps {
   isConnected: boolean;
-  onSync?: () => void;
+  onSync?: (caloriesBurned: number) => void;
+  onCaloriesUpdate?: (caloriesBurned: number) => void;
   onDisconnect?: () => void;
+  weekStart?: string;
 }
 
-export function StravaConnect({ isConnected, onSync, onDisconnect }: StravaConnectProps) {
+export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconnect, weekStart }: StravaConnectProps) {
   const [activities, setActivities] = useState<StravaActivity[]>([]);
   const [weekTotal, setWeekTotal] = useState({ caloriesBurned: 0, distance: 0 });
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,8 @@ export function StravaConnect({ isConnected, onSync, onDisconnect }: StravaConne
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/strava/activities?week=${getCurrentWeekStart()}`);
+      const week = weekStart || getCurrentWeekStart();
+      const response = await fetch(`/api/strava/activities?week=${week}`);
 
       if (!response.ok) {
         const data = await response.json();
@@ -36,7 +39,10 @@ export function StravaConnect({ isConnected, onSync, onDisconnect }: StravaConne
       const data = await response.json();
       setActivities(data.activities);
       setWeekTotal(data.weekTotal);
-      onSync?.();
+
+      // Call callbacks with updated calorie data
+      onCaloriesUpdate?.(data.weekTotal.caloriesBurned);
+      onSync?.(data.weekTotal.caloriesBurned);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to sync activities';
       console.error('Sync error:', err);
