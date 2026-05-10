@@ -1,11 +1,19 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { searchUSDAAndGetNutrition } from '@/lib/usda-lookup';
 
 interface ParsedItem {
   name: string;
   quantity: number;
   unit: string;
+  nutrition?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber?: number;
+  };
 }
 
 interface ReceiptUploaderProps {
@@ -17,6 +25,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [extractedItems, setExtractedItems] = useState<ParsedItem[]>([]);
+  const [nutritionStatus, setNutritionStatus] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -25,6 +34,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
 
     setLoading(true);
     setError(null);
+    setNutritionStatus('');
 
     // Read file as base64
     const reader = new FileReader();
@@ -43,13 +53,40 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
         }
 
         const data = await response.json();
-        const items = data.items || [];
-        setExtractedItems(items);
-        onItemsExtracted(items);
+        let items = data.items || [];
 
         if (items.length === 0) {
           setError('No grocery items were detected on the receipt. Try a clearer photo.');
+          setLoading(false);
+          return;
         }
+
+        // Auto-lookup nutrition for each item
+        setNutritionStatus('Looking up nutrition data...');
+        const itemsWithNutrition: ParsedItem[] = [];
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          setNutritionStatus(`Looking up nutrition for ${item.name}...`);
+
+          const nutrition = await searchUSDAAndGetNutrition(item.name);
+
+          const itemWithNutrition: ParsedItem = {
+            ...item,
+            nutrition: nutrition || {
+              calories: 0,
+              protein: 0,
+              carbs: 0,
+              fat: 0,
+            },
+          };
+
+          itemsWithNutrition.push(itemWithNutrition);
+        }
+
+        setExtractedItems(itemsWithNutrition);
+        setNutritionStatus('');
+        onItemsExtracted(itemsWithNutrition);
       } catch (error) {
         console.error('Parse error:', error);
         setError('Failed to parse receipt. Please try again.');
@@ -109,7 +146,11 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
           e.currentTarget.style.borderColor = '#8B7FB8';
         }}
       >
-        {loading ? '⏳ Processing receipt...' : '📷 Click to upload or take photo'}
+        {loading ? (
+          nutritionStatus ? `⏳ ${nutritionStatus}` : '⏳ Processing receipt...'
+        ) : (
+          '📷 Click to upload or take photo'
+        )}
       </button>
 
       <input

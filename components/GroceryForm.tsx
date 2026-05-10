@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NutritionSearch } from './NutritionSearch';
 
 interface GroceryFormProps {
@@ -9,6 +9,13 @@ interface GroceryFormProps {
   initialFoodName?: string;
   initialQuantity?: number;
   initialUnit?: string;
+  initialNutrition?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber?: number;
+  };
 }
 
 interface Nutrition {
@@ -18,7 +25,7 @@ interface Nutrition {
   fat: number;
 }
 
-export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantity, initialUnit }: GroceryFormProps) {
+export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantity, initialUnit, initialNutrition }: GroceryFormProps) {
   const [foodName, setFoodName] = useState(initialFoodName || '');
   const [quantity, setQuantity] = useState(initialQuantity?.toString() || '');
   const [unit, setUnit] = useState(initialUnit || 'lbs');
@@ -28,6 +35,27 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
   const [fat, setFat] = useState('');
   const [showNutritionSearch, setShowNutritionSearch] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Update form when initial values change (e.g., when selecting a different extracted item)
+  useEffect(() => {
+    setFoodName(initialFoodName || '');
+    setQuantity(initialQuantity?.toString() || '');
+    setUnit(initialUnit || 'lbs');
+
+    // Auto-populate nutrition fields if provided
+    if (initialNutrition) {
+      setCalories(initialNutrition.calories?.toString() || '');
+      setProtein(initialNutrition.protein?.toString() || '');
+      setCarbs(initialNutrition.carbs?.toString() || '');
+      setFat(initialNutrition.fat?.toString() || '');
+    } else {
+      // Clear nutrition fields if no nutrition data
+      setCalories('');
+      setProtein('');
+      setCarbs('');
+      setFat('');
+    }
+  }, [initialFoodName, initialQuantity, initialUnit, initialNutrition]);
 
   function validateForm(): boolean {
     const newErrors: Record<string, string> = {};

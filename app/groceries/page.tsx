@@ -42,6 +42,13 @@ interface ParsedItem {
   name: string;
   quantity: number;
   unit: string;
+  nutrition?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber?: number;
+  };
 }
 
 export default function CameraTab() {
@@ -327,6 +334,7 @@ export default function CameraTab() {
           initialFoodName={currentExtractedItem?.name}
           initialQuantity={currentExtractedItem?.quantity}
           initialUnit={currentExtractedItem?.unit}
+          initialNutrition={currentExtractedItem?.nutrition}
         />
       </div>
 
