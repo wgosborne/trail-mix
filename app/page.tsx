@@ -27,15 +27,23 @@ export default function Splash() {
       minHeight: '100vh',
       backgroundColor: '#FFFFFF'
     }}>
-      <div style={{ textAlign: 'center', maxWidth: '480px', padding: '20px' }}>
+      <div style={{ textAlign: 'center', maxWidth: '600px', padding: '20px' }}>
         <h1 style={{
-          fontSize: '48px',
-          fontWeight: 700,
+          fontSize: '96px',
+          fontWeight: 800,
+          fontFamily: 'var(--font-syne), sans-serif',
           color: '#2C2C2A',
-          marginBottom: '16px',
-          letterSpacing: '-0.5px'
+          marginBottom: '32px',
+          letterSpacing: '-2px',
+          lineHeight: '1.1',
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          gap: '0',
+          flexWrap: 'wrap'
         }}>
-          TrailMix
+          <span style={{ color: '#2C2C2A' }}>Trail</span>
+          <span style={{ color: '#8B7FB8', marginLeft: '8px' }}>Mix</span>
         </h1>
         <p style={{
           fontSize: '16px',
