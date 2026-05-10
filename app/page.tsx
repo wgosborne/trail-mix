@@ -58,7 +58,7 @@ export default function Splash() {
               fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'all 0.2s'
+              transition: 'background-color 0.2s ease'
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#E8E4DC';
@@ -80,7 +80,7 @@ export default function Splash() {
               fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'all 0.2s'
+              transition: 'opacity 0.2s ease'
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.opacity = '0.9';
@@ -102,7 +102,7 @@ export default function Splash() {
               fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'all 0.2s'
+              transition: 'background-color 0.2s ease'
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#F8F5FF';
