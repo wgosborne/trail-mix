@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* TrailMix Color Palette */
+  --color-purple: #8B7FB8;
+  --color-pink: #D67BB8;
+  --color-blue: #5B7FD4;
+  --color-tan: #C9845F;
+
+  --color-white: #FFFFFF;
+  --color-light-purple: #F8F5FF;
+  --color-light-pink: #FFF5F8;
+  --color-light-blue: #F5F8FF;
+  --color-cream: #FFF8F5;
+  --color-border: #E8E4DC;
+  --color-text: #2C2C2A;
+  --color-muted: #999999;
+  --color-light-gray: #F0EFE8;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Tailwind v4 configuration */
+  --color-purple: var(--color-purple);
+  --color-pink: var(--color-pink);
+  --color-blue: var(--color-blue);
+  --color-tan: var(--color-tan);
+
+  --color-white: var(--color-white);
+  --color-light-purple: var(--color-light-purple);
+  --color-light-pink: var(--color-light-pink);
+  --color-light-blue: var(--color-light-blue);
+  --color-cream: var(--color-cream);
+  --color-border: var(--color-border);
+  --color-text: var(--color-text);
+  --color-muted: var(--color-muted);
+  --color-light-gray: var(--color-light-gray);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Light mode only - TrailMix design */
+html {
+  background-color: var(--color-white);
+  color: var(--color-text);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-white);
+  color: var(--color-text);
+  font-family: var(--font-geist-sans);
+}
+
+/* Accent bar (3px gradient) for section headers */
+.accent-bar {
+  height: 3px;
+  background: linear-gradient(to right, var(--color-purple), var(--color-pink), var(--color-blue));
+  margin-bottom: 16px;
 }

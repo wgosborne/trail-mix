@@ -19,29 +19,99 @@ export default function Splash() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      <div className="text-center">
-        <h1 className="text-5xl font-bold mb-4">🥗 TrailMix</h1>
-        <p className="text-xl text-gray-600 mb-8">Track your grocery intake vs. your training burn</p>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      backgroundColor: '#FFFFFF'
+    }}>
+      <div style={{ textAlign: 'center', maxWidth: '480px', padding: '20px' }}>
+        <h1 style={{
+          fontSize: '48px',
+          fontWeight: 700,
+          color: '#2C2C2A',
+          marginBottom: '16px',
+          letterSpacing: '-0.5px'
+        }}>
+          TrailMix
+        </h1>
+        <p style={{
+          fontSize: '16px',
+          color: '#999999',
+          marginBottom: '32px',
+          lineHeight: '1.6'
+        }}>
+          Track your grocery intake versus your training burn. Designed for athletes who care about macronutrients.
+        </p>
 
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <button
             onClick={() => router.push('/groceries?mode=guest')}
-            className="block w-48 mx-auto bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600 font-medium"
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#F0EFE8',
+              color: '#2C2C2A',
+              border: '1px solid #E8E4DC',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#E8E4DC';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#F0EFE8';
+            }}
           >
-            👤 Use as Guest
+            Try as Guest
           </button>
           <button
             onClick={() => router.push('/auth/signin')}
-            className="block w-48 mx-auto bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium"
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#8B7FB8',
+              color: '#FFFFFF',
+              border: '1px solid #8B7FB8',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.opacity = '0.9';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.opacity = '1';
+            }}
           >
-            🔐 Sign In
+            Sign In
           </button>
           <button
             onClick={() => router.push('/auth/register')}
-            className="block w-48 mx-auto bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-medium"
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#FFFFFF',
+              color: '#8B7FB8',
+              border: '2px solid #8B7FB8',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#F8F5FF';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#FFFFFF';
+            }}
           >
-            ✨ Create Account
+            Create Account
           </button>
         </div>
       </div>

@@ -1,10 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { NutritionSearch } from './NutritionSearch';
 
 interface GroceryFormProps {
   onSubmit: (grocery: any) => void;
   loading?: boolean;
+}
+
+interface Nutrition {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
 }
 
 export function GroceryForm({ onSubmit, loading }: GroceryFormProps) {
@@ -15,6 +23,7 @@ export function GroceryForm({ onSubmit, loading }: GroceryFormProps) {
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
   const [fat, setFat] = useState('');
+  const [showNutritionSearch, setShowNutritionSearch] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   function validateForm(): boolean {
@@ -89,125 +98,254 @@ export function GroceryForm({ onSubmit, loading }: GroceryFormProps) {
     return monday.toISOString().split('T')[0];
   }
 
+  function handleNutritionSelected(nutrition: Nutrition) {
+    setCalories(nutrition.calories.toString());
+    setProtein(nutrition.protein.toString());
+    setCarbs(nutrition.carbs.toString());
+    setFat(nutrition.fat.toString());
+    setShowNutritionSearch(false);
+  }
+
   const hasErrors = Object.keys(errors).length > 0;
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-4 rounded-lg shadow mb-4">
-      <h2 className="text-lg font-semibold mb-4">Add Grocery Item</h2>
-      <div className="space-y-3">
-        {/* Food Name */}
-        <div>
-          <input
-            type="text"
-            placeholder="Food name (e.g., Chicken Breast)"
-            value={foodName}
-            onChange={(e) => setFoodName(e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg ${
-              errors.foodName ? 'border-red-500' : 'border-gray-300'
-            }`}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Nutrition Search Component */}
+      {showNutritionSearch && (
+        <div style={{
+          backgroundColor: '#F5F8FF',
+          border: '1px solid #E8E4DC',
+          borderRadius: '10px',
+          padding: '16px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#2C2C2A' }}>SEARCH NUTRITION DATABASE</h3>
+            <button
+              type="button"
+              onClick={() => setShowNutritionSearch(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#5B7FD4',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 600
+              }}
+            >
+              Close
+            </button>
+          </div>
+          <NutritionSearch onSelect={handleNutritionSelected} />
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} style={{
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #E8E4DC',
+        borderRadius: '10px',
+        padding: '20px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <div
+            style={{
+              height: '3px',
+              width: '24px',
+              background: 'linear-gradient(to right, #8B7FB8, #D67BB8, #5B7FD4)'
+            }}
           />
-          {errors.foodName && <p className="text-red-500 text-sm mt-1">{errors.foodName}</p>}
+          <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Add Grocery</h2>
         </div>
 
-        {/* Quantity */}
-        <div className="flex gap-2">
-          <div className="flex-1">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Food Name */}
+          <div>
             <input
-              type="number"
-              placeholder="Quantity"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg ${
-                errors.quantity ? 'border-red-500' : 'border-gray-300'
-              }`}
-              step="0.1"
+              type="text"
+              placeholder="Food name"
+              value={foodName}
+              onChange={(e) => setFoodName(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: `1px solid ${errors.foodName ? '#D67BB8' : '#E8E4DC'}`,
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: '#2C2C2A',
+                backgroundColor: '#FFFFFF'
+              }}
             />
-            {errors.quantity && <p className="text-red-500 text-sm mt-1">{errors.quantity}</p>}
+            {errors.foodName && <p style={{ color: '#D67BB8', fontSize: '11px', marginTop: '4px' }}>{errors.foodName}</p>}
           </div>
-          <select
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg"
+
+          {/* Quantity */}
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ flex: 1 }}>
+              <input
+                type="number"
+                placeholder="Quantity"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: `1px solid ${errors.quantity ? '#D67BB8' : '#E8E4DC'}`,
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  color: '#2C2C2A',
+                  backgroundColor: '#FFFFFF'
+                }}
+                step="0.1"
+              />
+              {errors.quantity && <p style={{ color: '#D67BB8', fontSize: '11px', marginTop: '4px' }}>{errors.quantity}</p>}
+            </div>
+            <select
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              style={{
+                padding: '10px 12px',
+                border: '1px solid #E8E4DC',
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: '#2C2C2A',
+                backgroundColor: '#FFFFFF',
+                minWidth: '100px',
+                cursor: 'pointer'
+              }}
+            >
+              <option>lbs</option>
+              <option>oz</option>
+              <option>g</option>
+              <option>count</option>
+              <option>cups</option>
+            </select>
+          </div>
+
+          {/* Nutrition Fields */}
+          <div style={{
+            backgroundColor: '#F0EFE8',
+            border: '1px solid #E8E4DC',
+            borderRadius: '8px',
+            padding: '12px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: '#2C2C2A', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Nutrition per item</p>
+              <button
+                type="button"
+                onClick={() => setShowNutritionSearch(!showNutritionSearch)}
+                style={{
+                  fontSize: '11px',
+                  padding: '6px 10px',
+                  backgroundColor: '#5B7FD4',
+                  color: '#FFFFFF',
+                  border: '1px solid #5B7FD4',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                {showNutritionSearch ? 'Hide' : 'Search'}
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+              <div>
+                <input
+                  type="number"
+                  placeholder="Calories"
+                  value={calories}
+                  onChange={(e) => setCalories(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    fontSize: '12px',
+                    border: `1px solid ${errors.calories ? '#D67BB8' : '#E8E4DC'}`,
+                    borderRadius: '6px',
+                    color: '#2C2C2A',
+                    backgroundColor: '#FFFFFF'
+                  }}
+                  step="0.1"
+                />
+                {errors.calories && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.calories}</p>}
+              </div>
+              <div>
+                <input
+                  type="number"
+                  placeholder="Protein (g)"
+                  value={protein}
+                  onChange={(e) => setProtein(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    fontSize: '12px',
+                    border: `1px solid ${errors.protein ? '#D67BB8' : '#E8E4DC'}`,
+                    borderRadius: '6px',
+                    color: '#2C2C2A',
+                    backgroundColor: '#FFFFFF'
+                  }}
+                  step="0.1"
+                />
+                {errors.protein && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.protein}</p>}
+              </div>
+              <div>
+                <input
+                  type="number"
+                  placeholder="Carbs (g)"
+                  value={carbs}
+                  onChange={(e) => setCarbs(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    fontSize: '12px',
+                    border: `1px solid ${errors.carbs ? '#D67BB8' : '#E8E4DC'}`,
+                    borderRadius: '6px',
+                    color: '#2C2C2A',
+                    backgroundColor: '#FFFFFF'
+                  }}
+                  step="0.1"
+                />
+                {errors.carbs && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.carbs}</p>}
+              </div>
+              <div>
+                <input
+                  type="number"
+                  placeholder="Fat (g)"
+                  value={fat}
+                  onChange={(e) => setFat(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    fontSize: '12px',
+                    border: `1px solid ${errors.fat ? '#D67BB8' : '#E8E4DC'}`,
+                    borderRadius: '6px',
+                    color: '#2C2C2A',
+                    backgroundColor: '#FFFFFF'
+                  }}
+                  step="0.1"
+                />
+                {errors.fat && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.fat}</p>}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '11px 16px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: 700,
+              border: '1px solid #8B7FB8',
+              backgroundColor: hasErrors ? '#F0EFE8' : '#8B7FB8',
+              color: hasErrors ? '#999999' : '#FFFFFF',
+              cursor: hasErrors ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s'
+            }}
           >
-            <option>lbs</option>
-            <option>oz</option>
-            <option>g</option>
-            <option>count</option>
-            <option>cups</option>
-          </select>
+            {loading ? 'Adding...' : 'Add Grocery'}
+          </button>
         </div>
-
-        {/* Nutrition Fields */}
-        <div className="bg-gray-50 p-3 rounded border border-gray-200">
-          <p className="text-sm font-medium text-gray-700 mb-2">Nutrition (per serving)</p>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <input
-                type="number"
-                placeholder="Calories"
-                value={calories}
-                onChange={(e) => setCalories(e.target.value)}
-                className={`w-full px-2 py-1 text-sm border rounded ${
-                  errors.calories ? 'border-red-500' : 'border-gray-300'
-                }`}
-                step="0.1"
-              />
-              {errors.calories && <p className="text-red-500 text-xs mt-1">{errors.calories}</p>}
-            </div>
-            <div>
-              <input
-                type="number"
-                placeholder="Protein (g)"
-                value={protein}
-                onChange={(e) => setProtein(e.target.value)}
-                className={`w-full px-2 py-1 text-sm border rounded ${
-                  errors.protein ? 'border-red-500' : 'border-gray-300'
-                }`}
-                step="0.1"
-              />
-              {errors.protein && <p className="text-red-500 text-xs mt-1">{errors.protein}</p>}
-            </div>
-            <div>
-              <input
-                type="number"
-                placeholder="Carbs (g)"
-                value={carbs}
-                onChange={(e) => setCarbs(e.target.value)}
-                className={`w-full px-2 py-1 text-sm border rounded ${
-                  errors.carbs ? 'border-red-500' : 'border-gray-300'
-                }`}
-                step="0.1"
-              />
-              {errors.carbs && <p className="text-red-500 text-xs mt-1">{errors.carbs}</p>}
-            </div>
-            <div>
-              <input
-                type="number"
-                placeholder="Fat (g)"
-                value={fat}
-                onChange={(e) => setFat(e.target.value)}
-                className={`w-full px-2 py-1 text-sm border rounded ${
-                  errors.fat ? 'border-red-500' : 'border-gray-300'
-                }`}
-                step="0.1"
-              />
-              {errors.fat && <p className="text-red-500 text-xs mt-1">{errors.fat}</p>}
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-2 rounded-lg font-medium transition ${
-            hasErrors
-              ? 'bg-gray-400 text-white cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400'
-          }`}
-        >
-          {loading ? 'Adding...' : 'Add Grocery'}
-        </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }

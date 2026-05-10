@@ -22,7 +22,14 @@ interface GroceryInventoryProps {
 
 export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInventoryProps) {
   if (!groceries.length) {
-    return <p className="text-gray-500 text-center py-8">No groceries added yet.</p>;
+    return (
+      <p
+        className="text-center py-12 font-medium"
+        style={{ color: '#999999' }}
+      >
+        No groceries added yet.
+      </p>
+    );
   }
 
   // Calculate total macros based on percentConsumed
@@ -40,57 +47,126 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
   );
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {/* Grocery Items */}
-      <div className="space-y-3">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {groceries.map((grocery) => (
-          <div key={grocery.id} className="bg-white p-4 rounded-lg shadow">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex-1">
-                <p className="font-semibold text-gray-800">{grocery.foodName}</p>
-                <p className="text-sm text-gray-500">
+          <div
+            key={grocery.id}
+            style={{
+              backgroundColor: '#F8F5FF',
+              border: '1px solid #E8E4DC',
+              borderRadius: '10px',
+              padding: '16px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: 700, color: '#2C2C2A', marginBottom: '4px' }}>{grocery.foodName}</p>
+                <p style={{ fontSize: '12px', color: '#999999' }}>
                   {grocery.quantityBought} {grocery.unit}
                 </p>
               </div>
               <button
                 onClick={() => onDelete(grocery.id)}
-                className="text-red-500 hover:text-red-700 font-medium text-sm ml-2"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#999999',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  marginLeft: '12px',
+                  textDecoration: 'underline',
+                }}
               >
-                Delete
+                Remove
               </button>
             </div>
 
-            {/* Nutrition Info */}
-            <div className="bg-gray-50 p-2 rounded mb-3 text-xs grid grid-cols-4 gap-2">
-              <div>
-                <p className="text-gray-500">Cal</p>
-                <p className="font-semibold">{Math.round(grocery.nutrition.calories)}</p>
+            {/* Nutrition Info - Color-coded cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '8px',
+              marginBottom: '12px'
+            }}>
+              {/* Calories - Blue */}
+              <div
+                style={{
+                  backgroundColor: '#F5F8FF',
+                  border: '1px solid #5B7FD4',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  textAlign: 'center'
+                }}
+              >
+                <p style={{ fontSize: '9px', fontWeight: 700, color: '#5B7FD4', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Cal</p>
+                <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>{Math.round(grocery.nutrition.calories)}</p>
               </div>
-              <div>
-                <p className="text-gray-500">Protein</p>
-                <p className="font-semibold">{grocery.nutrition.protein.toFixed(1)}g</p>
+
+              {/* Protein - Purple */}
+              <div
+                style={{
+                  backgroundColor: '#F8F5FF',
+                  border: '1px solid #8B7FB8',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  textAlign: 'center'
+                }}
+              >
+                <p style={{ fontSize: '9px', fontWeight: 700, color: '#8B7FB8', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Protein</p>
+                <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>{grocery.nutrition.protein.toFixed(1)}g</p>
               </div>
-              <div>
-                <p className="text-gray-500">Carbs</p>
-                <p className="font-semibold">{grocery.nutrition.carbs.toFixed(1)}g</p>
+
+              {/* Carbs - Pink */}
+              <div
+                style={{
+                  backgroundColor: '#FFF5F8',
+                  border: '1px solid #D67BB8',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  textAlign: 'center'
+                }}
+              >
+                <p style={{ fontSize: '9px', fontWeight: 700, color: '#D67BB8', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Carbs</p>
+                <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>{grocery.nutrition.carbs.toFixed(1)}g</p>
               </div>
-              <div>
-                <p className="text-gray-500">Fat</p>
-                <p className="font-semibold">{grocery.nutrition.fat.toFixed(1)}g</p>
+
+              {/* Fat - Tan */}
+              <div
+                style={{
+                  backgroundColor: '#FFF8F5',
+                  border: '1px solid #C9845F',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  textAlign: 'center'
+                }}
+              >
+                <p style={{ fontSize: '9px', fontWeight: 700, color: '#C9845F', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Fat</p>
+                <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>{grocery.nutrition.fat.toFixed(1)}g</p>
               </div>
             </div>
 
             {/* Consumed Slider */}
-            <div className="flex items-center gap-3">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <input
                 type="range"
                 min="0"
                 max="100"
                 value={grocery.percentConsumed}
                 onChange={(e) => onUpdate(grocery.id, parseFloat(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                style={{
+                  flex: 1,
+                  height: '5px',
+                  backgroundColor: '#E8E4DC',
+                  borderRadius: '3px',
+                  appearance: 'none',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
               />
-              <span className="text-sm font-medium w-14 text-right">
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#2C2C2A', minWidth: '50px', textAlign: 'right' }}>
                 {Math.round(grocery.percentConsumed)}%
               </span>
             </div>
@@ -99,24 +175,41 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
       </div>
 
       {/* Weekly Total Macros */}
-      <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-        <h3 className="font-semibold text-gray-800 mb-3">Weekly Total Macros</h3>
-        <div className="grid grid-cols-4 gap-3 text-center">
+      <div
+        style={{
+          backgroundColor: '#F5F8FF',
+          border: '1px solid #E8E4DC',
+          borderRadius: '10px',
+          padding: '16px',
+          marginTop: '8px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <div
+            style={{
+              height: '3px',
+              width: '24px',
+              background: 'linear-gradient(to right, #8B7FB8, #D67BB8, #5B7FD4)'
+            }}
+          />
+          <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>WEEKLY TOTALS</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', textAlign: 'center' }}>
           <div>
-            <p className="text-gray-600 text-sm">Calories</p>
-            <p className="text-xl font-bold text-blue-600">{Math.round(totalMacros.calories)}</p>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Calories</p>
+            <p style={{ fontSize: '18px', fontWeight: 700, color: '#5B7FD4' }}>{Math.round(totalMacros.calories)}</p>
           </div>
           <div>
-            <p className="text-gray-600 text-sm">Protein</p>
-            <p className="text-xl font-bold text-blue-600">{totalMacros.protein.toFixed(1)}g</p>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Protein</p>
+            <p style={{ fontSize: '18px', fontWeight: 700, color: '#8B7FB8' }}>{totalMacros.protein.toFixed(1)}g</p>
           </div>
           <div>
-            <p className="text-gray-600 text-sm">Carbs</p>
-            <p className="text-xl font-bold text-blue-600">{totalMacros.carbs.toFixed(1)}g</p>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Carbs</p>
+            <p style={{ fontSize: '18px', fontWeight: 700, color: '#D67BB8' }}>{totalMacros.carbs.toFixed(1)}g</p>
           </div>
           <div>
-            <p className="text-gray-600 text-sm">Fat</p>
-            <p className="text-xl font-bold text-blue-600">{totalMacros.fat.toFixed(1)}g</p>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Fat</p>
+            <p style={{ fontSize: '18px', fontWeight: 700, color: '#C9845F' }}>{totalMacros.fat.toFixed(1)}g</p>
           </div>
         </div>
       </div>

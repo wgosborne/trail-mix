@@ -2,9 +2,15 @@ import { TabNavigation } from '@/components/TabNavigation';
 
 export default function GroceriesLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#FFFFFF'
+    }}>
       <TabNavigation />
-      <div className="p-4">
+      <div style={{
+        padding: '0',
+        maxWidth: '100%'
+      }}>
         {children}
       </div>
     </div>
