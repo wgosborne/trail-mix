@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import { ConfirmDialog } from './ConfirmDialog';
+
 interface Grocery {
   id: string;
   foodName: string;
@@ -21,6 +24,24 @@ interface GroceryInventoryProps {
 }
 
 export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInventoryProps) {
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string }>({
+    isOpen: false,
+    id: '',
+    name: ''
+  });
+
+  const handleDeleteClick = (id: string, name: string) => {
+    setDeleteConfirm({ isOpen: true, id, name });
+  };
+
+  const handleConfirmDelete = () => {
+    onDelete(deleteConfirm.id);
+    setDeleteConfirm({ isOpen: false, id: '', name: '' });
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirm({ isOpen: false, id: '', name: '' });
+  };
   if (!groceries.length) {
     return (
       <p
@@ -47,8 +68,19 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {/* Grocery Items */}
+    <>
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Grocery?"
+        message={`Remove "${deleteConfirm.name}" from your inventory?`}
+        confirmText="Delete"
+        cancelText="Keep"
+        isDangerous={true}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* Grocery Items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {groceries.map((grocery) => (
           <div
@@ -68,17 +100,20 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
                 </p>
               </div>
               <button
-                onClick={() => onDelete(grocery.id)}
+                onClick={() => handleDeleteClick(grocery.id, grocery.foodName)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#999999',
+                  color: '#D67BB8',
                   cursor: 'pointer',
                   fontSize: '11px',
                   fontWeight: 600,
                   marginLeft: '12px',
                   textDecoration: 'underline',
+                  transition: 'color 0.2s'
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#B85A9A')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#D67BB8')}
               >
                 Remove
               </button>
@@ -213,6 +248,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

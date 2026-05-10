@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { userGroceryInventory } from '@/schema/db';
 import { eq, and } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
+import { grocerySchema, formatValidationError } from '@/lib/validation';
+import { z } from 'zod';
 
 // Helper function to calculate week start from a date
 function getWeekStart(date: Date = new Date()): string {
@@ -26,21 +28,14 @@ export async function POST(req: NextRequest) {
     const userId = (session.user as any).id;
     const body = await req.json();
 
-    // Validate required fields
-    const { foodName, quantityBought, unit, totalCalories, proteinG, carbsG, fatG, dateAdded } = body;
-
-    if (!foodName || quantityBought === undefined || !unit) {
-      return NextResponse.json(
-        { error: 'Missing required fields: foodName, quantityBought, unit' },
-        { status: 400 }
-      );
+    // Validate with Zod
+    const validationResult = grocerySchema.safeParse(body);
+    if (!validationResult.success) {
+      const errorMessage = formatValidationError(validationResult.error);
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    // Validate numeric fields
-    const qty = parseFloat(quantityBought);
-    if (isNaN(qty) || qty <= 0) {
-      return NextResponse.json({ error: 'quantityBought must be a positive number' }, { status: 400 });
-    }
+    const { foodName, quantityBought, unit, totalCalories, proteinG, carbsG, fatG, dateAdded } = validationResult.data;
 
     // Calculate week start
     const date = dateAdded ? new Date(dateAdded) : new Date();
@@ -53,13 +48,13 @@ export async function POST(req: NextRequest) {
       .values({
         userId: userId as any,
         foodName: foodName.trim(),
-        quantityBought: qty.toString() as any,
+        quantityBought: quantityBought.toString() as any,
         unit: unit.trim(),
         percentConsumed: 0 as any,
-        totalCalories: totalCalories ? parseFloat(totalCalories).toString() : null,
-        proteinG: proteinG ? parseFloat(proteinG).toString() : null,
-        carbsG: carbsG ? parseFloat(carbsG).toString() : null,
-        fatG: fatG ? parseFloat(fatG).toString() : null,
+        totalCalories: totalCalories ? totalCalories.toString() : null,
+        proteinG: proteinG ? proteinG.toString() : null,
+        carbsG: carbsG ? carbsG.toString() : null,
+        fatG: fatG ? fatG.toString() : null,
         fiberG: body.fiberG ? parseFloat(body.fiberG).toString() : null,
         dateAdded: dateAddedStr as any,
         weekStart: weekStart as any,

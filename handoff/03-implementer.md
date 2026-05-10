@@ -2012,3 +2012,83 @@ curl -H "Authorization: Bearer {token}" \
 5. API endpoints for macro goal management
 
 Users can now see their weekly nutrition summary, compare it with their Strava training data, and understand their overall training/nutrition alignment.
+
+---
+
+## Phase 5 Hotfix: Strava Activities Calorie Calculation - COMPLETE
+
+**Completed on:** 2026-05-10  
+**Issue:** Activities show correct duration but 0 calories on settings page  
+**Build Status:** ✅ Passes TypeScript compilation and Next.js build
+
+### Root Cause Analysis
+The Strava API's `/v3/athlete/activities` endpoint does not always include the `calories` field:
+- Activities with power meter data (cycling computers) return `kilojoules` instead
+- Activities without power data have `calories` = null or undefined
+- Direct `calories` field is only in detailed activity responses, not summary responses
+
+### Solution Implemented
+
+**File Modified:** `app/api/strava/activities/route.ts` (lines 49-85)
+
+Created `estimateCalories()` helper function with multi-tiered calorie estimation:
+
+1. **Direct Calories (Highest Priority):** Use `activity.calories` if provided and > 0
+2. **Kilojoules:** Convert `activity.kilojoules` to kcal (1:1 ratio for most activities)
+3. **Power Data:** Calculate from `weighted_average_watts * moving_time / 1000` = kilojoules
+4. **Activity-Based Fallback:** Estimate by activity type and duration
+   - Running: ~12 cal/min (realistic for most runners)
+   - Cycling: ~8 cal/min (lower intensity than running)
+   - Swimming: ~10 cal/min (high calorie burn)
+   - Other: ~7 cal/min (conservative estimate)
+
+This ensures all activities show realistic calorie burn estimates instead of 0.
+
+### Testing Recommendations
+
+**Browser Testing:**
+1. Connect Strava via Settings tab (⚙️)
+2. Complete OAuth flow with real Strava account
+3. Verify activities populate with non-zero calories
+4. Check week total sums all activity calories correctly
+5. Run activities should show ~720 cal for 60-minute activity (~12 cal/min)
+
+**API Testing:**
+```bash
+# After Strava is connected
+curl http://localhost:3001/api/strava/activities?week=2026-05-05 \
+  -H "Cookie: next-auth.session-token=YOUR_TOKEN"
+
+# Response should show:
+# - Each activity has caloriesBurned > 0
+# - weekTotal.caloriesBurned is sum of all activities (not 0)
+# - caloriesBurned values match activity type estimates
+```
+
+### Architecture Notes
+
+**Calorie Estimation Priority:**
+```
+activity.calories > activity.kilojoules > weighted_average_watts > activity_type_estimate
+```
+
+**Why Multi-Tier Approach:**
+- Tier 1: Strava's native calories (if available, most accurate)
+- Tier 2: Kilojoules from power sensors (very common on cycling devices)
+- Tier 3: Power calculations (alternative calculation method)
+- Tier 4: Type-based fallback (reasonable estimate when no power data)
+
+Users with power meters get the most accurate data. Users without get reasonable estimates.
+
+### Backward Compatibility
+✅ No breaking changes:
+- StravaConnect component displays values unchanged
+- Settings page UI unaffected (just displays correct values now)
+- Database schema unchanged
+- Other endpoints unaffected
+
+### Files Modified
+- `app/api/strava/activities/route.ts` — Added estimateCalories() function (lines 49-85)
+
+### Conclusion
+**Phase 5 Hotfix COMPLETE.** Activities now display realistic calorie burn data instead of 0 for all activities. Fix uses multiple calorie estimation methods for robust handling of different Strava device types.

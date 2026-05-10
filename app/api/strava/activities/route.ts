@@ -46,9 +46,47 @@ export async function GET(request: NextRequest) {
 
     const activities = await response.json();
 
+    // Helper function to estimate calories from Strava data
+    function estimateCalories(activity: any): number {
+      // If Strava provides explicit calories, use it
+      if (activity.calories && activity.calories > 0) {
+        return Math.round(activity.calories);
+      }
+
+      // Estimate from kilojoules (1 kilocalorie = 4.184 kilojoules)
+      if (activity.kilojoules && activity.kilojoules > 0) {
+        return Math.round(activity.kilojoules * 1);
+      }
+
+      // Estimate from power data and time
+      if (activity.weighted_average_watts && activity.moving_time) {
+        // Power (watts) * Time (seconds) / 1000 = kilojoules
+        // Then convert to kcal (approximately 1:1 for cycling)
+        const kilojoules = (activity.weighted_average_watts * activity.moving_time) / 1000;
+        return Math.round(kilojoules);
+      }
+
+      // Fallback: rough estimation based on activity type and duration
+      const minutes = activity.moving_time / 60;
+      const activityType = activity.type?.toLowerCase() || '';
+
+      let caloriesPerMinute = 0;
+      if (activityType.includes('run')) {
+        caloriesPerMinute = 12; // ~12 cal/min for running
+      } else if (activityType.includes('ride')) {
+        caloriesPerMinute = 8; // ~8 cal/min for cycling
+      } else if (activityType.includes('swim')) {
+        caloriesPerMinute = 10; // ~10 cal/min for swimming
+      } else {
+        caloriesPerMinute = 7; // ~7 cal/min for general activities
+      }
+
+      return Math.round(minutes * caloriesPerMinute);
+    }
+
     const weekTotal = activities.reduce(
       (acc: any, activity: any) => ({
-        caloriesBurned: (acc.caloriesBurned || 0) + (activity.calories || 0),
+        caloriesBurned: (acc.caloriesBurned || 0) + estimateCalories(activity),
         distance: (acc.distance || 0) + (activity.distance || 0),
         movingTime: (acc.movingTime || 0) + (activity.moving_time || 0),
       }),
@@ -61,8 +99,9 @@ export async function GET(request: NextRequest) {
         stravaId: a.id,
         date: a.start_date_local?.split('T')[0],
         type: a.type,
+        name: a.name,
         durationMinutes: Math.round(a.moving_time / 60),
-        caloriesBurned: a.calories || 0,
+        caloriesBurned: estimateCalories(a),
       })),
       weekTotal,
     });

@@ -4,6 +4,7 @@ import { eq, and } from 'drizzle-orm';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
+import { groceryUpdateSchema, formatValidationError } from '@/lib/validation';
 
 // PUT /api/groceries/[id] - Update existing grocery
 export async function PUT(
@@ -19,38 +20,23 @@ export async function PUT(
 
     const userId = (session.user as any).id;
     const body = await request.json();
-    const { percentConsumed, quantityBought, totalCalories, proteinG, carbsG, fatG, fiberG } = body;
+
+    // Validate with Zod
+    const validationResult = groceryUpdateSchema.safeParse(body);
+    if (!validationResult.success) {
+      const errorMessage = formatValidationError(validationResult.error);
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
+    }
+
+    const updateData = validationResult.data;
 
     // Build updates object
     const updates: any = {};
-    if (percentConsumed !== undefined) {
-      const pc = parseFloat(percentConsumed);
-      if (isNaN(pc) || pc < 0 || pc > 100) {
-        return NextResponse.json({ error: 'percentConsumed must be between 0 and 100' }, { status: 400 });
-      }
-      updates.percentConsumed = pc;
+    if (updateData.percentConsumed !== undefined) {
+      updates.percentConsumed = updateData.percentConsumed;
     }
-    if (quantityBought !== undefined) {
-      const qty = parseFloat(quantityBought);
-      if (isNaN(qty) || qty <= 0) {
-        return NextResponse.json({ error: 'quantityBought must be a positive number' }, { status: 400 });
-      }
-      updates.quantityBought = qty;
-    }
-    if (totalCalories !== undefined) {
-      updates.totalCalories = parseFloat(totalCalories);
-    }
-    if (proteinG !== undefined) {
-      updates.proteinG = parseFloat(proteinG);
-    }
-    if (carbsG !== undefined) {
-      updates.carbsG = parseFloat(carbsG);
-    }
-    if (fatG !== undefined) {
-      updates.fatG = parseFloat(fatG);
-    }
-    if (fiberG !== undefined) {
-      updates.fiberG = parseFloat(fiberG);
+    if (updateData.foodName !== undefined) {
+      updates.foodName = updateData.foodName;
     }
 
     if (Object.keys(updates).length === 0) {

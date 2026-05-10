@@ -140,16 +140,31 @@ TrailMix is editorial, athletic-focused, sophisticated, intentional, and minimal
 - Same header style as Camera tab (28px, accent bar)
 - Light blue background placeholder (#F5F8FF)
 
-### app/page.tsx (Splash Page)
+### app/page.tsx (Splash Page) - Mobile-First Responsive
 - White background only (no gradients)
-- Main title: 48px bold, -0.5px letter-spacing
-- Subtitle: 16px muted, 1.6 line-height
+- **Mobile-first responsive typography**:
+  - Hero text (h1):
+    - Mobile (≤640px): 48px
+    - Tablet (641-1024px): 80px
+    - Desktop (≥1025px): 120px
+  - Subtitle (p):
+    - Uses `clamp(14px, 4vw, 16px)` for fluid scaling
+  - Buttons:
+    - Uses `clamp(13px, 3vw, 14px)` for fluid text scaling
+- Responsive spacing:
+  - Hero margin: `clamp(24px, 5vw, 40px)` (scales with viewport)
+  - Button gap: `clamp(8px, 2vw, 12px)` (scales with viewport)
+  - Container padding: 16px mobile, 24px tablet, 32px desktop
+  - Button padding: `clamp(10px, 2.5vw, 12px)` vertical, `clamp(16px, 4vw, 24px)` horizontal
+- Touch-friendly buttons:
+  - Minimum height: 44px (mobile accessibility)
+  - Flexbox centering for vertical alignment
 - Three buttons with distinct styles:
-  1. "Try as Guest": light gray border, 1px, gray text
+  1. "Try as Guest": light gray background (#F0EFE8), light gray border (#E8E4DC), gray text
   2. "Sign In": purple background (#8B7FB8), white text
-  3. "Create Account": purple border (2px), purple text, white background
-- All buttons: 8px rounded, 14px font, 600 weight
-- Hover states on all buttons (opacity change for primary, background change for secondary)
+  3. "Create Account": white background, purple border (2px), purple text
+- All buttons: 8px rounded, 600 weight
+- Hover states on all buttons (background change)
 
 ### app/groceries/layout.tsx
 - White background (#FFFFFF), no padding on container
@@ -250,7 +265,21 @@ The design system colors and accent bar pattern are defined in globals.css with 
 
 ## Next Design Phase
 
-### Phase 2: Dashboard Tab
+### Phase 2: Mobile-First Responsive Updates (In Progress)
+1. **Splash Page (COMPLETED)**
+   - Hero text: 48px mobile → 80px tablet → 120px desktop
+   - Responsive typography using CSS media queries and clamp()
+   - Touch-friendly buttons (44px minimum height)
+   - Fluid spacing with viewport-relative units
+   
+2. **Remaining Pages to Update**
+   - Grocery Inventory page: Scale metric cards for mobile
+   - Grocery Form: Ensure inputs are touch-friendly (44px+ height)
+   - Week Navigator: Make navigation buttons mobile-appropriate
+   - Tab Navigation: Ensure tabs are mobile-sized correctly
+   - Overall breakpoints: Mobile (≤640px), Tablet (641-1024px), Desktop (≥1025px)
+
+### Phase 3: Dashboard Tab
 1. Build weekly nutrition summary with Recharts donut chart
    - Protein (purple segment)
    - Carbs (pink segment)
@@ -259,13 +288,13 @@ The design system colors and accent bar pattern are defined in globals.css with 
 3. Display daily breakdown (7-day grid)
 4. Integrate Strava calorie burn data
 
-### Phase 3: Settings Tab
+### Phase 4: Settings Tab
 1. Strava OAuth connection flow
 2. Macro goal configuration form
 3. Account management (email, password, logout)
 4. Weekly goal adjustments based on activities
 
-### Phase 4: Image Upload & Receipt Parsing
+### Phase 5: Image Upload & Receipt Parsing
 1. Add image upload UI (camera icon or file picker)
 2. Integrate Claude Vision API for receipt parsing
 3. Extract grocery items and quantities
@@ -276,7 +305,6 @@ The design system colors and accent bar pattern are defined in globals.css with 
 - Add smooth animations for micro-interactions (button hover, loading states)
 - Implement range input styling (custom slider track and thumb)
 - Add success/error toast notifications (using design system colors)
-- Mobile optimization (ensure buttons are 44px+ touch targets)
 
 ---
 
@@ -324,8 +352,13 @@ All form inputs have visible focus states (border color change).
 - [x] WeekNavigator buttons work and navigate weeks
 - [x] Splash page buttons have proper hover states
 - [x] All text meets WCAG AA contrast requirements
-- [ ] Recharts integration ready for donut charts (Phase 2)
-- [ ] Mobile responsiveness verified (all pages)
+- [x] Splash page mobile responsiveness verified
+  - [x] iPhone/Mobile (375px): Hero text 48px, readable spacing
+  - [x] Tablet (768px): Hero text 80px, balanced layout
+  - [x] Desktop (1024px+): Hero text 120px, full width
+  - [x] Touch targets 44px+ for mobile (buttons)
+- [ ] Recharts integration ready for donut charts (Phase 3)
+- [ ] Mobile responsiveness verified (remaining pages)
 
 ---
 
@@ -333,22 +366,34 @@ All form inputs have visible focus states (border color change).
 
 1. **Inline Styles Used Extensively**: Most components use inline `style={{}}` objects instead of Tailwind classes. This was chosen to ensure precise control over the design system colors and avoid class naming conflicts.
 
-2. **Recharts Ready**: The library is installed (`npm install recharts`) and ready for dashboard implementation. Plan donut charts with color-coded segments and bar charts with paired bars.
+2. **Responsive Design Techniques (New)**:
+   - **CSS Media Queries**: Used for hero text size breakpoints (mobile: 48px, tablet: 80px, desktop: 120px)
+   - **CSS clamp()**: Used for fluid scaling of typography and spacing
+     - Example: `fontSize: 'clamp(14px, 4vw, 16px)'` scales between 14px and 16px
+     - Example: `padding: 'clamp(10px, 2.5vw, 12px)'` scales padding with viewport
+   - **Viewport Units (vw)**: Used for responsive calculations based on viewport width
+   - **Mobile-First Approach**: Start with mobile sizes, scale up at breakpoints
+   - **Breakpoints Used**:
+     - Mobile: ≤640px
+     - Tablet: 641-1024px
+     - Desktop: ≥1025px
 
-3. **No Dark Mode**: The design system is light-mode only. Do not add dark mode support without explicit design review.
+3. **Recharts Ready**: The library is installed (`npm install recharts`) and ready for dashboard implementation. Plan donut charts with color-coded segments and bar charts with paired bars.
 
-4. **Color Hex Values**: Always use the exact hex values from the palette (e.g., #8B7FB8, not slightly different purples). This maintains brand consistency.
+4. **No Dark Mode**: The design system is light-mode only. Do not add dark mode support without explicit design review.
 
-5. **Accent Bars**: The 3px gradient bar appears above all major section headers. It's defined as a 36px-wide bar for page titles and 24px-wide for subsections.
+5. **Color Hex Values**: Always use the exact hex values from the palette (e.g., #8B7FB8, not slightly different purples). This maintains brand consistency.
 
-6. **Font Weights**: Use 700 for headlines and labels, 600 for semi-bold controls, 400-500 for body text. Avoid 600 or 700 for body content.
+6. **Accent Bars**: The 3px gradient bar appears above all major section headers. It's defined as a 36px-wide bar for page titles and 24px-wide for subsections.
 
-7. **Hover States**: All interactive elements should have clear hover states:
+7. **Font Weights**: Use 700 for headlines and labels, 600 for semi-bold controls, 400-500 for body text. Avoid 600 or 700 for body content.
+
+8. **Hover States**: All interactive elements should have clear hover states:
    - Buttons: background or border color change
    - Cards: background or border color change
    - Links: underline or color change
 
-8. **Button Heights**: Use standard padding (11px vertical, 24px horizontal) to keep buttons consistent and touchable (44px+ on mobile).
+9. **Button Heights**: Minimum 44px height on mobile for touch accessibility. Use flexbox centering for vertical alignment.
 
 ---
 

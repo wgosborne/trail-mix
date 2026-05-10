@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
+import { userGoalsSchema, formatValidationError } from '@/lib/validation';
 
 export async function PUT(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -13,41 +14,20 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
+
+    // Validate with Zod (partial validation - only provided fields matter)
+    const validationResult = userGoalsSchema.partial().safeParse(body);
+    if (!validationResult.success) {
+      const errorMessage = formatValidationError(validationResult.error);
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
+    }
+
     const {
       dailyCalGoal,
       dailyProteinG,
       dailyCarbsG,
       dailyFatG,
-    } = body;
-
-    // Validation
-    if (dailyCalGoal !== undefined && (dailyCalGoal < 1000 || dailyCalGoal > 5000)) {
-      return NextResponse.json(
-        { error: 'Daily calorie goal must be between 1000 and 5000' },
-        { status: 400 }
-      );
-    }
-
-    if (dailyProteinG !== undefined && (dailyProteinG < 20 || dailyProteinG > 500)) {
-      return NextResponse.json(
-        { error: 'Daily protein goal must be between 20g and 500g' },
-        { status: 400 }
-      );
-    }
-
-    if (dailyCarbsG !== undefined && (dailyCarbsG < 50 || dailyCarbsG > 800)) {
-      return NextResponse.json(
-        { error: 'Daily carbs goal must be between 50g and 800g' },
-        { status: 400 }
-      );
-    }
-
-    if (dailyFatG !== undefined && (dailyFatG < 10 || dailyFatG > 200)) {
-      return NextResponse.json(
-        { error: 'Daily fat goal must be between 10g and 200g' },
-        { status: 400 }
-      );
-    }
+    } = validationResult.data;
 
     const userId = (session.user as any).id as string;
 

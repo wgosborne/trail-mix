@@ -6,6 +6,7 @@ import { GroceryInventory } from '@/components/GroceryInventory';
 import { WeekNavigator } from '@/components/WeekNavigator';
 import { ReceiptUploader } from '@/components/ReceiptUploader';
 import { useGuestGroceries } from '@/hooks/useGuestGroceries';
+import { showSuccess, showError } from '@/lib/toast';
 import { useState, useEffect } from 'react';
 
 interface AuthGrocery {
@@ -110,13 +111,19 @@ export default function CameraTab() {
           if (newGrocery.weekStart === weekStart) {
             setAuthGroceries([...authGroceries, newGrocery]);
           }
+          showSuccess(`Added ${grocery.quantityBought} ${grocery.unit} ${grocery.foodName}`);
         } else {
-          console.error('Failed to create grocery:', response.status);
+          const errorData = await response.json().catch(() => ({ error: 'Failed to add grocery' }));
+          showError(errorData.error || 'Failed to add grocery');
         }
       } else {
         // For guest users, add to localStorage
         guestGroceries.addGrocery(grocery);
+        showSuccess(`Added ${grocery.quantityBought} ${grocery.unit} ${grocery.foodName}`);
       }
+    } catch (error) {
+      showError('Network error. Please try again.');
+      console.error('Error adding grocery:', error);
     } finally {
       setLoading(false);
     }
@@ -135,8 +142,12 @@ export default function CameraTab() {
         if (response.ok) {
           const updated = await response.json();
           setAuthGroceries(authGroceries.map((g) => (g.id === id ? updated : g)));
+        } else {
+          const errorData = await response.json().catch(() => ({ error: 'Failed to update' }));
+          showError(errorData.error || 'Failed to update grocery');
         }
       } catch (error) {
+        showError('Network error. Please try again.');
         console.error('Error updating grocery:', error);
       }
     } else {
@@ -155,13 +166,19 @@ export default function CameraTab() {
 
         if (response.ok || response.status === 204) {
           setAuthGroceries(authGroceries.filter((g) => g.id !== id));
+          showSuccess('Grocery deleted');
+        } else {
+          const errorData = await response.json().catch(() => ({ error: 'Failed to delete' }));
+          showError(errorData.error || 'Failed to delete grocery');
         }
       } catch (error) {
+        showError('Network error. Please try again.');
         console.error('Error deleting grocery:', error);
       }
     } else {
       // For guest users, use localStorage
       guestGroceries.deleteGrocery(id);
+      showSuccess('Grocery deleted');
     }
   };
 

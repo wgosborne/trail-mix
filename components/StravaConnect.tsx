@@ -6,6 +6,7 @@ interface StravaActivity {
   stravaId: number;
   date: string;
   type: string;
+  name: string;
   durationMinutes: number;
   caloriesBurned: number;
 }
@@ -162,7 +163,7 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
                 }}
               >
                 <p style={{ fontWeight: 600, color: '#2C2C2A', margin: '0 0 4px 0' }}>
-                  {activity.type} • {activity.durationMinutes} min
+                  {activity.name} • {activity.durationMinutes} min
                 </p>
                 <p style={{ color: '#999999', margin: 0 }}>
                   {activity.caloriesBurned} cal • {activity.date}
