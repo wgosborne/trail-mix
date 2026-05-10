@@ -11,8 +11,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const userId = (session.user as any).id as string;
+
   const user = await db.query.users.findFirst({
-    where: eq(users.id, session.user.id as string),
+    where: eq(users.id, userId),
   });
 
   if (!user?.stravaToken) {

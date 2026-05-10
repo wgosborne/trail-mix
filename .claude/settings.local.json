@@ -3,7 +3,14 @@
     "allow": [
       "WebSearch",
       "WebFetch(domain:developers.strava.com)",
-      "Bash(Get-ChildItem *)"
+      "Bash(Get-ChildItem *)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:3001/api/health)",
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(pkill -f \"node.*next\")",
+      "PowerShell(Get-Process *)",
+      "Bash(npm install *)",
+      "Bash(curl *)"
     ]
   }
 }

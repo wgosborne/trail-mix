@@ -16,13 +16,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'week required' }, { status: 400 });
   }
 
+  const userId = (session.user as any).id as string;
+
   const user = await db.query.users.findFirst({
-    where: eq(users.id, session.user.id as string),
+    where: eq(users.id, userId),
   });
 
   const groceries = await db.query.userGroceryInventory.findMany({
     where: and(
-      eq(userGroceryInventory.userId, session.user.id as string),
+      eq(userGroceryInventory.userId, userId),
       eq(userGroceryInventory.weekStart, weekStart)
     ),
   });
@@ -30,16 +32,16 @@ export async function GET(request: NextRequest) {
   // Calculate consumed macros
   const totals = groceries.reduce(
     (acc, g) => {
-      const consumed = (parseFloat(g.percentConsumed) / 100) || 0;
+      const consumed = (parseFloat((g.percentConsumed || '0').toString()) / 100) || 0;
       return {
-        caloriesBought: acc.caloriesBought + (parseFloat(g.totalCalories || '0') || 0),
-        caloriesConsumed: acc.caloriesConsumed + (parseFloat(g.totalCalories || '0') || 0) * consumed,
-        proteinBought: acc.proteinBought + (parseFloat(g.proteinG || '0') || 0),
-        proteinConsumed: acc.proteinConsumed + (parseFloat(g.proteinG || '0') || 0) * consumed,
-        carbsBought: acc.carbsBought + (parseFloat(g.carbsG || '0') || 0),
-        carbsConsumed: acc.carbsConsumed + (parseFloat(g.carbsG || '0') || 0) * consumed,
-        fatBought: acc.fatBought + (parseFloat(g.fatG || '0') || 0),
-        fatConsumed: acc.fatConsumed + (parseFloat(g.fatG || '0') || 0) * consumed,
+        caloriesBought: acc.caloriesBought + (parseFloat((g.totalCalories || '0').toString()) || 0),
+        caloriesConsumed: acc.caloriesConsumed + (parseFloat((g.totalCalories || '0').toString()) || 0) * consumed,
+        proteinBought: acc.proteinBought + (parseFloat((g.proteinG || '0').toString()) || 0),
+        proteinConsumed: acc.proteinConsumed + (parseFloat((g.proteinG || '0').toString()) || 0) * consumed,
+        carbsBought: acc.carbsBought + (parseFloat((g.carbsG || '0').toString()) || 0),
+        carbsConsumed: acc.carbsConsumed + (parseFloat((g.carbsG || '0').toString()) || 0) * consumed,
+        fatBought: acc.fatBought + (parseFloat((g.fatG || '0').toString()) || 0),
+        fatConsumed: acc.fatConsumed + (parseFloat((g.fatG || '0').toString()) || 0) * consumed,
       };
     },
     {

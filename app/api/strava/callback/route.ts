@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Store token in DB
+    const userId = (session.user as any).id as string;
     await db
       .update(users)
       .set({
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
         stravaUserId: tokenData.athlete.id.toString(),
         stravaTokenExpiresAt: new Date(tokenData.expires_at * 1000),
       })
-      .where(eq(users.id, session.user.id as string));
+      .where(eq(users.id, userId));
 
     return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/groceries/settings?strava_connected=true`);
   } catch (error) {
