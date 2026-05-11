@@ -196,6 +196,8 @@ const DashboardCard = memo(function DashboardCard({
         boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)',
+        position: 'relative',
+        zIndex: 2,
       }}
       onClick={onClick}
       onMouseEnter={(e) => {
@@ -519,9 +521,8 @@ export function NutritionDashboardPro({
       </div>
 
       {/* Main Layout: Donut + Stacked Cards */}
-      {hasData && (
-        <>
-          {/* Macro Circle Card - Floating Element */}
+      <>
+        {/* Macro Circle Card - Floating Element */}
           <DashboardCard onClick={() => router.push('/metrics/macros')}>
             <p style={{
               fontSize: '10px',
@@ -728,8 +729,7 @@ export function NutritionDashboardPro({
               </div>
             </div>
           </DashboardCard>
-        </>
-      )}
+      </>
 
       <style>{`
         @keyframes pulse {
