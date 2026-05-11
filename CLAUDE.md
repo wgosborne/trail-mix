@@ -119,23 +119,27 @@ npm run build
 - [x] Confirmation dialogs
 - [x] Skeleton loaders
 - [x] Phase 7 (Polish) complete
-- [ ] Phase 8 (bug fixes, UX refinement)
+- [x] Phase 8 Priority 1: Strava token auto-refresh (DONE - commit ce7c0b2)
+- [ ] Phase 8 Priority 2: Recharts warnings fix
+- [ ] Phase 8 Priority 3: Edge case testing
 
-## Next Steps
+## Phase 8 Progress
 
-1. Monitor logs for any edge case failures
-2. Test guest → login migration thoroughly
-3. Verify Strava token refresh if applicable
-4. Test on mobile (iOS/Android PWA install)
-5. Optimize dashboard rendering for large weeks (20+ items)
-6. Consider pagination if inventory grows
+**Priority 1: Strava Token Auto-Refresh** ✓ COMPLETE
+- Implemented `getValidStravaToken()` helper with automatic refresh logic
+- Strava activities endpoint uses auto-refresh before API calls
+- Disconnect endpoint clears all credentials
+- Test plan created: `TEST_PLAN_PHASE8_PRIORITY1.md`
+
+**Up Next**: Priority 2 - Recharts warnings & Priority 3 - Edge case testing
 
 ## Open Questions / Known Issues
 
-1. **Strava token expiration**: Refresh token not implemented (rare issue, user can re-auth)
+1. **Recharts console warnings**: Some Recharts components generating React warnings (Priority 2)
 2. **USDA search deprecated**: Replaced with Claude API calls. If Claude API capacity becomes a concern, optimize caching.
 3. **Guest data loss**: Acceptable per requirements. Browser cache clear = data lost. Users warned at login.
 4. **Receipt image storage**: Discarded after parsing (intentional). Users can't view parsed receipt history.
+5. **Strava token rotation**: If refresh token expires (6 months), user must re-auth. Acceptable for MVP.
 
 ## Project Files
 
