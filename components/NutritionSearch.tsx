@@ -96,13 +96,16 @@ export function NutritionSearch({ onSelect }: NutritionSearchProps) {
             onChange={(e) => setQuery(e.target.value)}
             style={{
               flex: 1,
-              padding: '10px 12px',
+              padding: '12px',
               border: '1px solid #E8E4DC',
               borderRadius: '6px',
               fontSize: '13px',
               color: '#2C2C2A',
               backgroundColor: '#FFFFFF',
-              outline: 'none'
+              outline: 'none',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center'
             }}
             disabled={loading}
           />
@@ -110,14 +113,19 @@ export function NutritionSearch({ onSelect }: NutritionSearchProps) {
             type="submit"
             disabled={loading || !query.trim()}
             style={{
-              padding: '10px 16px',
+              padding: '12px 16px',
               backgroundColor: loading || !query.trim() ? '#F0EFE8' : '#5B7FD4',
               color: loading || !query.trim() ? '#999999' : '#FFFFFF',
               border: `1px solid ${loading || !query.trim() ? '#E8E4DC' : '#5B7FD4'}`,
               borderRadius: '6px',
               fontSize: '13px',
               fontWeight: 600,
-              cursor: loading || !query.trim() ? 'not-allowed' : 'pointer'
+              cursor: loading || !query.trim() ? 'not-allowed' : 'pointer',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              whiteSpace: 'nowrap'
             }}
           >
             {loading ? 'Searching...' : 'Search'}
@@ -150,12 +158,16 @@ export function NutritionSearch({ onSelect }: NutritionSearchProps) {
               style={{
                 width: '100%',
                 textAlign: 'left',
-                padding: '10px 12px',
+                padding: '12px',
                 border: '1px solid #E8E4DC',
                 borderRadius: '6px',
                 backgroundColor: '#FFFFFF',
                 cursor: 'pointer',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                minHeight: '44px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center'
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#F8F5FF';
@@ -166,8 +178,8 @@ export function NutritionSearch({ onSelect }: NutritionSearchProps) {
                 (e.currentTarget as HTMLButtonElement).style.borderColor = '#E8E4DC';
               }}
             >
-              <p style={{ fontWeight: 600, fontSize: '13px', color: '#2C2C2A' }}>{result.name}</p>
-              <p style={{ fontSize: '11px', color: '#999999', marginTop: '4px' }}>
+              <p style={{ fontWeight: 600, fontSize: '13px', color: '#2C2C2A', margin: 0 }}>{result.name}</p>
+              <p style={{ fontSize: '11px', color: '#999999', marginTop: '4px', margin: '4px 0 0 0' }}>
                 {Math.round(result.nutrition.calories)} cal | {Math.round(result.nutrition.protein)}g protein |{' '}
                 {Math.round(result.nutrition.carbs)}g carbs | {Math.round(result.nutrition.fat)}g fat
               </p>

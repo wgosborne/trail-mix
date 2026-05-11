@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { db } from '@/lib/db';
+import { groceryLookup } from '@/schema/db';
+import { eq } from 'drizzle-orm';
+import { normalizeName } from '@/lib/grocery-lookup';
 
 const client = new Anthropic();
 
@@ -15,6 +19,7 @@ interface SearchResult {
     fat: number;
     fiber?: number;
   };
+  source?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -44,6 +49,30 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Check grocery lookup cache and prepend cached result if found
+    const cachedRows = await db
+      .select()
+      .from(groceryLookup)
+      .where(eq(groceryLookup.normalizedName, normalizeName(trimmedQuery)))
+      .limit(1);
+    const cachedResult: SearchResult | null =
+      cachedRows.length > 0
+        ? {
+            id: cachedRows[0].id,
+            name: cachedRows[0].normalizedName,
+            servingSize: 1,
+            servingSizeUnit: cachedRows[0].unit,
+            nutrition: {
+              calories: Number(cachedRows[0].calories),
+              protein: Number(cachedRows[0].proteinG),
+              carbs: Number(cachedRows[0].carbsG),
+              fat: Number(cachedRows[0].fatG),
+              fiber: cachedRows[0].fiberG ? Number(cachedRows[0].fiberG) : undefined,
+            },
+            source: 'Lookup',
+          }
+        : null;
 
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
@@ -129,10 +158,13 @@ Return ONLY the JSON object, no markdown or extra text.`,
       );
     }
 
+    // Prepend cached result if available, then add Claude result
+    const results = cachedResult ? [cachedResult, result] : [result];
+
     return NextResponse.json({
-      results: [result],
+      results,
       query: trimmedQuery,
-      count: 1,
+      count: results.length,
     });
   } catch (error) {
     if (error instanceof SyntaxError) {

@@ -157,18 +157,44 @@ export function NutritionDashboard({
     fetchWeeklyChartData();
   }, [weekStart, isStravaConnected]);
 
+  if (loading && !data) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <WeekNavigator onWeekChange={onWeekChange} />
+        {/* Skeleton for macro breakdown */}
+        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DC', borderRadius: '10px', padding: '16px' }}>
+          <div style={{ height: '180px', backgroundColor: '#E8E4DC', borderRadius: '6px', animation: 'pulse 2s infinite', marginBottom: '12px' }} />
+        </div>
+        {/* Skeleton for metrics */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} style={{ backgroundColor: '#F0EFE8', borderRadius: '8px', padding: '16px', height: '100px', animation: 'pulse 2s infinite' }} />
+          ))}
+        </div>
+        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
+      </div>
+    );
+  }
+
   if (error) {
     return (
-      <div style={{ backgroundColor: '#FFEBEE', border: '1px solid #EF9A9A', borderRadius: '10px', padding: '16px', textAlign: 'center', color: '#C62828', fontSize: '14px' }}>
-        {error}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <WeekNavigator onWeekChange={onWeekChange} />
+        <div style={{ backgroundColor: '#FFEBEE', border: '1px solid #EF9A9A', borderRadius: '10px', padding: '16px', textAlign: 'center', color: '#C62828', fontSize: '14px' }}>
+          <p style={{ margin: '0 0 8px 0', fontWeight: 600 }}>{error}</p>
+          <p style={{ margin: '0', fontSize: '12px' }}>Please try refreshing or check your connection</p>
+        </div>
       </div>
     );
   }
 
   if (!data && !loading) {
     return (
-      <div style={{ backgroundColor: '#F0EFE8', border: '1px solid #E8E4DC', borderRadius: '10px', padding: '16px', textAlign: 'center', fontSize: '14px', color: '#999999' }}>
-        No nutrition data available for this week
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <WeekNavigator onWeekChange={onWeekChange} />
+        <div style={{ backgroundColor: '#F0EFE8', border: '1px solid #E8E4DC', borderRadius: '10px', padding: '16px', textAlign: 'center', fontSize: '14px', color: '#999999' }}>
+          <p style={{ margin: 0 }}>No nutrition data available for this week</p>
+        </div>
       </div>
     );
   }
@@ -215,7 +241,7 @@ export function NutritionDashboard({
           <p style={{ fontSize: '13px', color: '#999999', textAlign: 'center', padding: '24px 0' }}>No groceries logged this week</p>
         ) : (
           <>
-            <div style={{ position: 'relative', height: '180px' }}>
+            <div style={{ position: 'relative', height: '180px', width: '100%', overflow: 'hidden' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -262,8 +288,8 @@ export function NutritionDashboard({
         )}
       </div>
 
-      {/* Key Metrics (2×2 Grid) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      {/* Key Metrics (Responsive Grid) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
         <div style={{ backgroundColor: '#F8F5FF', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <p style={{ fontSize: '10px', fontWeight: 700, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', margin: '0 0 4px 0' }}>
@@ -325,7 +351,7 @@ export function NutritionDashboard({
         </p>
 
         {weeklyChartData.length > 0 ? (
-          <div style={{ position: 'relative', height: '280px', marginBottom: '16px' }}>
+          <div style={{ position: 'relative', height: '280px', width: '100%', overflow: 'hidden', marginBottom: '16px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyChartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E8E4DC" />

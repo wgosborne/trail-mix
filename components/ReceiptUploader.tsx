@@ -151,7 +151,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
         disabled={loading}
         style={{
           width: '100%',
-          padding: '32px 16px',
+          padding: '40px 16px',
           border: '2px dashed #8B7FB8',
           borderRadius: '8px',
           backgroundColor: loading ? '#F0EFE8' : '#FFFFFF',
@@ -160,6 +160,12 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
           fontWeight: 600,
           color: loading ? '#999999' : '#2C2C2A',
           transition: 'all 0.2s',
+          minHeight: '120px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          lineHeight: 1.4
         }}
         onMouseEnter={(e) => {
           if (!loading) {
@@ -188,7 +194,9 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
 
       {error && (
         <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#FFE8E8', border: '1px solid #D67BB8', borderRadius: '6px' }}>
-          <p style={{ fontSize: '12px', color: '#D67BB8' }}>{error}</p>
+          <p style={{ fontSize: '12px', color: '#D67BB8', fontWeight: 600, margin: '0 0 4px 0' }}>Error</p>
+          <p style={{ fontSize: '12px', color: '#D67BB8', margin: 0 }}>{error}</p>
+          <p style={{ fontSize: '11px', color: '#D67BB8', margin: '4px 0 0 0', opacity: 0.8 }}>Try a different image or add groceries manually</p>
         </div>
       )}
 

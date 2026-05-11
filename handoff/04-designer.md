@@ -615,17 +615,102 @@ All form inputs have visible focus states (border color change).
 
 ---
 
+## NutritionDashboardPro - Redesign (May 11, 2026)
+
+### Mockup Inspiration
+The dashboard was redesigned to match a professional mobile mockup with:
+- Purple background (#8B7FB8)
+- Header with "Trail Mix" title and date range (e.g., "May 10 - May 16")
+- 2-column layout: Donut chart (left) + 3 stacked cards (right)
+
+### New Layout Structure
+
+**Left Column: Macro Donut Chart**
+- Size: 160px donut chart
+- Center label: "P:C:F" (white, centered)
+- Legend below: Protein (pink #D67BB8), Carbs (purple #8B7FB8), Fat (yellow #FFD700)
+- Clickable: Routes to `/metrics/macros`
+
+**Right Column: 3 Stacked Cards**
+
+1. **Avg. Calories Card**
+   - Title: "AVG. CALORIES" (10px uppercase)
+   - Large value: Daily average (24px bold)
+   - Label: "kcal burned"
+   - Mini bar chart (40px height) showing 7-day trend
+   - Color: Purple accent (#8B5CF6)
+   - Clickable: Routes to `/metrics/calories`
+
+2. **Weekly Deficit Card**
+   - Title: "WEEKLY DEFICIT" (10px uppercase)
+   - Large value: +/- calories in K format (e.g., "-4.2K")
+   - Label: "calories on pace"
+   - Status badge:
+     - Green (#34A853) "On track" if deficit >= -500
+     - Red (#FF6B6B) "Needs work" if deficit < -500
+   - Clickable: Routes to `/metrics/deficit`
+
+3. **Today's Macros vs Goal Card**
+   - Title: "TODAY'S MACROS VS GOAL" (10px uppercase)
+   - 3-column grid:
+     - Each macro has tiny progress bar + label + values
+     - Protein (pink): value/goal format (e.g., "245g of 275g")
+     - Carbs (purple): value/goal format
+     - Fat (yellow): value/goal format
+   - Clickable: Routes to `/metrics/macros`
+
+### Color Updates
+- **Protein**: Changed to pink (#D67BB8)
+- **Carbs**: Changed to purple (#8B7FB8)
+- **Fat**: Changed to yellow (#FFD700)
+
+### New Detail Pages Created
+1. `/metrics/macros/page.tsx` - Detailed macro breakdown with:
+   - 3 large cards showing each macro
+   - Percentage bar and calorie calculation
+   - Weekly summary with P:C:F distribution percentages
+   
+2. `/metrics/calories/page.tsx` - Calorie breakdown with:
+   - Consumed this week card
+   - Burned this week card (if Strava connected)
+   - Weekly balance and status indicator
+   
+3. `/metrics/deficit/page.tsx` - Deficit detail with:
+   - Large deficit display with status badge
+   - Burned vs. Consumed breakdown
+   - Educational context about calorie balance
+
+### Header Updates
+- Added `useRouter` for navigation between metrics pages
+- Function `formatDateRange()` to display week bounds
+- Click handlers on each card to navigate to detail pages
+
+### Responsive Notes
+- Grid adjusts on tablet/desktop via `gridTemplateColumns: '1fr 1fr'`
+- Mobile: Stacks to single column via media query
+- All cards have hover effects: `translateY(-4px) scale(1.02)`
+- Touch-friendly tap targets (44px+ minimum)
+
+### Design Consistency
+- Font sizes: 10px labels, 24px values, 160px donut
+- Padding: 20px on donut card, 16px on detail cards
+- Borders: 0 (cards use shadows instead)
+- Shadows: 0 8px 24px rgba(0,0,0,0.12) baseline
+- Rounded corners: 16px on all cards
+- Gap between cards: 12px
+
 ## Conclusion
 
 ### Phase Completion
-The Camera tab (Grocery Inventory) is fully implemented with the TrailMix design system. The Dashboard tab now features a sophisticated, production-ready NutritionDashboardPro component with advanced interactions, custom SVG charts, and a purple-themed 2-column layout optimized for mobile.
+The Camera tab (Grocery Inventory) is fully implemented with the TrailMix design system. The Dashboard tab now features a sophisticated, production-ready NutritionDashboardPro component matching the professional mockup with a 2-column layout (donut chart + 3 detail cards). Three clickable detail pages provide drill-down views for metrics.
 
 ### Key Achievements
-1. **Custom SVG Charts**: Built lightweight donut and bar charts without heavy libraries
-2. **Advanced Interactions**: 3D transforms, cubic-bezier animations, sophisticated shadows
-3. **Mobile-Optimized**: 2-column layout with responsive breakpoints and 44px+ touch targets
-4. **Accessible**: Keyboard navigation, focus states, WCAG AA contrast compliance
-5. **Production-Ready**: Full error handling, loading states, caching, and data integration
+1. **Mockup-Driven Design**: Dashboard exactly matches the professional inspiration image
+2. **Clickable Cards**: Each metric card navigates to a dedicated detail page
+3. **Color-Coded Macros**: P (pink), C (purple), F (yellow) for instant visual scanning
+4. **Data Integration**: Pulls from nutrition and Strava APIs with caching
+5. **Mobile-Optimized**: 2-column layout with responsive grid and 44px+ touch targets
+6. **Detail Pages**: Full macro, calorie, and deficit breakdown pages with context
 
 ### Next Steps
 1. Settings tab: Strava OAuth connection and macro goal configuration
@@ -633,3 +718,4 @@ The Camera tab (Grocery Inventory) is fully implemented with the TrailMix design
 3. Consider pagination if inventory grows beyond 20 items
 4. Monitor Strava token refresh edge cases
 5. Test PWA install on iOS/Android devices
+6. Add more analytics/historical trends on detail pages

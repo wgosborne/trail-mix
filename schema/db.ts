@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, decimal, date, index, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, decimal, date, index, boolean, integer, uniqueIndex } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const users = pgTable('users', {
@@ -56,6 +56,27 @@ export const sessions = pgTable(
   table => ({
     userIdx: index('idx_sessions_user').on(table.userId),
     tokenIdx: index('idx_sessions_token').on(table.sessionToken),
+  })
+);
+
+export const groceryLookup = pgTable(
+  'grocery_lookup',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    normalizedName: varchar('normalized_name', { length: 255 }).notNull(),
+    unit: varchar('unit', { length: 50 }).notNull(),
+    calories: decimal('calories', { precision: 8, scale: 2 }),
+    proteinG: decimal('protein_g', { precision: 7, scale: 2 }),
+    carbsG: decimal('carbs_g', { precision: 7, scale: 2 }),
+    fatG: decimal('fat_g', { precision: 7, scale: 2 }),
+    fiberG: decimal('fiber_g', { precision: 7, scale: 2 }),
+    source: varchar('source', { length: 50 }).notNull().default('claude'),
+    timesUsed: integer('times_used').notNull().default(1),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  table => ({
+    nameUnitIdx: uniqueIndex('idx_grocery_lookup_name_unit').on(table.normalizedName, table.unit),
   })
 );
 

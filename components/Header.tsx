@@ -60,27 +60,43 @@ export function Header() {
           paddingTop: '12px',
           paddingBottom: '12px',
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
           alignItems: 'center',
           zIndex: 41,
           minHeight: '52px'
         }}
       >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: '4px',
+            fontFamily: 'var(--font-syne), sans-serif',
+            fontSize: '20px',
+            fontWeight: 800,
+            letterSpacing: '-1px',
+          }}
+        >
+          <span style={{ color: '#2C2C2A' }}>Trail</span>
+          <span style={{ color: '#8B7FB8' }}>Mix</span>
+        </div>
+
         <button
           onClick={() => setShowLogoutConfirm(true)}
           style={{
             fontSize: '13px',
             fontWeight: 600,
-            color: '#5B7FD4',
+            color: '#8B7FB8',
             backgroundColor: 'transparent',
-            border: '1px solid #5B7FD4',
+            border: '1px solid #8B7FB8',
             padding: '8px 16px',
             borderRadius: '8px',
             cursor: 'pointer',
             transition: 'all 0.2s',
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#F5F8FF';
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#F8F5FF';
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';

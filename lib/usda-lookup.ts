@@ -157,8 +157,26 @@ export async function searchNutritionOptions(
   productName: string,
   quantity: number = 1,
   unit: string = 'count'
-): Promise<Array<{ name: string; calories: number; protein: number; carbs: number; fat: number }> | null> {
+): Promise<Array<{ name: string; calories: number; protein: number; carbs: number; fat: number; source?: string }> | null> {
   try {
+    // Check the local grocery lookup cache first — skip Claude call if found
+    const lookupRes = await fetch(
+      `/api/grocery-lookup?name=${encodeURIComponent(productName)}&unit=${encodeURIComponent(unit)}`
+    );
+    if (lookupRes.ok) {
+      const row = await lookupRes.json();
+      return [
+        {
+          name: row.normalizedName,
+          calories: Number(row.calories),
+          protein: Number(row.proteinG),
+          carbs: Number(row.carbsG),
+          fat: Number(row.fatG),
+          source: 'Lookup',
+        },
+      ];
+    }
+
     const response = await fetch('/api/nutrition/google-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -77,7 +77,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             disabled={isLoading}
             style={{
-              padding: '10px 20px',
+              padding: '12px 20px',
               borderRadius: '8px',
               fontSize: '13px',
               fontWeight: 600,
@@ -86,6 +86,10 @@ export function ConfirmDialog({
               color: '#2C2C2A',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               opacity: isLoading ? 0.6 : 1,
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
             {cancelText}
@@ -94,7 +98,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={isLoading}
             style={{
-              padding: '10px 20px',
+              padding: '12px 20px',
               borderRadius: '8px',
               fontSize: '13px',
               fontWeight: 600,
@@ -104,6 +108,10 @@ export function ConfirmDialog({
               cursor: isLoading ? 'not-allowed' : 'pointer',
               opacity: isLoading ? 0.6 : 1,
               transition: 'all 0.2s',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
             {isLoading ? 'Loading...' : confirmText}

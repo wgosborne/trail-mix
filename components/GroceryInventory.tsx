@@ -106,11 +106,15 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
                   border: 'none',
                   color: '#D67BB8',
                   cursor: 'pointer',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: 600,
                   marginLeft: '12px',
                   textDecoration: 'underline',
-                  transition: 'color 0.2s'
+                  transition: 'color 0.2s',
+                  padding: '6px 8px',
+                  minHeight: '44px',
+                  display: 'flex',
+                  alignItems: 'center'
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = '#B85A9A')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = '#D67BB8')}
@@ -119,10 +123,10 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
               </button>
             </div>
 
-            {/* Nutrition Info - Color-coded cards */}
+            {/* Nutrition Info - Color-coded cards - Responsive */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))',
               gap: '8px',
               marginBottom: '12px'
             }}>
@@ -184,7 +188,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
             </div>
 
             {/* Consumed Slider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0' }}>
               <input
                 type="range"
                 min="0"
@@ -193,13 +197,14 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
                 onChange={(e) => onUpdate(grocery.id, parseFloat(e.target.value))}
                 style={{
                   flex: 1,
-                  height: '5px',
+                  height: '8px',
                   backgroundColor: '#E8E4DC',
-                  borderRadius: '3px',
+                  borderRadius: '4px',
                   appearance: 'none',
                   cursor: 'pointer',
-                  outline: 'none'
-                }}
+                  outline: 'none',
+                  WebkitAppearance: 'slider-horizontal'
+                } as any}
               />
               <span style={{ fontSize: '12px', fontWeight: 600, color: '#2C2C2A', minWidth: '50px', textAlign: 'right' }}>
                 {Math.round(grocery.percentConsumed)}%
@@ -229,7 +234,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
           />
           <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>WEEKLY TOTALS</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', textAlign: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '12px', textAlign: 'center' }}>
           <div>
             <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Calories</p>
             <p style={{ fontSize: '18px', fontWeight: 700, color: '#5B7FD4' }}>{Math.round(totalMacros.calories)}</p>

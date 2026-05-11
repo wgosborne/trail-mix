@@ -130,14 +130,18 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
           onClick={handleSync}
           disabled={loading}
           style={{
-            padding: '6px 12px',
+            padding: '8px 16px',
             fontSize: '13px',
             backgroundColor: loading ? '#CCCCCC' : '#1976D2',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
             cursor: loading ? 'not-allowed' : 'pointer',
-            fontWeight: 500
+            fontWeight: 500,
+            minHeight: '44px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
           {loading ? 'Syncing...' : 'Sync'}

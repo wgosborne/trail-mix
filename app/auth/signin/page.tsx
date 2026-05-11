@@ -3,6 +3,7 @@
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function SignIn() {
   const router = useRouter();
@@ -31,41 +32,155 @@ export default function SignIn() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-96">
-        <h1 className="text-2xl font-bold mb-6">Sign In</h1>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      backgroundColor: '#FFFFFF',
+      padding: '16px'
+    }}>
+      <div style={{ maxWidth: '400px', width: '100%' }}>
+        <h1 style={{
+          fontSize: 'clamp(28px, 6vw, 36px)',
+          fontWeight: 800,
+          fontFamily: 'var(--font-syne), sans-serif',
+          color: '#2C2C2A',
+          marginBottom: '8px',
+          textAlign: 'center'
+        }}>
+          Sign In
+        </h1>
+        <p style={{
+          fontSize: 'clamp(13px, 3vw, 14px)',
+          color: '#999999',
+          marginBottom: 'clamp(24px, 5vw, 32px)',
+          textAlign: 'center'
+        }}>
+          Welcome back to TrailMix
+        </p>
+
+        {error && (
+          <div style={{
+            backgroundColor: '#FEE8E8',
+            color: '#DC3545',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            fontSize: '13px',
+            border: '1px solid #F5D5D5'
+          }}>
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSignIn}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Email</label>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#2C2C2A',
+              marginBottom: '8px'
+            }}>
+              Email
+            </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '1px solid #E8E4DC',
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: '#2C2C2A',
+                backgroundColor: '#FFFFFF',
+                boxSizing: 'border-box',
+                transition: 'border-color 0.2s'
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = '#8B7FB8'}
+              onBlur={(e) => e.currentTarget.style.borderColor = '#E8E4DC'}
               required
             />
           </div>
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Password</label>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#2C2C2A',
+              marginBottom: '8px'
+            }}>
+              Password
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '1px solid #E8E4DC',
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: '#2C2C2A',
+                backgroundColor: '#FFFFFF',
+                boxSizing: 'border-box',
+                transition: 'border-color 0.2s'
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = '#8B7FB8'}
+              onBlur={(e) => e.currentTarget.style.borderColor = '#E8E4DC'}
               required
             />
           </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+            style={{
+              width: '100%',
+              padding: 'clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 24px)',
+              backgroundColor: loading ? '#D0D0D0' : '#8B7FB8',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: 'clamp(13px, 3vw, 14px)',
+              fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'opacity 0.2s ease',
+              minHeight: '44px',
+              opacity: loading ? 0.6 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '0.9';
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '1';
+            }}
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
-        <p className="text-sm mt-4 text-center">
-          Don't have an account? <a href="/auth/register" className="text-blue-600">Register</a>
+
+        <p style={{
+          fontSize: 'clamp(12px, 3vw, 13px)',
+          color: '#999999',
+          marginTop: 'clamp(20px, 4vw, 24px)',
+          textAlign: 'center'
+        }}>
+          Don't have an account?{' '}
+          <Link href="/auth/register" style={{
+            color: '#8B7FB8',
+            textDecoration: 'none',
+            fontWeight: 600,
+            transition: 'opacity 0.2s'
+          }} onMouseEnter={(e) => (e.currentTarget as HTMLAnchorElement).style.opacity = '0.8'} onMouseLeave={(e) => (e.currentTarget as HTMLAnchorElement).style.opacity = '1'}>
+            Create Account
+          </Link>
         </p>
       </div>
     </div>

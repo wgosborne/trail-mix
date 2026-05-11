@@ -167,8 +167,35 @@ Phase 8 (Post-launch Polish & Maintenance) is **COMPLETE**. The project is now i
 - ✓ UX polished for mobile and accessibility
 - ✓ Code cleaned up with proper documentation
 - ✓ Consistent error handling across all endpoints
+- ✓ Grocery lookup table implemented for caching nutrition data
 
-The codebase is production-ready. Future work would focus on performance optimization (caching, pagination) and advanced features (meal logging, social sharing) beyond the current MVP scope.
+## Phase 9: Grocery Lookup Table (Caching & Performance)
+
+**Implemented: Nutrition Lookup Cache**
+
+Added a persistent `grocery_lookup` table to cache nutrition data after first lookup, speeding up future queries for the same items.
+
+**What was added:**
+1. **New table**: `grocery_lookup` (Drizzle schema) — stores normalized food names, units, and nutrition macros
+2. **Helper functions** (`lib/grocery-lookup.ts`):
+   - `normalizeName()` — normalize food names for consistent lookups (lowercase, trim, collapse whitespace)
+   - `findInLookup()` — query cached nutrition by name and unit
+   - `upsertLookup()` — insert or update cache entry, preserving 'user' source over 'claude'
+3. **New endpoint**: `GET /api/grocery-lookup?name=X&unit=Y` — returns cached nutrition or 404
+4. **Integration points**:
+   - `POST /api/groceries` — caches entered nutrition data after user adds item
+   - `lib/usda-lookup.ts` — `searchNutritionOptions()` checks cache before calling Claude
+   - `POST /api/usda/search` — prepends cached result alongside fresh Claude results
+5. **Database**: Migration generated and applied (`drizzle/0001_public_grim_reaper.sql`)
+6. **Build**: TypeScript compilation successful, all endpoints registered
+
+**Why this matters:**
+- Eliminates redundant Claude API calls for frequently-used items
+- Reduces latency for repeat lookups
+- User-entered values preserved and trusted over Claude estimates
+- Clean separation: 'user' source = human-entered, 'claude' source = AI-generated
+
+The codebase is production-ready. Future work would focus on advanced features (meal logging, social sharing, analytics) beyond the current MVP scope.
 
 ## Project Files
 

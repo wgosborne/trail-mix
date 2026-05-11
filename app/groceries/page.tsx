@@ -311,7 +311,12 @@ export default function CameraTab() {
           </h2>
         </div>
         {isLoadingGroceries ? (
-          <div style={{ textAlign: 'center', color: '#999999', padding: '32px 0', fontSize: '13px' }}>Loading groceries...</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {[1, 2, 3].map((i) => (
+              <div key={i} style={{ backgroundColor: '#F8F5FF', border: '1px solid #E8E4DC', borderRadius: '10px', padding: '16px', minHeight: '100px', animation: 'pulse 2s infinite' }} />
+            ))}
+            <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
+          </div>
         ) : (
           <GroceryInventory
             groceries={groceriesToDisplay}

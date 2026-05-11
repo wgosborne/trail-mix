@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { grocerySchema, formatValidationError } from '@/lib/validation';
 import { z } from 'zod';
+import { upsertLookup } from '@/lib/grocery-lookup';
 
 // Helper function to calculate week start from a date
 function getWeekStart(date: Date = new Date()): string {
@@ -62,6 +63,20 @@ export async function POST(req: NextRequest) {
       .returning();
 
     const grocery = result[0];
+
+    // Cache nutrition data in the lookup table for future lookups
+    await upsertLookup(
+      foodName,
+      unit,
+      {
+        calories: totalCalories ? Number(totalCalories) : null,
+        proteinG: proteinG ? Number(proteinG) : null,
+        carbsG: carbsG ? Number(carbsG) : null,
+        fatG: fatG ? Number(fatG) : null,
+        fiberG: body.fiberG ? parseFloat(body.fiberG) : null,
+      },
+      'user'
+    );
 
     return NextResponse.json(
       {

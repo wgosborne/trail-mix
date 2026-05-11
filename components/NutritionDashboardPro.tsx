@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { WeekNavigator } from './WeekNavigator';
 import { getCached, setCached } from '@/lib/cache';
 
@@ -251,6 +252,7 @@ export function NutritionDashboardPro({
   isStravaConnected = false,
   onStravaSync,
 }: NutritionDashboardProProps) {
+  const router = useRouter();
   const [data, setData] = useState<NutritionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -389,15 +391,36 @@ export function NutritionDashboardPro({
   const hasData = totalConsumed > 0;
 
   const donutData = [
-    { name: 'Protein', value: proteinCal, color: '#8B7FB8' },
-    { name: 'Carbs', value: carbsCal, color: '#D67BB8' },
-    { name: 'Fat', value: fatCal, color: '#C9845F' },
+    { name: 'Protein', value: proteinCal, color: '#D67BB8' },
+    { name: 'Carbs', value: carbsCal, color: '#8B7FB8' },
+    { name: 'Fat', value: fatCal, color: '#FFD700' },
   ];
 
   const avgConsumed = Math.round(totalConsumed / days);
   const avgBurned = Math.round(stravaCaloriesBurned / days);
   const dailyGoal = goals?.dailyCalories ?? 2000;
   const netPerDay = avgBurned - avgConsumed;
+
+  // Helper to format date range
+  const formatDateRange = (weekStart: string) => {
+    const start = new Date(weekStart + 'T00:00:00Z');
+    const end = new Date(start);
+    end.setUTCDate(end.getUTCDate() + 6);
+
+    const monthStart = start.getUTCMonth() + 1;
+    const dayStart = start.getUTCDate();
+    const monthEnd = end.getUTCMonth() + 1;
+    const dayEnd = end.getUTCDate();
+
+    if (monthStart === monthEnd) {
+      return `${monthStart}/${dayStart} - ${dayEnd}`;
+    }
+    return `${monthStart}/${dayStart} - ${monthEnd}/${dayEnd}`;
+  };
+
+  // Calculate deficit/surplus
+  const deficit = Math.round(stravaCaloriesBurned - totalConsumed);
+  const isOnTrack = deficit >= -500; // within reasonable range
 
   return (
     <div style={{
@@ -432,35 +455,33 @@ export function NutritionDashboardPro({
         filter: 'blur(40px)'
       }} />
 
-      {/* Header */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ marginBottom: '20px' }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: 700,
-            color: '#FFFFFF',
-            margin: '0 0 4px 0',
-            letterSpacing: '-0.3px'
-          }}>
-            Weekly Summary
-          </h2>
-          <p style={{
-            fontSize: '13px',
-            color: 'rgba(255, 255, 255, 0.8)',
-            margin: 0,
-            lineHeight: '1.5'
-          }}>
-            Your nutrition breakdown and training metrics
-          </p>
-        </div>
+      {/* Header with title and date range */}
+      <div style={{ position: 'relative', zIndex: 1, marginBottom: '8px' }}>
+        <h2 style={{
+          fontSize: '28px',
+          fontWeight: 700,
+          color: '#FFFFFF',
+          margin: '0 0 4px 0',
+          letterSpacing: '-0.3px'
+        }}>
+          Trail Mix
+        </h2>
+        <p style={{
+          fontSize: '13px',
+          color: 'rgba(255, 255, 255, 0.9)',
+          margin: 0,
+          lineHeight: '1.5'
+        }}>
+          {formatDateRange(weekStart)}
+        </p>
       </div>
 
       {/* Week Navigator */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div style={{ position: 'relative', zIndex: 1, marginBottom: '8px' }}>
         <WeekNavigator onWeekChange={onWeekChange} />
       </div>
 
-      {/* 2-Column Grid for 6 Components */}
+      {/* Main 2-Column Layout: Donut on left, 3 cards stacked on right */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
@@ -468,17 +489,22 @@ export function NutritionDashboardPro({
         position: 'relative',
         zIndex: 1
       }}>
-        {/* Component 1: Macro Donut Chart */}
+        {/* Left Column: Donut Chart with Legend */}
         {hasData && (
           <div
             style={{
               backgroundColor: '#FFFFFF',
               borderRadius: '16px',
-              padding: '16px',
+              padding: '20px',
               boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
               cursor: 'pointer',
               transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center'
             }}
+            onClick={() => router.push('/metrics/macros')}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLDivElement;
               el.style.transform = 'translateY(-4px) scale(1.02)';
@@ -490,291 +516,53 @@ export function NutritionDashboardPro({
               el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
             }}
           >
-            <p style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              color: '#2C2C2A',
-              textTransform: 'uppercase',
-              letterSpacing: '0.4px',
-              margin: '0 0 12px 0'
-            }}>
-              Macro Split
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '160px' }}>
-              <div style={{ position: 'relative', width: '140px', height: '140px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <DonutChart data={donutData} size={140} />
-                <div style={{
-                  position: 'absolute',
-                  textAlign: 'center',
-                  pointerEvents: 'none'
+            <div style={{ position: 'relative', width: '160px', height: '160px', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px' }}>
+              <DonutChart data={donutData} size={160} />
+              <div style={{
+                position: 'absolute',
+                textAlign: 'center',
+                pointerEvents: 'none'
+              }}>
+                <p style={{
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  color: '#2C2C2A',
+                  margin: 0,
+                  lineHeight: 1
                 }}>
-                  <p style={{
-                    fontSize: '20px',
-                    fontWeight: 700,
-                    color: '#2C2C2A',
-                    margin: 0,
-                    lineHeight: 1
-                  }}>
-                    {totalConsumed}
-                  </p>
-                  <p style={{
-                    fontSize: '10px',
-                    color: '#999999',
-                    margin: 0,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.4px'
-                  }}>
-                    kcal
-                  </p>
-                </div>
+                  P:C:F
+                </p>
               </div>
             </div>
+
+            {/* Legend */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr 1fr',
+              display: 'flex',
+              flexDirection: 'column',
               gap: '8px',
-              marginTop: '12px'
+              width: '100%'
             }}>
               {[
-                { label: 'Protein', value: Math.round(totals?.proteinConsumed ?? 0), color: '#8B7FB8', unit: 'g' },
-                { label: 'Carbs', value: Math.round(totals?.carbsConsumed ?? 0), color: '#D67BB8', unit: 'g' },
-                { label: 'Fat', value: Math.round(totals?.fatConsumed ?? 0), color: '#C9845F', unit: 'g' },
-              ].map(({ label, value, color, unit }) => (
-                <div key={label} style={{
-                  backgroundColor: `${color}15`,
-                  borderRadius: '8px',
-                  padding: '8px',
-                  textAlign: 'center',
-                  border: `1px solid ${color}30`
-                }}>
-                  <p style={{ fontSize: '10px', color: '#999999', margin: '0 0 2px 0' }}>{label}</p>
-                  <p style={{ fontSize: '14px', fontWeight: 700, color, margin: 0 }}>{value}{unit}</p>
+                { label: 'Protein', color: '#D67BB8' },
+                { label: 'Carbs', color: '#8B7FB8' },
+                { label: 'Fat', color: '#FFD700' },
+              ].map(({ label, color }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: color }} />
+                  <span style={{ fontSize: '12px', color: '#999999' }}>{label}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Component 2: Daily Average Progress */}
-        <div
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
-            padding: '16px',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.transform = 'translateY(-4px) scale(1.02)';
-            el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.transform = 'translateY(0) scale(1)';
-            el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
-          }}
-        >
-          <p style={{
-            fontSize: '11px',
-            fontWeight: 700,
-            color: '#2C2C2A',
-            textTransform: 'uppercase',
-            letterSpacing: '0.4px',
-            margin: '0 0 12px 0'
-          }}>
-            Daily Average
-          </p>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '28px', fontWeight: 700, color: '#2C2C2A', lineHeight: 1 }}>
-                  {avgConsumed}
-                </span>
-                <span style={{ fontSize: '13px', color: '#999999' }}>/ {dailyGoal}</span>
-              </div>
-              <AdvancedProgressBar
-                value={avgConsumed}
-                max={dailyGoal}
-                color="#D67BB8"
-                height={6}
-              />
-              <p style={{ fontSize: '11px', color: '#999999', margin: '8px 0 0 0' }}>kcal/day</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Component 3: Protein Progress */}
-        <div
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
-            padding: '16px',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.transform = 'translateY(-4px) scale(1.02)';
-            el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.transform = 'translateY(0) scale(1)';
-            el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
-          }}
-        >
-          <p style={{
-            fontSize: '11px',
-            fontWeight: 700,
-            color: '#2C2C2A',
-            textTransform: 'uppercase',
-            letterSpacing: '0.4px',
-            margin: '0 0 12px 0'
-          }}>
-            Protein Goal
-          </p>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '28px', fontWeight: 700, color: '#8B7FB8', lineHeight: 1 }}>
-                  {Math.round(totals?.proteinConsumed ?? 0)}
-                </span>
-                <span style={{ fontSize: '13px', color: '#999999' }}>g</span>
-              </div>
-              <AdvancedProgressBar
-                value={Math.round(totals?.proteinConsumed ?? 0)}
-                max={(goals?.dailyProtein ?? 150) * days}
-                color="#8B7FB8"
-                height={6}
-              />
-              <p style={{ fontSize: '11px', color: '#999999', margin: '8px 0 0 0' }}>
-                Goal: {Math.round((goals?.dailyProtein ?? 150) * days)}g
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Component 4: Carbs Progress */}
-        <div
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
-            padding: '16px',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.transform = 'translateY(-4px) scale(1.02)';
-            el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.transform = 'translateY(0) scale(1)';
-            el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
-          }}
-        >
-          <p style={{
-            fontSize: '11px',
-            fontWeight: 700,
-            color: '#2C2C2A',
-            textTransform: 'uppercase',
-            letterSpacing: '0.4px',
-            margin: '0 0 12px 0'
-          }}>
-            Carbs Goal
-          </p>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '28px', fontWeight: 700, color: '#D67BB8', lineHeight: 1 }}>
-                  {Math.round(totals?.carbsConsumed ?? 0)}
-                </span>
-                <span style={{ fontSize: '13px', color: '#999999' }}>g</span>
-              </div>
-              <AdvancedProgressBar
-                value={Math.round(totals?.carbsConsumed ?? 0)}
-                max={(goals?.dailyCarbs ?? 300) * days}
-                color="#D67BB8"
-                height={6}
-              />
-              <p style={{ fontSize: '11px', color: '#999999', margin: '8px 0 0 0' }}>
-                Goal: {Math.round((goals?.dailyCarbs ?? 300) * days)}g
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Component 5: Fat Progress */}
-        <div
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
-            padding: '16px',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.transform = 'translateY(-4px) scale(1.02)';
-            el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.transform = 'translateY(0) scale(1)';
-            el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
-          }}
-        >
-          <p style={{
-            fontSize: '11px',
-            fontWeight: 700,
-            color: '#2C2C2A',
-            textTransform: 'uppercase',
-            letterSpacing: '0.4px',
-            margin: '0 0 12px 0'
-          }}>
-            Fat Goal
-          </p>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '28px', fontWeight: 700, color: '#C9845F', lineHeight: 1 }}>
-                  {Math.round(totals?.fatConsumed ?? 0)}
-                </span>
-                <span style={{ fontSize: '13px', color: '#999999' }}>g</span>
-              </div>
-              <AdvancedProgressBar
-                value={Math.round(totals?.fatConsumed ?? 0)}
-                max={(goals?.dailyFat ?? 80) * days}
-                color="#C9845F"
-                height={6}
-              />
-              <p style={{ fontSize: '11px', color: '#999999', margin: '8px 0 0 0' }}>
-                Goal: {Math.round((goals?.dailyFat ?? 80) * days)}g
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Component 6: Strava Integration (if connected) */}
-        {isStravaConnected && stravaCaloriesBurned > 0 && (
+        {/* Right Column: 3 Stacked Cards */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
+        }}>
+          {/* Card 1: Avg Calories */}
           <div
             style={{
               backgroundColor: '#FFFFFF',
@@ -783,10 +571,8 @@ export function NutritionDashboardPro({
               boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
               cursor: 'pointer',
               transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
             }}
+            onClick={() => router.push('/metrics/calories')}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLDivElement;
               el.style.transform = 'translateY(-4px) scale(1.02)';
@@ -799,131 +585,181 @@ export function NutritionDashboardPro({
             }}
           >
             <p style={{
-              fontSize: '11px',
+              fontSize: '10px',
+              fontWeight: 700,
+              color: '#999999',
+              textTransform: 'uppercase',
+              letterSpacing: '0.4px',
+              margin: '0 0 8px 0'
+            }}>
+              Avg. Calories
+            </p>
+            <p style={{
+              fontSize: '24px',
               fontWeight: 700,
               color: '#2C2C2A',
+              margin: '0 0 8px 0',
+              lineHeight: 1
+            }}>
+              {avgConsumed}
+            </p>
+            <p style={{
+              fontSize: '11px',
+              color: '#999999',
+              margin: '0 0 12px 0'
+            }}>
+              kcal burned
+            </p>
+            <div style={{ height: '40px' }}>
+              <MiniBarChart
+                data={weeklyChartData.slice(0, 7).map((week) => ({
+                  label: week.label,
+                  value: week.consumed,
+                  color: '#8B5CF6'
+                }))}
+                height={40}
+              />
+            </div>
+          </div>
+
+          {/* Card 2: Weekly Deficit */}
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '16px',
+              padding: '16px',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+            onClick={() => router.push('/metrics/deficit')}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.style.transform = 'translateY(-4px) scale(1.02)';
+              el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.style.transform = 'translateY(0) scale(1)';
+              el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
+            }}
+          >
+            <p style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              color: '#999999',
+              textTransform: 'uppercase',
+              letterSpacing: '0.4px',
+              margin: '0 0 8px 0'
+            }}>
+              Weekly Deficit
+            </p>
+            <p style={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#2C2C2A',
+              margin: '0 0 8px 0',
+              lineHeight: 1
+            }}>
+              {deficit > 0 ? '+' : ''}{(deficit / 1000).toFixed(1)}K
+            </p>
+            <p style={{
+              fontSize: '11px',
+              color: '#999999',
+              margin: '0 0 8px 0'
+            }}>
+              calories on pace
+            </p>
+            <div style={{
+              display: 'inline-block',
+              backgroundColor: isOnTrack ? '#D1F2D6' : '#FFE5E5',
+              border: `1px solid ${isOnTrack ? '#34A853' : '#FF6B6B'}`,
+              borderRadius: '6px',
+              padding: '4px 8px'
+            }}>
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                color: isOnTrack ? '#34A853' : '#FF6B6B'
+              }}>
+                {isOnTrack ? 'On track' : 'Needs work'}
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Today's Macros vs Goal */}
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '16px',
+              padding: '16px',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+            onClick={() => router.push('/metrics/macros')}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.style.transform = 'translateY(-4px) scale(1.02)';
+              el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.style.transform = 'translateY(0) scale(1)';
+              el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
+            }}
+          >
+            <p style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              color: '#999999',
               textTransform: 'uppercase',
               letterSpacing: '0.4px',
               margin: '0 0 12px 0'
             }}>
-              Burned (Strava)
+              Today's Macros vs Goal
             </p>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <p style={{
-                  fontSize: '28px',
-                  fontWeight: 700,
-                  color: '#5B7FD4',
-                  margin: '0 0 12px 0',
-                  lineHeight: 1
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: '8px'
+            }}>
+              {[
+                { label: 'Protein', value: Math.round(totals?.proteinConsumed ?? 0), goal: (goals?.dailyProtein ?? 150) * days, color: '#D67BB8', unit: 'g' },
+                { label: 'Carbs', value: Math.round(totals?.carbsConsumed ?? 0), goal: (goals?.dailyCarbs ?? 300) * days, color: '#8B7FB8', unit: 'g' },
+                { label: 'Fat', value: Math.round(totals?.fatConsumed ?? 0), goal: (goals?.dailyFat ?? 80) * days, color: '#FFD700', unit: 'g' },
+              ].map(({ label, value, goal, color, unit }) => (
+                <div key={label} style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
                 }}>
-                  {Math.round(stravaCaloriesBurned).toLocaleString()}
-                </p>
-                <p style={{ fontSize: '11px', color: '#999999', margin: 0 }}>
-                  {avgBurned} / day avg
-                </p>
-              </div>
-              {onStravaSync && (
-                <button
-                  onClick={async () => {
-                    setSyncingStrava(true);
-                    try {
-                      await onStravaSync();
-                    } finally {
-                      setSyncingStrava(false);
-                    }
-                  }}
-                  disabled={syncingStrava}
-                  style={{
-                    padding: '8px 12px',
-                    backgroundColor: '#5B7FD4',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    cursor: syncingStrava ? 'not-allowed' : 'pointer',
-                    opacity: syncingStrava ? 0.6 : 1,
-                    transition: 'all 0.2s ease',
-                    marginTop: 'auto'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!syncingStrava) {
-                      (e.currentTarget as HTMLButtonElement).style.opacity = '0.9';
-                      (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.02)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.opacity = '1';
-                    (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
-                  }}
-                >
-                  {syncingStrava ? 'Syncing...' : 'Sync Now'}
-                </button>
-              )}
+                  <div style={{
+                    height: '4px',
+                    backgroundColor: '#E8E4DC',
+                    borderRadius: '2px',
+                    overflow: 'hidden'
+                  }}>
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${Math.min(100, (value / goal) * 100)}%`,
+                        backgroundColor: color,
+                        borderRadius: '2px'
+                      }}
+                    />
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: '10px', color: '#999999', margin: '0 0 2px 0' }}>{label}</p>
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: '#2C2C2A', margin: 0 }}>{value}{unit}</p>
+                    <p style={{ fontSize: '9px', color: '#999999', margin: '2px 0 0 0' }}>of {Math.round(goal)}{unit}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Weekly Comparison Chart */}
-      {weeklyChartData.length > 0 && (
-        <div
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
-            padding: '16px',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            position: 'relative',
-            zIndex: 1
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.transform = 'translateY(-4px)';
-            el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.transform = 'translateY(0)';
-            el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
-          }}
-        >
-          <p style={{
-            fontSize: '11px',
-            fontWeight: 700,
-            color: '#2C2C2A',
-            textTransform: 'uppercase',
-            letterSpacing: '0.4px',
-            margin: '0 0 16px 0'
-          }}>
-            4-Week Trend
-          </p>
-          <div style={{ height: '120px', marginBottom: '12px' }}>
-            <MiniBarChart
-              data={weeklyChartData.map((week) => ({
-                label: week.label,
-                value: isStravaConnected ? Math.max(week.consumed, week.burned) : week.consumed,
-                color: isStravaConnected && week.burned > week.consumed ? '#5B7FD4' : '#D67BB8'
-              }))}
-              height={120}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: '16px', fontSize: '11px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#D67BB8' }} />
-              <span style={{ color: '#999999' }}>Consumed</span>
-            </div>
-            {isStravaConnected && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#5B7FD4' }} />
-                <span style={{ color: '#999999' }}>Burned</span>
-              </div>
-            )}
           </div>
         </div>
-      )}
+      </div>
 
       <style>{`
         @keyframes pulse {
@@ -931,19 +767,17 @@ export function NutritionDashboardPro({
           50% { opacity: 0.5; }
         }
 
-        @media (max-width: 768px) {
-          [data-grid] {
+        @media (max-width: 1024px) {
+          [data-two-col] {
             grid-template-columns: 1fr !important;
           }
         }
 
-        /* 3D transform support */
         * {
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Keyboard accessibility */
         [data-interactive]:focus-visible {
           outline: 2px solid #8B7FB8;
           outline-offset: 2px;
