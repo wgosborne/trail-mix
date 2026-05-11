@@ -3,8 +3,10 @@
 import { useState } from 'react';
 
 interface NutritionResult {
-  fdcId: string;
+  id: string;
   name: string;
+  servingSize?: number;
+  servingSizeUnit?: string;
   nutrition: {
     calories: number;
     protein: number;
@@ -143,7 +145,7 @@ export function NutritionSearch({ onSelect }: NutritionSearchProps) {
           </p>
           {results.map((result) => (
             <button
-              key={result.fdcId}
+              key={result.id}
               onClick={() => onSelect(result.nutrition)}
               style={{
                 width: '100%',
@@ -179,7 +181,7 @@ export function NutritionSearch({ onSelect }: NutritionSearchProps) {
       )}
 
       {!query && !loading && results.length === 0 && !error && (
-        <p style={{ fontSize: '12px', color: '#999999' }}>Enter a food name to search the USDA nutrition database</p>
+        <p style={{ fontSize: '12px', color: '#999999' }}>Enter a food name to search nutrition information</p>
       )}
     </div>
   );

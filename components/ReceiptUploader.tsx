@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { searchUSDAAndGetNutrition } from '@/lib/usda-lookup';
+import { searchNutritionOptions } from '@/lib/usda-lookup';
 
 interface ParsedItem {
   name: string;
@@ -16,6 +16,16 @@ interface ParsedItem {
   };
 }
 
+interface USDAOption {
+  id?: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber?: number;
+}
+
 interface ReceiptUploaderProps {
   onItemsExtracted: (items: ParsedItem[]) => void;
 }
@@ -25,6 +35,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [extractedItems, setExtractedItems] = useState<ParsedItem[]>([]);
+  const [currentItemIndex, setCurrentItemIndex] = useState(0);
   const [nutritionStatus, setNutritionStatus] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -61,31 +72,32 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
           return;
         }
 
-        // Auto-lookup nutrition for each item
-        setNutritionStatus('Looking up nutrition data...');
+        // Lookup nutrition for each item
+        setNutritionStatus('Loading nutrition data...');
         const itemsWithNutrition: ParsedItem[] = [];
 
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
-          setNutritionStatus(`Looking up nutrition for ${item.name}...`);
+          setNutritionStatus(`Getting macros for ${item.name}...`);
 
-          const nutrition = await searchUSDAAndGetNutrition(item.name);
+          const options = await searchNutritionOptions(item.name, item.quantity, item.unit);
 
-          const itemWithNutrition: ParsedItem = {
+          itemsWithNutrition.push({
             ...item,
-            nutrition: nutrition || {
+            nutrition: options?.[0] || {
               calories: 0,
               protein: 0,
               carbs: 0,
               fat: 0,
             },
-          };
-
-          itemsWithNutrition.push(itemWithNutrition);
+          });
         }
 
         setExtractedItems(itemsWithNutrition);
+        setCurrentItemIndex(0);
         setNutritionStatus('');
+
+        // Pass all items to parent for navigation
         onItemsExtracted(itemsWithNutrition);
       } catch (error) {
         console.error('Parse error:', error);
@@ -101,9 +113,21 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
   const handleReset = () => {
     setPreview(null);
     setExtractedItems([]);
+    setCurrentItemIndex(0);
     setError(null);
     if (inputRef.current) {
       inputRef.current.value = '';
+    }
+  };
+
+  const handleAddItem = (item: ParsedItem) => {
+    // Move to next item or finish
+    if (currentItemIndex < extractedItems.length - 1) {
+      setCurrentItemIndex(currentItemIndex + 1);
+    } else {
+      // All items added
+      onItemsExtracted(extractedItems);
+      handleReset();
     }
   };
 
@@ -169,52 +193,8 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
       )}
 
       {preview && extractedItems.length > 0 && (
-        <div style={{ marginTop: '16px' }}>
-          <div style={{ marginBottom: '12px' }}>
-            <img src={preview} alt="Receipt preview" style={{ maxWidth: '100%', maxHeight: '120px', objectFit: 'cover', borderRadius: '6px' }} />
-          </div>
-          <div style={{ marginTop: '16px' }}>
-            <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#2C2C2A', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-              EXTRACTED ITEMS ({extractedItems.length})
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {extractedItems.map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    padding: '10px 12px',
-                    backgroundColor: '#F5F8FF',
-                    border: '1px solid #E8E4DC',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    color: '#2C2C2A',
-                  }}
-                >
-                  <div style={{ fontWeight: 600 }}>{item.name}</div>
-                  <div style={{ fontSize: '11px', color: '#666666', marginTop: '4px' }}>
-                    {item.quantity} {item.unit}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={handleReset}
-              style={{
-                width: '100%',
-                marginTop: '12px',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 600,
-                border: '1px solid #E8E4DC',
-                backgroundColor: '#FFFFFF',
-                color: '#2C2C2A',
-                cursor: 'pointer',
-              }}
-            >
-              Upload Different Receipt
-            </button>
-          </div>
+        <div style={{ marginTop: '16px', marginBottom: '12px' }}>
+          <img src={preview} alt="Receipt preview" style={{ maxWidth: '100%', maxHeight: '100px', objectFit: 'cover', borderRadius: '6px' }} />
         </div>
       )}
     </div>

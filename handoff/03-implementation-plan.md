@@ -2043,6 +2043,30 @@ git push origin main
 - Note bugs/friction points
 - Plan Phase 2 improvements
 
+### Step 8.4: Optimize Costs - Build Local Nutrition Lookup Table (Phase 2 Task)
+
+**Why:** Claude search uses API credits ($0.80/MTok input). After 2 weeks, you'll have a list of frequently searched foods. Build a local lookup table to eliminate API calls for common items.
+
+**Approach:**
+- [ ] Export your most-searched foods from the database
+- [ ] Pre-populate a JSON file or simple SQLite table with: `{ name, calories, protein, carbs, fat, fiber, servingSize, servingSizeUnit }`
+- [ ] Update search logic: try local lookup first, fall back to Claude for unknown foods
+- [ ] Estimated cost savings: 90%+ (only edge cases hit Claude)
+
+**Example structure:**
+```json
+{
+  "chicken breast": { calories: 165, protein: 31, carbs: 0, fat: 3.6, servingSize: 100, servingSizeUnit: "g" },
+  "eggs": { calories: 78, protein: 6.3, carbs: 0.6, fat: 5.3, servingSize: 50, servingSizeUnit: "g" },
+  "milk": { calories: 149, protein: 8, carbs: 12, fat: 7.7, servingSize: 240, servingSizeUnit: "ml" }
+}
+```
+
+**Files to modify:**
+- `lib/nutrition-cache.ts` - Lookup table with fallback logic
+- `app/api/usda/search/route.ts` - Check cache before calling Claude
+- `lib/usda-lookup.ts` - Update search functions to use cache
+
 ---
 
 ## File Structure Checklist

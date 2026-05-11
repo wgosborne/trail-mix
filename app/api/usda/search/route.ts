@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 
-interface USDAFood {
-  fdcId: string;
-  description: string;
-  foodNutrients: Array<{
-    nutrientId: number;
-    value: number;
-  }>;
-}
+const client = new Anthropic();
 
 interface SearchResult {
-  fdcId: string;
+  id: string;
   name: string;
+  servingSize?: number;
+  servingSizeUnit?: string;
   nutrition: {
     calories: number;
     protein: number;
@@ -49,105 +45,116 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify API key is configured
-    if (!process.env.USDA_API_KEY) {
-      console.error('USDA_API_KEY not configured');
-      return NextResponse.json(
-        { error: 'server_error', message: 'USDA API not configured' },
-        { status: 500 }
-      );
+    console.log(`[CLAUDE-SEARCH] Searching for: "${trimmedQuery}"`);
+
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: `You are a nutrition database assistant. For the food item: "${trimmedQuery}"
+
+Return ONLY valid JSON with nutrition information for a standard serving. Include:
+- name: The food name (cleaned, no extra details)
+- servingSize: Standard serving amount (e.g., 100 for 100g, 1 for 1 cup)
+- servingSizeUnit: Unit of serving (g, cup, oz, count, etc.)
+- nutrition: calories, protein (g), carbs (g), fat (g), fiber (g)
+
+Return as a single food object. All nutrition values must be per serving. Estimate if needed.
+
+Example response:
+{
+  "name": "Grilled Chicken Breast",
+  "servingSize": 100,
+  "servingSizeUnit": "g",
+  "nutrition": {
+    "calories": 165,
+    "protein": 31,
+    "carbs": 0,
+    "fat": 3.6,
+    "fiber": 0
+  }
+}
+
+Return ONLY the JSON object, no markdown or extra text.`,
+        },
+      ],
+    });
+
+    const textContent = message.content.find((c) => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text response from Claude');
     }
 
-    // Call USDA API with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    let jsonText = textContent.text.trim();
+    console.log('[CLAUDE-SEARCH] Claude response:', jsonText);
 
-    let response: Response;
+    // Remove markdown code blocks if present
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```\n?$/, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```\n?$/, '');
+    }
+
+    let parsed;
     try {
-      response = await fetch(
-        `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(trimmedQuery)}&pageSize=5&api_key=${process.env.USDA_API_KEY}`,
-        { signal: controller.signal }
-      );
-    } finally {
-      clearTimeout(timeoutId);
+      parsed = JSON.parse(jsonText);
+    } catch (parseError) {
+      console.error('[CLAUDE-SEARCH] Failed to parse Claude response:', jsonText.substring(0, 500));
+      throw parseError;
     }
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        return NextResponse.json(
-          { error: 'no_nutrition_found', results: [], suggestion: 'Try a different search term' },
-          { status: 200 }
-        );
-      }
-      throw new Error(`USDA API returned ${response.status}`);
-    }
+    // Validate and transform response
+    const result: SearchResult = {
+      id: `claude-${Date.now()}`,
+      name: parsed.name || trimmedQuery,
+      servingSize: parsed.servingSize,
+      servingSizeUnit: parsed.servingSizeUnit,
+      nutrition: {
+        calories: Math.round(parsed.nutrition?.calories || 0),
+        protein: Math.round(parsed.nutrition?.protein * 100) / 100 || 0,
+        carbs: Math.round(parsed.nutrition?.carbs * 100) / 100 || 0,
+        fat: Math.round(parsed.nutrition?.fat * 100) / 100 || 0,
+        fiber: parsed.nutrition?.fiber ? Math.round(parsed.nutrition.fiber * 100) / 100 : undefined,
+      },
+    };
 
-    const data = await response.json();
-
-    // Parse and transform results
-    const results: SearchResult[] = (data.foods || [])
-      .map((food: USDAFood) => {
-        const nutrients = food.foodNutrients || [];
-
-        const getNutrient = (id: number): number => {
-          const nutrient = nutrients.find((n) => n.nutrientId === id);
-          return nutrient?.value ? Math.round(nutrient.value * 100) / 100 : 0;
-        };
-
-        return {
-          fdcId: food.fdcId,
-          name: food.description,
-          nutrition: {
-            calories: getNutrient(1008), // Energy (kcal)
-            protein: getNutrient(1003), // Protein (g)
-            carbs: getNutrient(1005), // Carbohydrates (g)
-            fat: getNutrient(1004), // Total lipid (fat) (g)
-            fiber: getNutrient(1079), // Fiber, total dietary (g)
-          },
-        };
-      })
-      .filter(
-        // Only include foods with at least calories and protein data
-        (result: SearchResult) => result.nutrition.calories > 0 || result.nutrition.protein > 0
-      );
-
-    if (results.length === 0) {
+    // Only return if we have some nutrition data
+    if (result.nutrition.calories === 0 && result.nutrition.protein === 0) {
       return NextResponse.json(
         {
           error: 'no_nutrition_found',
           results: [],
-          suggestion: `No results found for "${trimmedQuery}". Try a different search.`,
+          suggestion: `No nutrition data found for "${trimmedQuery}". Try a different search.`,
         },
         { status: 200 }
       );
     }
 
+    console.log('[CLAUDE-SEARCH] Returning result for:', result.name);
     return NextResponse.json({
-      results,
+      results: [result],
       query: trimmedQuery,
-      count: results.length,
+      count: 1,
     });
   } catch (error) {
     if (error instanceof SyntaxError) {
-      console.error('Invalid JSON:', error);
+      console.error('[CLAUDE-SEARCH] Invalid JSON:', error);
       return NextResponse.json(
         { error: 'validation_error', message: 'Invalid JSON in request body' },
         { status: 400 }
       );
     }
 
-    if (error instanceof Error && error.name === 'AbortError') {
-      console.error('USDA search timeout:', error);
-      return NextResponse.json(
-        { error: 'timeout', message: 'USDA search timed out. Please try again.' },
-        { status: 504 }
-      );
-    }
-
-    console.error('USDA search error:', error);
+    console.error('[CLAUDE-SEARCH] Error:', error);
     return NextResponse.json(
-      { error: 'search_error', message: 'Failed to search nutrition database' },
-      { status: 500 }
+      {
+        error: 'search_error',
+        results: [],
+        message: 'Failed to get nutrition information. Please try again.',
+      },
+      { status: 200 }
     );
   }
 }

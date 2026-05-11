@@ -1,25 +1,22 @@
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { userGroceryInventory } from '@/schema/db';
 import { eq, and } from 'drizzle-orm';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { groceryUpdateSchema, formatValidationError } from '@/lib/validation';
 
-// PUT /api/groceries/[id] - Update existing grocery
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const userId = (session.user as any).id;
-    const body = await request.json();
+    const id = (await params).id;
+    const body = await req.json();
 
     // Validate with Zod
     const validationResult = groceryUpdateSchema.safeParse(body);
@@ -28,29 +25,22 @@ export async function PUT(
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    const updateData = validationResult.data;
+    const { percentConsumed, foodName } = validationResult.data;
 
-    // Build updates object
+    // Build update object
     const updates: any = {};
-    if (updateData.percentConsumed !== undefined) {
-      updates.percentConsumed = updateData.percentConsumed;
-    }
-    if (updateData.foodName !== undefined) {
-      updates.foodName = updateData.foodName;
-    }
+    if (percentConsumed !== undefined) updates.percentConsumed = percentConsumed.toString();
+    if (foodName !== undefined) updates.foodName = foodName.trim();
 
-    if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
-    }
-
+    // Update grocery (verify user owns it)
     const result = await db
       .update(userGroceryInventory)
       .set(updates)
-      .where(and(eq(userGroceryInventory.id, id), eq(userGroceryInventory.userId, userId)))
+      .where(and(eq(userGroceryInventory.id, id as any), eq(userGroceryInventory.userId, userId as any)))
       .returning();
 
-    if (!result.length) {
-      return NextResponse.json({ error: 'Grocery not found or unauthorized' }, { status: 404 });
+    if (result.length === 0) {
+      return NextResponse.json({ error: 'Grocery not found' }, { status: 404 });
     }
 
     const grocery = result[0];
@@ -74,32 +64,28 @@ export async function PUT(
   }
 }
 
-// DELETE /api/groceries/[id] - Delete grocery
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const userId = (session.user as any).id;
+    const id = (await params).id;
 
-    const result = await db
+    console.log(`[DELETE GROCERY] Attempting to delete id: ${id} for user: ${userId}`);
+
+    // Delete grocery (verify user owns it)
+    await db
       .delete(userGroceryInventory)
-      .where(and(eq(userGroceryInventory.id, id), eq(userGroceryInventory.userId, userId)))
-      .returning();
+      .where(and(eq(userGroceryInventory.id, id as any), eq(userGroceryInventory.userId, userId as any)));
 
-    if (!result.length) {
-      return NextResponse.json({ error: 'Grocery not found or unauthorized' }, { status: 404 });
-    }
-
-    return NextResponse.json(null, { status: 204 });
+    console.log(`[DELETE GROCERY] Successfully deleted id: ${id}`);
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error('Error deleting grocery:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('[DELETE GROCERY] Error:', error);
+    return NextResponse.json({ error: 'Failed to delete grocery' }, { status: 500 });
   }
 }
