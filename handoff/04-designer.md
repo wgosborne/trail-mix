@@ -64,6 +64,18 @@ TrailMix is editorial, athletic-focused, sophisticated, intentional, and minimal
 
 ## Components Modified
 
+### Header.tsx (New)
+- Fixed header at top of all authenticated pages
+- 52px height with 20px horizontal padding
+- Right-aligned "Sign Out" button
+- Button style: Blue border (#5B7FD4), transparent background, blue text
+- Hover state: Light blue background (#F5F8FF)
+- Logout confirmation modal using ConfirmDialog component
+- Modal message explains data clearing (guest data + inventory)
+- Clears localStorage keys: `trail_mix_guest_groceries`, `trail_mix_macro_goals`
+- Redirects to splash page after logout via NextAuth signOut()
+- Shows success toast notification
+
 ### TabNavigation.tsx
 - Removed emoji icons, replaced with Unicode characters (⊕, ◆, ⚙)
 - Each tab has color-coded active state:
@@ -169,6 +181,9 @@ TrailMix is editorial, athletic-focused, sophisticated, intentional, and minimal
 ### app/groceries/layout.tsx
 - White background (#FFFFFF), no padding on container
 - Child content handles its own padding
+- Includes Header component at top (fixed positioning)
+- Adds paddingTop: 52px to children container to account for fixed header
+- TabNavigation remains at bottom with 80px height
 
 ---
 
@@ -189,7 +204,11 @@ TrailMix is editorial, athletic-focused, sophisticated, intentional, and minimal
 
 ## Key Design Decisions
 
-1. **No Emojis Ever**: Replaced all emoji icons with Unicode characters (⊕, ◆, ⚙) to maintain editorial sophistication. Splash page uses text-based buttons.
+1. **Top-Right Logout Button**: Positioned in fixed header at top-right for consistent, always-accessible logout. Maintains visual hierarchy with blue border style (not filled).
+
+2. **Logout Confirmation Modal**: Uses existing ConfirmDialog component with "dangerous" styling (pink button) to confirm data will be cleared. Message clearly explains guest data + weekly inventory will be cleared.
+
+3. **No Emojis Ever**: Replaced all emoji icons with Unicode characters (⊕, ◆, ⚙) to maintain editorial sophistication. Splash page uses text-based buttons.
 
 2. **Color-Coded Macros**: Each macro nutrient has a permanent color assignment:
    - Protein = Purple
@@ -262,6 +281,23 @@ The design system colors and accent bar pattern are defined in globals.css with 
 ```
 
 ---
+
+## Recent Updates (Phase 8)
+
+### Logout Feature (Completed - May 11, 2026)
+1. **Header.tsx** - New fixed header component for authenticated pages
+   - Top-right "Sign Out" button with blue border styling
+   - Uses existing ConfirmDialog for logout confirmation
+   - Clears guest localStorage data on logout
+   - Redirects to splash page after successful logout
+   - Shows success toast notification
+
+2. **app/groceries/layout.tsx** - Updated to include Header
+   - Added paddingTop: 52px to account for fixed header
+   - Header only shows when user is authenticated
+
+3. **components/GroceryForm.tsx** - Fixed TypeScript error
+   - Corrected type check for optional currentItemIndex prop
 
 ## Next Design Phase
 

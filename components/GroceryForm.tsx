@@ -145,7 +145,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Extracted Item Display */}
-      {currentItemIndex !== null && extractedItemsCount && extractedItemsCount > 0 && (
+      {typeof currentItemIndex === 'number' && extractedItemsCount && extractedItemsCount > 0 && (
         <div style={{
           backgroundColor: '#FFF5F8',
           border: '2px solid #D67BB8',
@@ -229,6 +229,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {/* Food Name */}
           <div>
+            <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Food Name</label>
             <input
               type="text"
               placeholder="Food name"
@@ -236,7 +237,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
               onChange={(e) => setFoodName(e.target.value)}
               style={{
                 width: '100%',
-                padding: '10px 12px',
+                padding: '12px',
                 border: `1px solid ${errors.foodName ? '#D67BB8' : '#E8E4DC'}`,
                 borderRadius: '8px',
                 fontSize: '13px',
@@ -247,9 +248,10 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
             {errors.foodName && <p style={{ color: '#D67BB8', fontSize: '11px', marginTop: '4px' }}>{errors.foodName}</p>}
           </div>
 
-          {/* Quantity */}
+          {/* Quantity and Unit */}
           <div style={{ display: 'flex', gap: '12px' }}>
             <div style={{ flex: 1 }}>
+              <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Quantity</label>
               <input
                 type="number"
                 placeholder="Quantity"
@@ -257,7 +259,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                 onChange={(e) => setQuantity(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
+                  padding: '12px',
                   border: `1px solid ${errors.quantity ? '#D67BB8' : '#E8E4DC'}`,
                   borderRadius: '8px',
                   fontSize: '13px',
@@ -268,31 +270,34 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
               />
               {errors.quantity && <p style={{ color: '#D67BB8', fontSize: '11px', marginTop: '4px' }}>{errors.quantity}</p>}
             </div>
-            <select
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              style={{
-                padding: '10px 12px',
-                border: '1px solid #E8E4DC',
-                borderRadius: '8px',
-                fontSize: '13px',
-                color: '#2C2C2A',
-                backgroundColor: '#FFFFFF',
-                minWidth: '100px',
-                cursor: 'pointer'
-              }}
-            >
-              <option>lbs</option>
-              <option>oz</option>
-              <option>g</option>
-              <option>count</option>
-              <option>ct</option>
-              <option>ea</option>
-              <option>cups</option>
-              <option>gallon</option>
-              <option>ml</option>
-              <option>L</option>
-            </select>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Unit</label>
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #E8E4DC',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  color: '#2C2C2A',
+                  backgroundColor: '#FFFFFF',
+                  cursor: 'pointer'
+                }}
+              >
+                <option>lbs</option>
+                <option>oz</option>
+                <option>g</option>
+                <option>count</option>
+                <option>ct</option>
+                <option>ea</option>
+                <option>cups</option>
+                <option>gallon</option>
+                <option>ml</option>
+                <option>L</option>
+              </select>
+            </div>
           </div>
 
           {/* Nutrition Fields */}
@@ -331,7 +336,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                   onChange={(e) => setCalories(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '8px 10px',
+                    padding: '10px',
                     fontSize: '12px',
                     border: `1px solid ${errors.calories ? '#D67BB8' : '#E8E4DC'}`,
                     borderRadius: '6px',
@@ -351,7 +356,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                   onChange={(e) => setProtein(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '8px 10px',
+                    padding: '10px',
                     fontSize: '12px',
                     border: `1px solid ${errors.protein ? '#D67BB8' : '#E8E4DC'}`,
                     borderRadius: '6px',
@@ -371,7 +376,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                   onChange={(e) => setCarbs(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '8px 10px',
+                    padding: '10px',
                     fontSize: '12px',
                     border: `1px solid ${errors.carbs ? '#D67BB8' : '#E8E4DC'}`,
                     borderRadius: '6px',
@@ -391,7 +396,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                   onChange={(e) => setFat(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '8px 10px',
+                    padding: '10px',
                     fontSize: '12px',
                     border: `1px solid ${errors.fat ? '#D67BB8' : '#E8E4DC'}`,
                     borderRadius: '6px',
@@ -410,7 +415,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
             disabled={loading}
             style={{
               width: '100%',
-              padding: '11px 16px',
+              padding: '14px 16px',
               borderRadius: '8px',
               fontSize: '13px',
               fontWeight: 700,
@@ -418,7 +423,11 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
               backgroundColor: hasErrors ? '#F0EFE8' : '#8B7FB8',
               color: hasErrors ? '#999999' : '#FFFFFF',
               cursor: hasErrors ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
             {loading ? 'Adding...' : 'Add Grocery'}
