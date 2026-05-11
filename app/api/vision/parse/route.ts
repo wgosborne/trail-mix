@@ -73,9 +73,6 @@ Otherwise, return ALL items with proper quantity/unit extraction.`,
     }
 
     let jsonText = textContent.text.trim();
-    console.log('[VISION] ===== CLAUDE RESPONSE =====');
-    console.log('[VISION] Full response:', jsonText);
-    console.log('[VISION] =============================');
 
     // Remove markdown code blocks if present
     if (jsonText.startsWith('```json')) {
@@ -88,9 +85,8 @@ Otherwise, return ALL items with proper quantity/unit extraction.`,
     let parsed;
     try {
       parsed = JSON.parse(jsonText);
-      console.log('[VISION] Parsed items count:', Array.isArray(parsed.items) ? parsed.items.length : 0);
     } catch (parseError) {
-      console.log('[VISION] JSON parse error. Text was:', jsonText.substring(0, 500));
+      console.error('[VISION] JSON parse error:', parseError);
       throw parseError;
     }
 
@@ -120,7 +116,6 @@ Otherwise, return ALL items with proper quantity/unit extraction.`,
         return normalized;
       });
 
-    console.log('[VISION] Final items:', parsed.items.length);
     return NextResponse.json(parsed);
   } catch (error) {
     console.error('Vision parsing error:', error);

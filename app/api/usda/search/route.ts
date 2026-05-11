@@ -45,8 +45,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[CLAUDE-SEARCH] Searching for: "${trimmedQuery}"`);
-
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
@@ -88,7 +86,6 @@ Return ONLY the JSON object, no markdown or extra text.`,
     }
 
     let jsonText = textContent.text.trim();
-    console.log('[CLAUDE-SEARCH] Claude response:', jsonText);
 
     // Remove markdown code blocks if present
     if (jsonText.startsWith('```json')) {
@@ -132,7 +129,6 @@ Return ONLY the JSON object, no markdown or extra text.`,
       );
     }
 
-    console.log('[CLAUDE-SEARCH] Returning result for:', result.name);
     return NextResponse.json({
       results: [result],
       query: trimmedQuery,

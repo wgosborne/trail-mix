@@ -1,3 +1,7 @@
+/**
+ * Retrieve cached data from sessionStorage if available and not expired.
+ * Returns null if the item doesn't exist or has expired.
+ */
 export function getCached<T>(key: string): T | null {
   if (typeof window === 'undefined') {
     return null;
@@ -22,6 +26,10 @@ export function getCached<T>(key: string): T | null {
   }
 }
 
+/**
+ * Store data in sessionStorage with optional TTL (default: 2 minutes).
+ * Data will be automatically expired based on the ttlMs parameter.
+ */
 export function setCached<T>(key: string, data: T, ttlMs: number = 2 * 60 * 1000): void {
   if (typeof window === 'undefined') {
     return;

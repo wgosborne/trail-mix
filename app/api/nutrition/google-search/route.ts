@@ -24,17 +24,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[NUTRITION-SEARCH] Asking Claude for nutrition: ${productName}`);
-
     // Use Claude to get nutrition data
     const result = await getClaudeNutrition(productName);
 
     if (result) {
-      console.log(`[NUTRITION-SEARCH] Got nutrition from Claude`);
       return NextResponse.json({ results: [result] });
     }
-
-    console.log(`[NUTRITION-SEARCH] Claude couldn't find nutrition for: ${productName}`);
     return NextResponse.json({
       error: 'no_results',
       results: [],
@@ -78,7 +73,6 @@ If this is a branded product, use the standard nutrition label. If generic, use 
     }
 
     const text = textContent.text.trim();
-    console.log(`[CLAUDE] Response: ${text}`);
 
     // Parse the JSON response
     let data;

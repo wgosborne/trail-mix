@@ -2,6 +2,11 @@ import { db } from './db';
 import { users } from '@/schema/db';
 import { eq } from 'drizzle-orm';
 
+/**
+ * Get a valid Strava OAuth token for the user, refreshing if necessary.
+ * Uses a 5-minute buffer to prevent token expiration during use.
+ * Throws an error if Strava is not connected or refresh fails.
+ */
 export async function getValidStravaToken(userId: string): Promise<string> {
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),

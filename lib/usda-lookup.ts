@@ -102,7 +102,6 @@ export async function searchUSDAAndGetNutrition(
         // If USDA has serving size, nutrition is per-serving, so just multiply by quantity
         if (result.servingSize && result.servingSizeUnit) {
           scaleFactor = quantity;
-          console.log(`[USDA-LOOKUP] Using serving size: ${result.servingSize} ${result.servingSizeUnit}, scale factor: ${scaleFactor}`);
         } else {
           // Fallback: estimate based on common items
           const commonWeights: Record<string, number> = {
@@ -126,16 +125,11 @@ export async function searchUSDAAndGetNutrition(
           }
 
           scaleFactor = (quantity * estimatedGramPerItem) / 100;
-          console.log(`[USDA-LOOKUP] No serving size found, using estimate: ${estimatedGramPerItem}g per ${unit}`);
         }
       } else {
         const totalGrams = convertToGrams(quantity, unit);
         scaleFactor = totalGrams / 100;
       }
-
-      console.log(`[USDA-LOOKUP] Original: "${productName}" → Simplified: "${searchQuery}"`);
-      console.log(`[USDA-LOOKUP] Quantity: ${quantity} ${unit}, scale factor: ${scaleFactor}`);
-      console.log(`[USDA-LOOKUP] USDA per 100g:`, nutrition);
 
       const scaled = {
         calories: Math.round(nutrition.calories * scaleFactor * 100) / 100,
@@ -145,7 +139,6 @@ export async function searchUSDAAndGetNutrition(
         fiber: nutrition.fiber ? Math.round(nutrition.fiber * scaleFactor * 100) / 100 : undefined,
       };
 
-      console.log(`[USDA-LOOKUP] Scaled result:`, scaled);
       return scaled;
     }
 

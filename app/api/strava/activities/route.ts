@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     let activities = await response.json();
 
     // Fetch detailed data for each activity (includes calories)
-    // TODO: Only fetch details for current week to avoid rate limiting on past weeks
+    // Only fetch details for current week to avoid rate limiting on past weeks
     if (weekParam === getCurrentWeekStart()) {
       activities = await Promise.all(
         activities.map(async (activity: any) => {

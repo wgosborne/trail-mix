@@ -75,17 +75,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const userId = (session.user as any).id;
     const id = (await params).id;
 
-    console.log(`[DELETE GROCERY] Attempting to delete id: ${id} for user: ${userId}`);
-
     // Delete grocery (verify user owns it)
     await db
       .delete(userGroceryInventory)
       .where(and(eq(userGroceryInventory.id, id as any), eq(userGroceryInventory.userId, userId as any)));
 
-    console.log(`[DELETE GROCERY] Successfully deleted id: ${id}`);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error('[DELETE GROCERY] Error:', error);
+    console.error('Failed to delete grocery:', error);
     return NextResponse.json({ error: 'Failed to delete grocery' }, { status: 500 });
   }
 }
