@@ -16,6 +16,9 @@ interface GroceryFormProps {
     fat: number;
     fiber?: number;
   };
+  extractedItemsCount?: number;
+  currentItemIndex?: number | null;
+  onSkip?: () => void;
 }
 
 interface Nutrition {
@@ -25,7 +28,7 @@ interface Nutrition {
   fat: number;
 }
 
-export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantity, initialUnit, initialNutrition }: GroceryFormProps) {
+export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantity, initialUnit, initialNutrition, extractedItemsCount, currentItemIndex, onSkip }: GroceryFormProps) {
   const [foodName, setFoodName] = useState(initialFoodName || '');
   const [quantity, setQuantity] = useState(initialQuantity?.toString() || '');
   const [unit, setUnit] = useState(initialUnit || 'lbs');
@@ -141,6 +144,42 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Extracted Item Display */}
+      {currentItemIndex !== null && extractedItemsCount && extractedItemsCount > 0 && (
+        <div style={{
+          backgroundColor: '#FFF5F8',
+          border: '2px solid #D67BB8',
+          borderRadius: '12px',
+          padding: '16px',
+        }}>
+          <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#2C2C2A', marginBottom: '8px' }}>
+            Item {currentItemIndex + 1} of {extractedItemsCount}
+          </h3>
+          <p style={{ fontSize: '13px', color: '#666666', marginBottom: '12px' }}>
+            {initialFoodName} {initialQuantity ? `• ${initialQuantity} ${initialUnit}` : ''}
+          </p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => onSkip?.()}
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #E8E4DC',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#2C2C2A',
+                cursor: 'pointer',
+              }}
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Nutrition Search Component */}
       {showNutritionSearch && (
         <div style={{
@@ -247,7 +286,12 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
               <option>oz</option>
               <option>g</option>
               <option>count</option>
+              <option>ct</option>
+              <option>ea</option>
               <option>cups</option>
+              <option>gallon</option>
+              <option>ml</option>
+              <option>L</option>
             </select>
           </div>
 
@@ -277,8 +321,9 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                 {showNutritionSearch ? 'Hide' : 'Search'}
               </button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
               <div>
+                <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Calories (kcal)</label>
                 <input
                   type="number"
                   placeholder="Calories"
@@ -298,6 +343,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                 {errors.calories && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.calories}</p>}
               </div>
               <div>
+                <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Protein (g)</label>
                 <input
                   type="number"
                   placeholder="Protein (g)"
@@ -317,6 +363,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                 {errors.protein && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.protein}</p>}
               </div>
               <div>
+                <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Carbs (g)</label>
                 <input
                   type="number"
                   placeholder="Carbs (g)"
@@ -336,6 +383,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                 {errors.carbs && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.carbs}</p>}
               </div>
               <div>
+                <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Fat (g)</label>
                 <input
                   type="number"
                   placeholder="Fat (g)"

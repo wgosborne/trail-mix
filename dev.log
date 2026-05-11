@@ -2,14 +2,119 @@
 > trail-mix@0.1.0 dev
 > next dev -p 3001
 
-⨯ Failed to start server
-Error: listen EADDRINUSE: address already in use :::3001
-    at <unknown> (Error: listen EADDRINUSE: address already in use :::3001)
-    at new Promise (<anonymous>) {
-  code: 'EADDRINUSE',
-  errno: -4091,
-  syscall: 'listen',
-  address: '::',
-  port: 3001
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.1.68:3001
+- Environments: .env.local
+✓ Ready in 797ms
+
+ GET /groceries 200 in 940ms (next.js: 505ms, application-code: 435ms)
+ GET /groceries 200 in 236ms (next.js: 10ms, application-code: 225ms)
+ GET /api/auth/session 200 in 3.9s (next.js: 3.8s, application-code: 78ms)
+ GET /api/groceries?weekStart=2026-05-04 200 in 581ms (next.js: 213ms, application-code: 368ms)
+[VISION] ===== CLAUDE RESPONSE =====
+[VISION] Full response: ```json
+{
+  "items": [
+    {
+      "name": "Tyson Frozen Pollo Asado Seasoned Pulled Chicken Breast",
+      "quantity": 18,
+      "unit": "oz"
+    },
+    {
+      "name": "Simply Cheetos Spicy White Cheddar Cheese Puffs Chips",
+      "quantity": 6,
+      "unit": "oz"
+    },
+    {
+      "name": "Tyson Frozen Blackened Flavored Chicken Tenders",
+      "quantity": 20,
+      "unit": "oz"
+    },
+    {
+      "name": "A&W Zero Sugar Root Beer Soda Bottles",
+      "quantity": 6,
+      "unit": "pk"
+    },
+    {
+      "name": "Ghost Energy 7-Up Lemon Lime",
+      "quantity": 16,
+      "unit": "fl oz"
+    },
+    {
+      "name": "KRO Hard Cooked Eggs",
+      "quantity": 6,
+      "unit": "ct"
+    },
+    {
+      "name": "Mission Carb Balance Soft Taco Size Flour Tortillas",
+      "quantity": 8,
+      "unit": "ct"
+    },
+    {
+      "name": "Monster Zero Sugar Strawberry Shot Energy Drink Can",
+      "quantity": 16,
+      "unit": "fl oz"
+    }
+  ]
 }
+```
+[VISION] =============================
+[VISION] Parsed items count: 8
+[VISION] Final items: 8
+ POST /api/vision/parse 200 in 3.7s (next.js: 122ms, application-code: 3.6s)
+[NUTRITION-SEARCH] Searching for: Tyson Frozen Pollo Asado Seasoned Pulled Chicken Breast
+[OFF] Found 0 products with nutrition data
+[NUTRITION-SEARCH] No results found for: Tyson Frozen Pollo Asado Seasoned Pulled Chicken Breast
+ POST /api/nutrition/google-search 200 in 3.6s (next.js: 49ms, application-code: 3.6s)
+[NUTRITION-SEARCH] Searching for: Simply Cheetos Spicy White Cheddar Cheese Puffs Chips
+[OFF] API returned 503
+[NUTRITION-SEARCH] No results found for: Simply Cheetos Spicy White Cheddar Cheese Puffs Chips
+ POST /api/nutrition/google-search 200 in 249ms (next.js: 4ms, application-code: 245ms)
+[NUTRITION-SEARCH] Searching for: Tyson Frozen Blackened Flavored Chicken Tenders
+[OFF] API returned 503
+[NUTRITION-SEARCH] No results found for: Tyson Frozen Blackened Flavored Chicken Tenders
+ POST /api/nutrition/google-search 200 in 512ms (next.js: 4ms, application-code: 508ms)
+[NUTRITION-SEARCH] Searching for: A&W Zero Sugar Root Beer Soda Bottles
+[OFF] Found 0 products with nutrition data
+[NUTRITION-SEARCH] No results found for: A&W Zero Sugar Root Beer Soda Bottles
+ POST /api/nutrition/google-search 200 in 3.8s (next.js: 7ms, application-code: 3.8s)
+[NUTRITION-SEARCH] Searching for: Ghost Energy 7-Up Lemon Lime
+[OFF] Found 0 products with nutrition data
+[NUTRITION-SEARCH] No results found for: Ghost Energy 7-Up Lemon Lime
+ POST /api/nutrition/google-search 200 in 2.7s (next.js: 4ms, application-code: 2.7s)
+[NUTRITION-SEARCH] Searching for: KRO Hard Cooked Eggs
+[OFF] Found 0 products with nutrition data
+[NUTRITION-SEARCH] No results found for: KRO Hard Cooked Eggs
+ POST /api/nutrition/google-search 200 in 1855ms (next.js: 5ms, application-code: 1850ms)
+[NUTRITION-SEARCH] Searching for: Mission Carb Balance Soft Taco Size Flour Tortillas
+[OFF] Found 0 products with nutrition data
+[NUTRITION-SEARCH] No results found for: Mission Carb Balance Soft Taco Size Flour Tortillas
+ POST /api/nutrition/google-search 200 in 3.0s (next.js: 3ms, application-code: 3.0s)
+[NUTRITION-SEARCH] Searching for: Monster Zero Sugar Strawberry Shot Energy Drink Can
+[OFF] Found 0 products with nutrition data
+[NUTRITION-SEARCH] No results found for: Monster Zero Sugar Strawberry Shot Energy Drink Can
+ POST /api/nutrition/google-search 200 in 5.9s (next.js: 4ms, application-code: 5.9s)
+ GET /groceries/dashboard 200 in 126ms (next.js: 64ms, application-code: 62ms)
+ GET /api/nutrition?week=2026-05-04 200 in 281ms (next.js: 82ms, application-code: 199ms)
+ GET /api/nutrition?week=2026-05-04 200 in 151ms (next.js: 5ms, application-code: 146ms)
+ GET /api/nutrition?week=2026-04-13 200 in 525ms (next.js: 87ms, application-code: 438ms)
+ GET /api/nutrition?week=2026-04-27 200 in 438ms (next.js: 19ms, application-code: 419ms)
+ GET /api/nutrition?week=2026-04-20 200 in 450ms (next.js: 11ms, application-code: 439ms)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+ GET /api/nutrition?week=2026-05-04 200 in 157ms (next.js: 3ms, application-code: 154ms)
+ GET /api/nutrition?week=2026-04-13 200 in 151ms (next.js: 6ms, application-code: 145ms)
+ GET /api/nutrition?week=2026-04-27 200 in 159ms (next.js: 4ms, application-code: 155ms)
+ GET /api/nutrition?week=2026-04-20 200 in 162ms (next.js: 12ms, application-code: 150ms)
+ GET /api/nutrition?week=2026-05-04 200 in 149ms (next.js: 2ms, application-code: 147ms)
+ GET /groceries 200 in 28ms (next.js: 5ms, application-code: 23ms)
+ GET /api/groceries?weekStart=2026-05-04 200 in 116ms (next.js: 3ms, application-code: 113ms)
+ GET /api/groceries?weekStart=2026-05-04 200 in 130ms (next.js: 3ms, application-code: 127ms)
 [?25h

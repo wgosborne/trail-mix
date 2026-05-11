@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const message = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 1024,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2048,
       messages: [
         {
           role: 'user',
@@ -29,20 +29,38 @@ export async function POST(request: NextRequest) {
             },
             {
               type: 'text',
-              text: `You are a receipt parser. Extract ALL grocery items from this receipt. For each item, provide:
-1. Item name (product description)
-2. Quantity (number - just the number, e.g., 2, 5.5)
-3. Unit (lbs, oz, count, cups, g, kg, ml, etc.)
+              text: `You are a Kroger receipt parser. Extract every grocery product from this receipt with accurate quantities and units.
 
-Return ONLY valid JSON (no markdown, no code blocks, no explanation):
+EXTRACTION RULES:
+1. Find EVERY product/item in the "Items" or "Groceries" section
+2. For each item, extract:
+   - "name": Product description (remove quantity/unit from name)
+   - "quantity": Number from the product description or receipt (required)
+   - "unit": Unit of measure (oz, lbs, g, count, ct, ea, etc.)
+
+IMPORTANT - Extract quantity from product names:
+- "Tyson Frozen Chicken, 18 oz" → quantity: 18, unit: "oz", name: "Tyson Frozen Chicken"
+- "Mission Tortillas, 8 ct" → quantity: 8, unit: "ct", name: "Mission Tortillas"
+- "Simply Orange, 1 gallon" → quantity: 1, unit: "gallon", name: "Simply Orange"
+- "Eggs, 1 dozen" → quantity: 12, unit: "count", name: "Eggs"
+- "Milk, 1 gallon" → quantity: 1, unit: "gallon", name: "Milk"
+- If no unit/quantity in name, default to: quantity: 1, unit: "count" (ea)
+
+Return ONLY valid JSON:
 {
   "items": [
-    { "name": "Chicken Breast", "quantity": 2, "unit": "lbs" },
-    { "name": "Brown Rice", "quantity": 5, "unit": "lbs" }
+    { "name": "Product Name Only", "quantity": 18, "unit": "oz" },
+    { "name": "Another Product", "quantity": 1, "unit": "count" }
   ]
 }
 
-If this is not a grocery receipt, still attempt extraction. If extraction fails or no items found, return: { "items": [] }`,
+SPECIAL CASES:
+- Quantity is the number (not including the word "pack", "box", etc.)
+- Unit is the abbreviation (oz, lbs, g, ct, ea, count, gallon, etc.)
+- Name should be clean and readable (no quantity/unit info)
+
+If no items found, return: { "items": [] }
+Otherwise, return ALL items with proper quantity/unit extraction.`,
             },
           ],
         },
@@ -54,29 +72,55 @@ If this is not a grocery receipt, still attempt extraction. If extraction fails 
       throw new Error('No text response from Claude');
     }
 
-    // Clean the response (remove markdown if present)
     let jsonText = textContent.text.trim();
+    console.log('[VISION] ===== CLAUDE RESPONSE =====');
+    console.log('[VISION] Full response:', jsonText);
+    console.log('[VISION] =============================');
+
+    // Remove markdown code blocks if present
     if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.replace(/```json\n?/, '').replace(/```\n?$/, '');
+      jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```\n?$/, '');
     } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.replace(/```\n?/, '').replace(/```\n?$/, '');
+      jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```\n?$/, '');
     }
 
-    // Validate and parse JSON
-    const parsed = JSON.parse(jsonText);
+    // Parse JSON
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonText);
+      console.log('[VISION] Parsed items count:', Array.isArray(parsed.items) ? parsed.items.length : 0);
+    } catch (parseError) {
+      console.log('[VISION] JSON parse error. Text was:', jsonText.substring(0, 500));
+      throw parseError;
+    }
 
-    // Ensure items array exists and contains valid entries
+    // Ensure items array exists
     if (!Array.isArray(parsed.items)) {
       parsed.items = [];
     }
 
-    // Filter and validate items
-    parsed.items = parsed.items.filter((item: any) => {
-      return item.name && typeof item.name === 'string' &&
-             item.quantity && typeof item.quantity === 'number' && item.quantity > 0 &&
-             item.unit && typeof item.unit === 'string';
-    });
+    // Filter and normalize items - be lenient, only require name
+    parsed.items = parsed.items
+      .filter((item: any) => {
+        // Must have a name
+        return item.name && typeof item.name === 'string' && item.name.trim().length > 0;
+      })
+      .map((item: any) => {
+        const normalized: any = {
+          name: item.name.trim(),
+        };
+        // Add quantity if it's a valid number
+        if (typeof item.quantity === 'number' && item.quantity > 0) {
+          normalized.quantity = item.quantity;
+        }
+        // Add unit if it's a non-empty string
+        if (typeof item.unit === 'string' && item.unit.trim().length > 0) {
+          normalized.unit = item.unit.trim();
+        }
+        return normalized;
+      });
 
+    console.log('[VISION] Final items:', parsed.items.length);
     return NextResponse.json(parsed);
   } catch (error) {
     console.error('Vision parsing error:', error);

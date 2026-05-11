@@ -7,9 +7,9 @@ export const grocerySchema = z.object({
     .max(255, 'Food name must be 255 characters or less'),
   quantityBought: z.number()
     .positive('Quantity must be greater than 0'),
-  unit: z.enum(['lbs', 'oz', 'g', 'count', 'cups']).refine(
-    val => ['lbs', 'oz', 'g', 'count', 'cups'].includes(val),
-    { message: 'Invalid unit. Choose from: lbs, oz, g, count, cups' }
+  unit: z.enum(['lbs', 'oz', 'g', 'count', 'cups', 'ct', 'ea', 'gallon', 'ml', 'L']).refine(
+    val => ['lbs', 'oz', 'g', 'count', 'cups', 'ct', 'ea', 'gallon', 'ml', 'L'].includes(val),
+    { message: 'Invalid unit. Choose from: lbs, oz, g, count, cups, ct, ea, gallon, ml, L' }
   ),
   totalCalories: z.number().nonnegative('Calories must be 0 or greater').optional().nullable(),
   proteinG: z.number().nonnegative('Protein must be 0 or greater').optional().nullable(),

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { getCached, setCached } from '@/lib/cache';
 
 interface StravaActivity {
   stravaId: number;
@@ -26,10 +27,28 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
   const [error, setError] = useState<string | null>(null);
 
   async function handleSync() {
+    const week = weekStart || getCurrentWeekStart();
+
+    // Check cache first - if cached, use it (don't refresh)
+    const cached = getCached<{ activities: StravaActivity[]; weekTotal: any }>(`strava_${week}`);
+    if (cached) {
+      setActivities(cached.activities);
+      setWeekTotal(cached.weekTotal);
+      onCaloriesUpdate?.(cached.weekTotal.caloriesBurned);
+      onSync?.(cached.weekTotal.caloriesBurned);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    // No cache, fetch and cache it
     setLoading(true);
     setError(null);
+    await refreshActivities(week);
+  }
+
+  async function refreshActivities(week: string) {
     try {
-      const week = weekStart || getCurrentWeekStart();
       const response = await fetch(`/api/strava/activities?week=${week}`);
 
       if (!response.ok) {
@@ -40,16 +59,22 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
       const data = await response.json();
       setActivities(data.activities);
       setWeekTotal(data.weekTotal);
+      setCached(`strava_${week}`, { activities: data.activities, weekTotal: data.weekTotal });
 
       // Call callbacks with updated calorie data
       onCaloriesUpdate?.(data.weekTotal.caloriesBurned);
       onSync?.(data.weekTotal.caloriesBurned);
+      setLoading(false);
+      setError(null);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to sync activities';
-      console.error('Sync error:', err);
-      setError(errorMsg);
+      if (!activities.length) {
+        // Only show error if we have no cached data
+        console.error('Sync error:', err);
+        setError(errorMsg);
+      }
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {

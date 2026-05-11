@@ -196,6 +196,14 @@ export default function CameraTab() {
   const handleItemsExtracted = (items: ParsedItem[]) => {
     setExtractedItems(items);
     setSelectedItemIndex(items.length > 0 ? 0 : null);
+
+    // Scroll to grocery form
+    setTimeout(() => {
+      const formElement = document.getElementById('grocery-form');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 300);
   };
 
   const handleAddExtractedItem = async (grocery: any) => {
@@ -274,58 +282,6 @@ export default function CameraTab() {
         <ReceiptUploader onItemsExtracted={handleItemsExtracted} />
       </div>
 
-      {extractedItems.length > 0 && currentExtractedItem && (
-        <div style={{ marginTop: '20px', marginBottom: '20px', padding: '16px', backgroundColor: '#F5F8FF', border: '1px solid #D67BB8', borderRadius: '10px' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A', marginBottom: '8px' }}>
-              Extracted Item {selectedItemIndex! + 1} of {extractedItems.length}
-            </h3>
-            <p style={{ fontSize: '13px', color: '#666666' }}>
-              {currentExtractedItem.name} - {currentExtractedItem.quantity} {currentExtractedItem.unit}
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={handleSkipExtractedItem}
-              style={{
-                flex: 1,
-                padding: '10px 16px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                border: '1px solid #E8E4DC',
-                backgroundColor: '#FFFFFF',
-                color: '#2C2C2A',
-                cursor: 'pointer',
-              }}
-            >
-              Skip
-            </button>
-            <button
-              onClick={() => {
-                // Trigger the form with this item's data
-                const formElement = document.getElementById('grocery-form') as HTMLFormElement;
-                if (formElement) {
-                  formElement.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              style={{
-                flex: 1,
-                padding: '10px 16px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-                border: '1px solid #8B7FB8',
-                backgroundColor: '#8B7FB8',
-                color: '#FFFFFF',
-                cursor: 'pointer',
-              }}
-            >
-              Add with Nutrition
-            </button>
-          </div>
-        </div>
-      )}
 
       <div style={{ marginTop: '20px', marginBottom: '20px' }} id="grocery-form">
         <GroceryForm
@@ -335,6 +291,9 @@ export default function CameraTab() {
           initialQuantity={currentExtractedItem?.quantity}
           initialUnit={currentExtractedItem?.unit}
           initialNutrition={currentExtractedItem?.nutrition}
+          extractedItemsCount={extractedItems.length}
+          currentItemIndex={selectedItemIndex}
+          onSkip={handleSkipExtractedItem}
         />
       </div>
 

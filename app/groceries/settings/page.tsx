@@ -4,38 +4,76 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { StravaConnect } from '@/components/StravaConnect';
+import { getCached, setCached } from '@/lib/cache';
 
 function SettingsContent() {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isConnected, setIsConnected] = useState(false);
-  const [loading, setLoading] = useState(true);
+
+  // Initialize from cache to prevent flash of loading state
+  const cachedStatus = getCached<{ isConnected: boolean }>('strava_status');
+  const [isConnected, setIsConnected] = useState(cachedStatus?.isConnected ?? false);
+  const [loading, setLoading] = useState(!cachedStatus);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Check Strava connection status on mount
-  useEffect(() => {
-    async function checkStravaStatus() {
-      if (!session?.user) {
-        setLoading(false);
-        return;
-      }
+  // Initialize goals from cache
+  const cachedProfile2 = getCached<any>('user_profile');
+  const [goals, setGoals] = useState({
+    dailyCalGoal: cachedProfile2?.dailyCalGoal ?? 2000,
+    dailyProteinG: cachedProfile2?.dailyProteinG ?? 150,
+    dailyCarbsG: cachedProfile2?.dailyCarbsG ?? 200,
+    dailyFatG: cachedProfile2?.dailyFatG ?? 65,
+  });
+  const [goalsLoading, setGoalsLoading] = useState(false);
 
-      try {
-        const response = await fetch('/api/user/strava-status');
-        if (response.ok) {
-          const data = await response.json();
-          setIsConnected(data.isConnected);
-        }
-      } catch (error) {
-        console.error('Failed to check Strava status:', error);
-      } finally {
-        setLoading(false);
-      }
+  // Check Strava connection status and load goals on mount (only if not cached)
+  useEffect(() => {
+    if (!session?.user) {
+      setLoading(false);
+      return;
     }
 
-    checkStravaStatus();
+    // Only fetch if cache is missing
+    const cachedStatus = getCached<{ isConnected: boolean }>('strava_status');
+    if (!cachedStatus) {
+      (async () => {
+        try {
+          const response = await fetch('/api/user/strava-status');
+          if (response.ok) {
+            const data = await response.json();
+            setIsConnected(data.isConnected);
+            setCached('strava_status', { isConnected: data.isConnected });
+          }
+        } catch (error) {
+          console.error('Failed to check Strava status:', error);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+
+    const cachedProfile = getCached<any>('user_profile');
+    if (!cachedProfile) {
+      (async () => {
+        try {
+          const response = await fetch('/api/user/profile');
+          if (response.ok) {
+            const data = await response.json();
+            setGoals({
+              dailyCalGoal: data.dailyCalGoal || 2000,
+              dailyProteinG: data.dailyProteinG || 150,
+              dailyCarbsG: data.dailyCarbsG || 200,
+              dailyFatG: data.dailyFatG || 65,
+            });
+            setCached('user_profile', data);
+          }
+        } catch (error) {
+          console.error('Failed to load goals:', error);
+        }
+      })();
+    }
   }, [session]);
 
   // Handle query params for success/error messages
@@ -100,6 +138,31 @@ function SettingsContent() {
     }
   }
 
+  async function handleSaveGoals() {
+    setGoalsLoading(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    try {
+      const response = await fetch('/api/user/goals', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(goals),
+      });
+
+      if (response.ok) {
+        setSuccessMessage('Nutrition goals saved successfully!');
+      } else {
+        setErrorMessage('Failed to save nutrition goals.');
+      }
+    } catch (error) {
+      console.error('Save goals error:', error);
+      setErrorMessage('Failed to save nutrition goals.');
+    } finally {
+      setGoalsLoading(false);
+    }
+  }
+
   if (!session?.user) {
     return (
       <div style={{ padding: '16px 20px' }}>
@@ -161,9 +224,7 @@ function SettingsContent() {
 
       <div style={{ marginBottom: '24px' }}>
         <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#2C2C2A', marginBottom: '12px' }}>Strava Integration</h2>
-        {loading ? (
-          <p style={{ fontSize: '14px', color: '#999999' }}>Loading...</p>
-        ) : (
+        {!loading && (
           <>
             {isConnected ? (
               <div style={{
@@ -221,6 +282,110 @@ function SettingsContent() {
           />
         </div>
       )}
+
+      <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#2C2C2A', marginBottom: '12px' }}>Nutrition Goals</h2>
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #E8E4DC',
+          borderRadius: '10px',
+          padding: '20px'
+        }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: '#2C2C2A', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '8px' }}>
+                Daily Calories
+              </label>
+              <input
+                type="number"
+                value={goals.dailyCalGoal}
+                onChange={(e) => setGoals({ ...goals, dailyCalGoal: parseInt(e.target.value) || 0 })}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #E8E4DC',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: '#2C2C2A', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '8px' }}>
+                Daily Protein (g)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                value={goals.dailyProteinG}
+                onChange={(e) => setGoals({ ...goals, dailyProteinG: parseFloat(e.target.value) || 0 })}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #E8E4DC',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: '#2C2C2A', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '8px' }}>
+                Daily Carbs (g)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                value={goals.dailyCarbsG}
+                onChange={(e) => setGoals({ ...goals, dailyCarbsG: parseFloat(e.target.value) || 0 })}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #E8E4DC',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: '#2C2C2A', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '8px' }}>
+                Daily Fat (g)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                value={goals.dailyFatG}
+                onChange={(e) => setGoals({ ...goals, dailyFatG: parseFloat(e.target.value) || 0 })}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #E8E4DC',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+          </div>
+          <button
+            onClick={handleSaveGoals}
+            disabled={goalsLoading}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: goalsLoading ? '#CCCCCC' : '#8B7FB8',
+              color: 'white',
+              border: '1px solid #8B7FB8',
+              borderRadius: '8px',
+              cursor: goalsLoading ? 'not-allowed' : 'pointer',
+              fontSize: '13px',
+              fontWeight: 700,
+            }}
+          >
+            {goalsLoading ? 'Saving...' : 'Save Goals'}
+          </button>
+        </div>
+      </div>
 
       <div style={{
         backgroundColor: '#F5F8FF',
