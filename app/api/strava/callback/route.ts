@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
       .update(users)
       .set({
         stravaToken: tokenData.access_token,
+        stravaRefreshToken: tokenData.refresh_token,
         stravaUserId: tokenData.athlete.id.toString(),
         stravaTokenExpiresAt: new Date(tokenData.expires_at * 1000),
       })

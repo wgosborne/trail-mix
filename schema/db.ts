@@ -8,6 +8,7 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 255 }),
   stravaToken: text('strava_token'),
   stravaUserId: varchar('strava_user_id', { length: 255 }),
+  stravaRefreshToken: text('strava_refresh_token'),
   stravaTokenExpiresAt: timestamp('strava_token_expires_at'),
   dailyCalGoal: decimal('daily_cal_goal', { precision: 5, scale: 0 }).default('2000'),
   dailyProteinG: decimal('daily_protein_g', { precision: 5, scale: 1 }).default('150'),

@@ -1,0 +1,61 @@
+import { db } from './db';
+import { users } from '@/schema/db';
+import { eq } from 'drizzle-orm';
+
+export async function getValidStravaToken(userId: string): Promise<string> {
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+  });
+
+  if (!user || !user.stravaToken) {
+    throw new Error('Strava not connected');
+  }
+
+  const now = new Date();
+  const bufferMs = 5 * 60 * 1000;
+  const expiryWithBuffer = new Date((user.stravaTokenExpiresAt?.getTime() || 0) - bufferMs);
+
+  if (expiryWithBuffer > now) {
+    return user.stravaToken;
+  }
+
+  if (!user.stravaRefreshToken) {
+    throw new Error('Strava token expired - please reconnect');
+  }
+
+  try {
+    const refreshResponse = await fetch('https://www.strava.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: process.env.STRAVA_CLIENT_ID,
+        client_secret: process.env.STRAVA_CLIENT_SECRET,
+        grant_type: 'refresh_token',
+        refresh_token: user.stravaRefreshToken,
+      }),
+    });
+
+    if (!refreshResponse.ok) {
+      throw new Error(`Strava refresh failed with status ${refreshResponse.status}`);
+    }
+
+    const newTokenData = await refreshResponse.json();
+    if (!newTokenData.access_token || !newTokenData.refresh_token) {
+      throw new Error('Strava refresh response missing tokens');
+    }
+
+    await db
+      .update(users)
+      .set({
+        stravaToken: newTokenData.access_token,
+        stravaRefreshToken: newTokenData.refresh_token,
+        stravaTokenExpiresAt: new Date(newTokenData.expires_at * 1000),
+      })
+      .where(eq(users.id, userId));
+
+    return newTokenData.access_token;
+  } catch (error) {
+    console.error('Strava token refresh error:', error);
+    throw new Error('Strava token refresh failed');
+  }
+}
