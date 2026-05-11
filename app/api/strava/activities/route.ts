@@ -39,17 +39,20 @@ export async function GET(request: NextRequest) {
     let activities = await response.json();
 
     // Fetch detailed data for each activity (includes calories)
-    activities = await Promise.all(
-      activities.map(async (activity: any) => {
-        const detailResponse = await fetch(`https://www.strava.com/api/v3/activities/${activity.id}`, {
-          headers: { Authorization: `Bearer ${stravaToken}` },
-        });
-        if (detailResponse.ok) {
-          return await detailResponse.json();
-        }
-        return activity;
-      })
-    );
+    // TODO: Only fetch details for current week to avoid rate limiting on past weeks
+    if (weekParam === getCurrentWeekStart()) {
+      activities = await Promise.all(
+        activities.map(async (activity: any) => {
+          const detailResponse = await fetch(`https://www.strava.com/api/v3/activities/${activity.id}`, {
+            headers: { Authorization: `Bearer ${stravaToken}` },
+          });
+          if (detailResponse.ok) {
+            return await detailResponse.json();
+          }
+          return activity;
+        })
+      );
+    }
 
     // Helper function to estimate calories from Strava data
     function estimateCalories(activity: any): number {

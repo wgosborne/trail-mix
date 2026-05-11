@@ -18,6 +18,7 @@ export async function PUT() {
       .update(users)
       .set({
         stravaToken: null,
+        stravaRefreshToken: null,
         stravaUserId: null,
         stravaTokenExpiresAt: null,
       })
