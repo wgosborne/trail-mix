@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { WeekNavigator } from './WeekNavigator';
 import { getCached, setCached } from '@/lib/cache';
@@ -87,22 +87,22 @@ async function fetchStravaWeek(weekStart: string): Promise<{ caloriesBurned: num
   }
 }
 
-// SVG Donut Chart Component
-function DonutChart({ data, size = 200 }: { data: Array<{ name: string; value: number; color: string }>; size?: number }) {
+// SVG Donut Chart Component - Simplified with drop-shadow only
+function DonutChart({ data, size = 100 }: { data: Array<{ name: string; value: number; color: string }>; size?: number }) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   if (total === 0) {
     return (
-      <svg width={size} height={size} style={{ display: 'block', margin: '0 auto' }}>
-        <circle cx={size / 2} cy={size / 2} r={size / 2 - 20} fill="none" stroke="#E8E4DC" strokeWidth="30" />
+      <svg width={size} height={size} style={{ display: 'block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.08))' }}>
+        <circle cx={size / 2} cy={size / 2} r={size / 2 - 8} fill="none" stroke="#E8E4DC" strokeWidth="12" />
       </svg>
     );
   }
 
   const centerX = size / 2;
   const centerY = size / 2;
-  const outerRadius = size / 2 - 10;
-  const innerRadius = size / 2 - 50;
+  const outerRadius = size / 2 - 4;
+  const innerRadius = size / 2 - 20;
 
   let currentAngle = -Math.PI / 2;
   const paths = data.map((item) => {
@@ -139,7 +139,7 @@ function DonutChart({ data, size = 200 }: { data: Array<{ name: string; value: n
   });
 
   return (
-    <svg width={size} height={size} style={{ display: 'block', margin: '0 auto' }}>
+    <svg width={size} height={size} style={{ display: 'block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.08))' }}>
       {paths}
     </svg>
   );
@@ -178,6 +178,41 @@ function MiniBarChart({ data, height = 80 }: { data: Array<{ label: string; valu
     </div>
   );
 }
+
+// Card Wrapper with 3D Depth
+const DashboardCard = memo(function DashboardCard({
+  children,
+  onClick
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <div
+      style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: '12px',
+        padding: '18px',
+        boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)',
+      }}
+      onClick={onClick}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.transform = 'translateY(-6px)';
+        el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)';
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.transform = 'translateY(0)';
+        el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
+      }}
+    >
+      {children}
+    </div>
+  );
+});
 
 // Advanced Progress Bar Component
 function AdvancedProgressBar({
@@ -426,12 +461,14 @@ export function NutritionDashboardPro({
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      gap: '16px',
+      gap: '14px',
       backgroundColor: '#8B7FB8',
       borderRadius: '24px',
       padding: '20px',
       minHeight: 'calc(100vh - 200px)',
-      position: 'relative'
+      position: 'relative',
+      maxWidth: '340px',
+      margin: '0 auto'
     }}>
       {/* Background decoration */}
       <div style={{
@@ -456,7 +493,7 @@ export function NutritionDashboardPro({
       }} />
 
       {/* Header with title and date range */}
-      <div style={{ position: 'relative', zIndex: 1, marginBottom: '8px' }}>
+      <div style={{ position: 'relative', zIndex: 1, marginBottom: '4px' }}>
         <h2 style={{
           fontSize: '28px',
           fontWeight: 700,
@@ -477,61 +514,47 @@ export function NutritionDashboardPro({
       </div>
 
       {/* Week Navigator */}
-      <div style={{ position: 'relative', zIndex: 1, marginBottom: '8px' }}>
+      <div style={{ position: 'relative', zIndex: 1, marginBottom: '4px' }}>
         <WeekNavigator onWeekChange={onWeekChange} />
       </div>
 
-      {/* Main 2-Column Layout: Donut on left, 3 cards stacked on right */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '12px',
-        position: 'relative',
-        zIndex: 1
-      }}>
-        {/* Left Column: Donut Chart with Legend */}
-        {hasData && (
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '16px',
-              padding: '20px',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-            onClick={() => router.push('/metrics/macros')}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLDivElement;
-              el.style.transform = 'translateY(-4px) scale(1.02)';
-              el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLDivElement;
-              el.style.transform = 'translateY(0) scale(1)';
-              el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
-            }}
-          >
-            <div style={{ position: 'relative', width: '160px', height: '160px', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px' }}>
-              <DonutChart data={donutData} size={160} />
-              <div style={{
-                position: 'absolute',
-                textAlign: 'center',
-                pointerEvents: 'none'
-              }}>
-                <p style={{
-                  fontSize: '18px',
-                  fontWeight: 700,
-                  color: '#2C2C2A',
-                  margin: 0,
-                  lineHeight: 1
+      {/* Main Layout: Donut + Stacked Cards */}
+      {hasData && (
+        <>
+          {/* Macro Circle Card - Floating Element */}
+          <DashboardCard onClick={() => router.push('/metrics/macros')}>
+            <p style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              color: '#999999',
+              textTransform: 'uppercase',
+              letterSpacing: '0.4px',
+              margin: '0 0 12px 0',
+              textAlign: 'center'
+            }}>
+              Macro Split
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+              <div style={{ position: 'relative', width: '100px', height: '100px' }}>
+                <DonutChart data={donutData} size={100} />
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                  pointerEvents: 'none'
                 }}>
-                  P:C:F
-                </p>
+                  <p style={{
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: '#2C2C2A',
+                    margin: 0,
+                    lineHeight: 1
+                  }}>
+                    P:C:F
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -539,51 +562,23 @@ export function NutritionDashboardPro({
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px',
-              width: '100%'
+              gap: '6px'
             }}>
               {[
-                { label: 'Protein', color: '#D67BB8' },
-                { label: 'Carbs', color: '#8B7FB8' },
+                { label: 'Protein', color: '#FFB6C1' },
+                { label: 'Carbs', color: '#DDA0DD' },
                 { label: 'Fat', color: '#FFD700' },
               ].map(({ label, color }) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: color }} />
-                  <span style={{ fontSize: '12px', color: '#999999' }}>{label}</span>
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: color, flexShrink: 0 }} />
+                  <span style={{ fontSize: '11px', color: '#999999' }}>{label}</span>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          </DashboardCard>
 
-        {/* Right Column: 3 Stacked Cards */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}>
-          {/* Card 1: Avg Calories */}
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '16px',
-              padding: '16px',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}
-            onClick={() => router.push('/metrics/calories')}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLDivElement;
-              el.style.transform = 'translateY(-4px) scale(1.02)';
-              el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLDivElement;
-              el.style.transform = 'translateY(0) scale(1)';
-              el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
-            }}
-          >
+          {/* Card: Avg Calories */}
+          <DashboardCard onClick={() => router.push('/metrics/calories')}>
             <p style={{
               fontSize: '10px',
               fontWeight: 700,
@@ -595,7 +590,7 @@ export function NutritionDashboardPro({
               Avg. Calories
             </p>
             <p style={{
-              fontSize: '24px',
+              fontSize: '32px',
               fontWeight: 700,
               color: '#2C2C2A',
               margin: '0 0 8px 0',
@@ -604,46 +599,26 @@ export function NutritionDashboardPro({
               {avgConsumed}
             </p>
             <p style={{
-              fontSize: '11px',
+              fontSize: '12px',
               color: '#999999',
               margin: '0 0 12px 0'
             }}>
-              kcal burned
+              kcal per day
             </p>
             <div style={{ height: '40px' }}>
               <MiniBarChart
                 data={weeklyChartData.slice(0, 7).map((week) => ({
                   label: week.label,
                   value: week.consumed,
-                  color: '#8B5CF6'
+                  color: '#8B7FB8'
                 }))}
                 height={40}
               />
             </div>
-          </div>
+          </DashboardCard>
 
-          {/* Card 2: Weekly Deficit */}
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '16px',
-              padding: '16px',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}
-            onClick={() => router.push('/metrics/deficit')}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLDivElement;
-              el.style.transform = 'translateY(-4px) scale(1.02)';
-              el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLDivElement;
-              el.style.transform = 'translateY(0) scale(1)';
-              el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
-            }}
-          >
+          {/* Card: Weekly Deficit */}
+          <DashboardCard onClick={() => router.push('/metrics/deficit')}>
             <p style={{
               fontSize: '10px',
               fontWeight: 700,
@@ -655,7 +630,7 @@ export function NutritionDashboardPro({
               Weekly Deficit
             </p>
             <p style={{
-              fontSize: '24px',
+              fontSize: '32px',
               fontWeight: 700,
               color: '#2C2C2A',
               margin: '0 0 8px 0',
@@ -664,51 +639,32 @@ export function NutritionDashboardPro({
               {deficit > 0 ? '+' : ''}{(deficit / 1000).toFixed(1)}K
             </p>
             <p style={{
-              fontSize: '11px',
+              fontSize: '12px',
               color: '#999999',
-              margin: '0 0 8px 0'
+              margin: '0 0 12px 0'
             }}>
               calories on pace
             </p>
             <div style={{
-              display: 'inline-block',
-              backgroundColor: isOnTrack ? '#D1F2D6' : '#FFE5E5',
-              border: `1px solid ${isOnTrack ? '#34A853' : '#FF6B6B'}`,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              backgroundColor: isOnTrack ? '#D4F1E4' : '#FFE5E5',
               borderRadius: '6px',
-              padding: '4px 8px'
+              padding: '6px 12px'
             }}>
               <span style={{
                 fontSize: '11px',
                 fontWeight: 600,
-                color: isOnTrack ? '#34A853' : '#FF6B6B'
+                color: isOnTrack ? '#0F6E56' : '#FF6B6B'
               }}>
-                {isOnTrack ? 'On track' : 'Needs work'}
+                {isOnTrack ? '✓ On track' : '⚠ Needs work'}
               </span>
             </div>
-          </div>
+          </DashboardCard>
 
-          {/* Card 3: Today's Macros vs Goal */}
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '16px',
-              padding: '16px',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}
-            onClick={() => router.push('/metrics/macros')}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLDivElement;
-              el.style.transform = 'translateY(-4px) scale(1.02)';
-              el.style.boxShadow = '0 16px 32px rgba(0, 0, 0, 0.18)';
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLDivElement;
-              el.style.transform = 'translateY(0) scale(1)';
-              el.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
-            }}
-          >
+          {/* Card: Macros vs Goal - Grid Layout */}
+          <DashboardCard onClick={() => router.push('/metrics/macros')}>
             <p style={{
               fontSize: '10px',
               fontWeight: 700,
@@ -717,49 +673,63 @@ export function NutritionDashboardPro({
               letterSpacing: '0.4px',
               margin: '0 0 12px 0'
             }}>
-              Today's Macros vs Goal
+              Macros vs Goal
             </p>
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
-              gap: '8px'
+              gap: '12px'
             }}>
               {[
-                { label: 'Protein', value: Math.round(totals?.proteinConsumed ?? 0), goal: (goals?.dailyProtein ?? 150) * days, color: '#D67BB8', unit: 'g' },
-                { label: 'Carbs', value: Math.round(totals?.carbsConsumed ?? 0), goal: (goals?.dailyCarbs ?? 300) * days, color: '#8B7FB8', unit: 'g' },
+                { label: 'Protein', value: Math.round(totals?.proteinConsumed ?? 0), goal: (goals?.dailyProtein ?? 150) * days, color: '#FFB6C1', unit: 'g' },
+                { label: 'Carbs', value: Math.round(totals?.carbsConsumed ?? 0), goal: (goals?.dailyCarbs ?? 300) * days, color: '#DDA0DD', unit: 'g' },
                 { label: 'Fat', value: Math.round(totals?.fatConsumed ?? 0), goal: (goals?.dailyFat ?? 80) * days, color: '#FFD700', unit: 'g' },
               ].map(({ label, value, goal, color, unit }) => (
                 <div key={label} style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '6px'
+                  gap: '8px',
+                  textAlign: 'center',
+                  padding: '10px',
+                  backgroundColor: '#F8F7FB',
+                  borderRadius: '8px'
                 }}>
-                  <div style={{
-                    height: '4px',
-                    backgroundColor: '#E8E4DC',
-                    borderRadius: '2px',
-                    overflow: 'hidden'
-                  }}>
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${Math.min(100, (value / goal) * 100)}%`,
-                        backgroundColor: color,
-                        borderRadius: '2px'
-                      }}
-                    />
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: '10px', color: '#999999', margin: '0 0 2px 0' }}>{label}</p>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: '#2C2C2A', margin: 0 }}>{value}{unit}</p>
-                    <p style={{ fontSize: '9px', color: '#999999', margin: '2px 0 0 0' }}>of {Math.round(goal)}{unit}</p>
-                  </div>
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#2C2C2A', margin: 0 }}>{label}</p>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: color, margin: 0 }}>{value}{unit}</p>
+                  <p style={{ fontSize: '10px', color: '#999999', margin: 0 }}>of {Math.round(goal)}{unit}</p>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      </div>
+
+            {/* Calorie Comparison Section */}
+            <div style={{
+              marginTop: '14px',
+              paddingTop: '14px',
+              borderTop: '1px solid #E8E4DC'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#999999' }}>Consumed</span>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: '#2C2C2A' }}>{totalConsumed} cal</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#999999' }}>Daily Goal</span>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: '#2C2C2A' }}>{dailyGoal} cal</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                backgroundColor: 'linear-gradient(90deg, #F0EFE8 0%, #D4F1E4 100%)',
+                borderRadius: '6px',
+                padding: '8px 10px',
+                marginTop: '4px'
+              }}>
+                <span style={{ fontSize: '11px', color: '#999999' }}>Remaining</span>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: '#0F6E56' }}>{Math.max(0, dailyGoal - (totalConsumed / days))} cal</span>
+              </div>
+            </div>
+          </DashboardCard>
+        </>
+      )}
 
       <style>{`
         @keyframes pulse {
@@ -767,9 +737,9 @@ export function NutritionDashboardPro({
           50% { opacity: 0.5; }
         }
 
-        @media (max-width: 1024px) {
-          [data-two-col] {
-            grid-template-columns: 1fr !important;
+        @media (max-width: 640px) {
+          [data-container] {
+            max-width: 100vw !important;
           }
         }
 

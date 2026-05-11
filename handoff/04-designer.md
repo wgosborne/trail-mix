@@ -699,23 +699,120 @@ The dashboard was redesigned to match a professional mobile mockup with:
 - Rounded corners: 16px on all cards
 - Gap between cards: 12px
 
+## NutritionDashboardPro - Refined Design (May 11, 2026 - Phase 8 Polish)
+
+### 3D Depth & Card Styling Refinements
+**Implementation Highlights:**
+- **Layered Shadows**: Cards use dual-layer shadows for depth
+  - Base: `0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)`
+  - Hover: `0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)`
+- **Hover Elevation**: Cards lift with `translateY(-6px)` on hover
+- **Smooth Transitions**: All effects use `cubic-bezier(0.23, 1, 0.320, 1)` for natural motion
+- **Rounded Corners**: 12px border-radius for softer appearance
+- **Padding Reduced**: 18px (down from 20px) to fit 340px container snugly
+- **Gap Reduced**: 14px between cards (down from 16px)
+
+### Macro Circle Card - Simplified Floating Element
+**Changes:**
+- **Removed white background panel** from donut chart container
+- **SVG only approach**: Chart rendered with drop-shadow filter only
+  - Filter: `drop-shadow(0 4px 12px rgba(0,0,0,0.08))`
+- **Reduced size**: 100px donut (down from 160px) for mobile-first design
+- **Adjusted radius**: outerRadius now 96px, innerRadius 80px for proportion
+- **Legend below**: Colored dots directly beneath circle
+- **Card label above**: "MACRO SPLIT" (10px uppercase)
+- **Centered layout**: All elements use flexbox center alignment
+
+### Macros vs Goal Card - Grid Redesign
+**Changes:**
+- **Replaced progress bars**: Now 3-column grid layout
+- **Column format**: 
+  - Top: Label (Protein/Carbs/Fat) in 11px
+  - Middle: Consumed value in 13px bold
+  - Bottom: "of X goal" in 10px gray
+- **Grid styling**: Light background (#F8F7FB), 8px rounded corners, 10px padding per column
+- **Calorie section**: New comparison section below (separated by border)
+  - Consumed / Daily Goal / Remaining rows
+  - "Remaining" row has gradient background (#F0EFE8 to #D4F1E4)
+  - Remaining text colored green (#0F6E56)
+
+### Color Updates - Macro Refinements
+- **Protein**: #FFB6C1 (light pink, more readable)
+- **Carbs**: #DDA0DD (plum purple, better contrast)
+- **Fat**: #FFD700 (gold, unchanged)
+- **Status Badge**: 
+  - On-track: #D4F1E4 background, #0F6E56 text
+  - Off-track: #FFE5E5 background, #FF6B6B text
+
+### Typography Adjustments
+- **Card Label**: 10px (down from 11px) uppercase, bold
+- **Card Value**: 32px (down from 36px/24px) bold, primary text
+- **Card Sublabel**: 12px (down from 13px) muted text
+- **Column labels**: 11px bold, 13px value, 10px goal text
+
+### Layout & Container Constraints
+- **Max Width**: 340px (fixed for mobile phone screen)
+- **Container Margin**: `0 auto` for center alignment
+- **Card Gaps**: 14px vertical spacing
+- **No horizontal scrolling**: All content fits within 340px
+- **Responsive**: Mobile media query removes max-width on smaller screens
+
+### Memoized Components
+- **DashboardCard wrapper**: Memoized to prevent unnecessary re-renders
+  - Handles all shadow and hover effects consistently
+  - Reduces boilerplate in main component
+  - Improves performance with React.memo()
+
+### DonutChart Optimization
+- **Simplified SVG**: Only chart rendering, no background panel
+- **Drop-shadow filter**: Single filter instead of box-shadow
+- **Smaller footprint**: 100px vs 160px (40% size reduction)
+- **Better for mobile**: Fits proportionally in compact layout
+
+### Mini Bar Chart Enhancement
+- **Gap adjustment**: 4px (up from 3px) for better visual separation
+- **Height**: Still 40px but responsive to content
+- **Color consistent**: Purple (#8B7FB8) for trend visualization
+
+### Testing Checklist - Refinements
+- [x] Card shadows render correctly (dual-layer)
+- [x] Hover effects smooth and natural (cubic-bezier animation)
+- [x] 340px container constraint respected
+- [x] No horizontal scrolling on mobile
+- [x] Donut circle floating element works
+- [x] Legend positioned below circle
+- [x] Macros grid layout displays properly
+- [x] Calorie comparison section readable
+- [x] Color updates applied (pink, plum, gold)
+- [x] Status badge styling updated
+- [x] All padding/margins reduced as spec
+- [x] Rounded corners at 12px
+- [x] Build succeeds without warnings
+- [x] Component renders without errors
+
+### File Updated
+- `components/NutritionDashboardPro.tsx` - Full redesign implementation
+
+---
+
 ## Conclusion
 
-### Phase Completion
-The Camera tab (Grocery Inventory) is fully implemented with the TrailMix design system. The Dashboard tab now features a sophisticated, production-ready NutritionDashboardPro component matching the professional mockup with a 2-column layout (donut chart + 3 detail cards). Three clickable detail pages provide drill-down views for metrics.
+### Phase Completion - Polish & Refinement
+The NutritionDashboardPro has been refined with sophisticated 3D depth styling, optimized card layouts, and mobile-first constraints. All visual refinements complete without changing business logic or data structure.
 
-### Key Achievements
-1. **Mockup-Driven Design**: Dashboard exactly matches the professional inspiration image
-2. **Clickable Cards**: Each metric card navigates to a dedicated detail page
-3. **Color-Coded Macros**: P (pink), C (purple), F (yellow) for instant visual scanning
-4. **Data Integration**: Pulls from nutrition and Strava APIs with caching
-5. **Mobile-Optimized**: 2-column layout with responsive grid and 44px+ touch targets
-6. **Detail Pages**: Full macro, calorie, and deficit breakdown pages with context
+### Key Achievements (Phase 8 Refinements)
+1. **3D Depth System**: Dual-layer shadows with smooth hover elevation
+2. **Simplified Macro Circle**: Floating SVG element with drop-shadow only
+3. **Redesigned Macros Card**: 3-column grid layout with calorie comparison
+4. **340px Optimization**: Container constraint with snug spacing
+5. **Memoized Components**: Performance improvements via React.memo()
+6. **Color Refinement**: Updated macro colors for better readability
+7. **Mobile-First Design**: Reduced padding and margins for compact screens
 
 ### Next Steps
 1. Settings tab: Strava OAuth connection and macro goal configuration
-2. Fine-tune animations based on user feedback
-3. Consider pagination if inventory grows beyond 20 items
-4. Monitor Strava token refresh edge cases
-5. Test PWA install on iOS/Android devices
-6. Add more analytics/historical trends on detail pages
+2. Test responsive design on iOS/Android PWA devices
+3. Monitor performance on low-end devices
+4. Consider pagination if inventory grows beyond 20 items
+5. Gather user feedback on card interactions
+6. Optimize Strava token refresh edge cases
