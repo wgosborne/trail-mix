@@ -809,10 +809,76 @@ The NutritionDashboardPro has been refined with sophisticated 3D depth styling, 
 6. **Color Refinement**: Updated macro colors for better readability
 7. **Mobile-First Design**: Reduced padding and margins for compact screens
 
+## Intake Tab Redesign - Tabbed Navigation (May 12, 2026)
+
+### Overview
+Redesigned the Grocery Inventory page (/app/groceries/page.tsx) with a tabbed interface to separate "Add" actions from "Inventory" viewing. This improves UX by reducing cognitive load and organizing workflows.
+
+### Implementation Details
+
+**Pill-Style Tab Buttons**
+- **Location**: Top of page, below header
+- **Style**: Two rounded buttons with gradient backgrounds
+  - Active: Full purple gradient (`linear-gradient(to right, #8B7FB8, #D67BB8, #5B7FD4)`)
+  - Active shadow: `0 4px 12px rgba(139, 127, 184, 0.3)`
+  - Inactive: Light gray background (#F5F5F5)
+  - Inactive text: #666666
+- **Sizing**: 
+  - flex: 1 (equal width distribution)
+  - minWidth: 140px
+  - padding: 12px 20px
+  - borderRadius: 24px (pill shape)
+- **Typography**: 
+  - 14px, 600 weight
+  - Smooth transition: `all 0.3s ease`
+
+**Default State**
+- Active tab on load: "Add+" tab
+- Rationale: Users typically add items first before viewing inventory
+
+**Tab Content Organization**
+
+1. **Add+ Tab** (activeTab === 'add')
+   - Week Navigator (authenticated users only)
+   - Receipt Uploader component
+   - Grocery Form component
+   - Extracted items processing flow
+
+2. **Inventory Tab** (activeTab === 'inventory')
+   - Week Navigator (authenticated users only)
+   - "This Week" section header with accent bar
+   - Loading skeleton state
+   - GroceryInventory component with all items, update/delete actions
+
+**State Management**
+- New state variable: `activeTab` with type `'add' | 'inventory'`
+- Default state: `'add'`
+- Toggle via button onClick handlers
+
+**Responsive Design**
+- Pill buttons use flexWrap: 'wrap' for mobile fallback
+- minWidth 140px ensures buttons don't collapse on small screens
+- Content below tabs remains full-width and responsive
+
+### Visual Hierarchy
+The tab buttons appear immediately after the page header and before any content, making it clear to users what mode they're in. Color-coded active state reinforces the current selection.
+
+### File Updated
+- `app/groceries/page.tsx` - Added activeTab state and conditional rendering
+
+### Testing Checklist
+- [x] "Add+" tab shows ReceiptUploader and GroceryForm
+- [x] "Inventory" tab shows GroceryInventory with "This Week" section
+- [x] Clicking tabs toggles content (mutually exclusive)
+- [x] "Add+" tab is active by default
+- [x] Active tab has gradient background and shadow
+- [x] Inactive tab has gray background
+- [x] Pill buttons responsive on mobile
+- [x] Week Navigator appears in both tabs for authenticated users
+- [x] Smooth transitions between tab views
+
 ### Next Steps
-1. Settings tab: Strava OAuth connection and macro goal configuration
-2. Test responsive design on iOS/Android PWA devices
-3. Monitor performance on low-end devices
-4. Consider pagination if inventory grows beyond 20 items
-5. Gather user feedback on card interactions
-6. Optimize Strava token refresh edge cases
+1. User testing for workflow preference (Add+ first vs. Inventory first)
+2. Add animation when switching tabs (optional: slide/fade effect)
+3. Consider tab state persistence in localStorage for returning users
+4. Monitor if tabbed layout improves add/view workflow separation

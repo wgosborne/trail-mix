@@ -463,65 +463,41 @@ export function NutritionDashboardPro({
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      gap: '14px',
-      backgroundColor: '#8B7FB8',
-      borderRadius: '24px',
-      padding: '20px',
-      minHeight: 'calc(100vh - 200px)',
-      position: 'relative',
-      maxWidth: '340px',
-      margin: '0 auto'
+      gap: '24px',
+      backgroundColor: 'transparent',
+      padding: '0',
+      minHeight: 'auto',
+      position: 'relative'
     }}>
-      {/* Background decoration */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        width: '200px',
-        height: '200px',
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: '50%',
-        filter: 'blur(40px)'
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        width: '150px',
-        height: '150px',
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: '50%',
-        filter: 'blur(40px)'
-      }} />
 
-      {/* Header with title and date range */}
-      <div style={{ position: 'relative', zIndex: 1, marginBottom: '4px' }}>
-        <h2 style={{
-          fontSize: '28px',
-          fontWeight: 700,
-          color: '#FFFFFF',
-          margin: '0 0 4px 0',
-          letterSpacing: '-0.3px'
-        }}>
-          Trail Mix
-        </h2>
-        <p style={{
-          fontSize: '13px',
-          color: 'rgba(255, 255, 255, 0.9)',
-          margin: 0,
-          lineHeight: '1.5'
-        }}>
-          {formatDateRange(weekStart)}
-        </p>
+      {/* Header with title */}
+      <div style={{ position: 'relative', zIndex: 1, marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ height: '3px', width: '36px', background: '#8B7FB8' }} />
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: 700,
+            color: '#2C2C2A',
+            margin: '0',
+            letterSpacing: '-0.3px'
+          }}>
+            Weekly Dashboard
+          </h1>
+        </div>
       </div>
 
       {/* Week Navigator */}
-      <div style={{ position: 'relative', zIndex: 1, marginBottom: '4px' }}>
+      <div style={{ position: 'relative', zIndex: 1, marginBottom: '8px' }}>
         <WeekNavigator onWeekChange={onWeekChange} />
       </div>
 
-      {/* Main Layout: Donut + Stacked Cards */}
-      <>
+      {/* Main Layout: Cards in Responsive Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '24px',
+        width: '100%'
+      }}>
         {/* Macro Circle Card - Floating Element */}
           <DashboardCard onClick={() => router.push('/metrics/macros')}>
             <p style={{
@@ -729,7 +705,7 @@ export function NutritionDashboardPro({
               </div>
             </div>
           </DashboardCard>
-      </>
+      </div>
 
       <style>{`
         @keyframes pulse {

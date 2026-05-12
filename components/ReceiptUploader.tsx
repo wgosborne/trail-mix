@@ -132,17 +132,36 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
   };
 
   return (
-    <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DC', borderRadius: '10px', padding: '20px' }}>
+    <div style={{
+      backgroundColor: '#F8F5FF',
+      border: '1px solid #E8E4DC',
+      borderRadius: '10px',
+      padding: '20px',
+      boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
+      transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)',
+      cursor: 'default'
+    }}
+    onMouseEnter={(e) => {
+      const el = e.currentTarget as HTMLDivElement;
+      el.style.transform = 'translateY(-6px)';
+      el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)';
+    }}
+    onMouseLeave={(e) => {
+      const el = e.currentTarget as HTMLDivElement;
+      el.style.transform = 'translateY(0)';
+      el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
+    }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
         <div
           style={{
             height: '3px',
             width: '24px',
-            background: 'linear-gradient(to right, #8B7FB8, #D67BB8, #5B7FD4)'
+            background: '#8B7FB8'
           }}
         />
         <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-          📸 Upload Receipt
+          Upload Receipt
         </h2>
       </div>
 
@@ -177,9 +196,9 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
         }}
       >
         {loading ? (
-          nutritionStatus ? `⏳ ${nutritionStatus}` : '⏳ Processing receipt...'
+          nutritionStatus ? `${nutritionStatus}` : 'Processing receipt...'
         ) : (
-          '📷 Click to upload or take photo'
+          'Click to upload or take photo'
         )}
       </button>
 

@@ -34,7 +34,7 @@ export default function DashboardTab() {
     return (
       <div style={{ padding: '16px 20px' }}>
         <div style={{ marginBottom: '20px' }}>
-          <div style={{ height: '3px', width: '36px', background: 'linear-gradient(to right, #8B7FB8, #D67BB8, #5B7FD4)', marginBottom: '12px' }} />
+          <div style={{ height: '3px', width: '36px', background: '#8B7FB8', marginBottom: '12px' }} />
           <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#2C2C2A', marginBottom: '8px', letterSpacing: '-0.3px' }}>Weekly Summary</h1>
           <p style={{ fontSize: '13px', color: '#999999', lineHeight: '1.5' }}>Your nutrition breakdown and training metrics.</p>
         </div>

@@ -59,6 +59,7 @@ export default function CameraTab() {
   const [authLoading, setAuthLoading] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ParsedItem[]>([]);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'add' | 'inventory'>('add');
   const [weekStart, setWeekStart] = useState<string>(() => {
     const d = new Date();
     const dayOfWeek = d.getUTCDay();
@@ -267,7 +268,7 @@ export default function CameraTab() {
         <div style={{
           height: '3px',
           width: '36px',
-          background: 'linear-gradient(to right, #8B7FB8, #D67BB8, #5B7FD4)',
+          background: '#8B7FB8',
           marginBottom: '12px'
         }} />
         <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#2C2C2A', marginBottom: '8px', letterSpacing: '-0.3px' }}>Grocery Inventory</h1>
@@ -276,55 +277,98 @@ export default function CameraTab() {
         </p>
       </div>
 
-      {session?.user && <WeekNavigator onWeekChange={handleWeekChange} />}
-
-      <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-        <ReceiptUploader onItemsExtracted={handleItemsExtracted} />
+      {/* Tab Navigation */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
+        <button
+          onClick={() => setActiveTab('add')}
+          style={{
+            flex: 1,
+            minWidth: '140px',
+            padding: '12px 20px',
+            borderRadius: '24px',
+            border: 'none',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            background: activeTab === 'add'
+              ? '#8B7FB8'
+              : '#F5F5F5',
+            color: activeTab === 'add' ? '#FFFFFF' : '#666666',
+            boxShadow: activeTab === 'add' ? '0 4px 12px rgba(139, 127, 184, 0.3)' : 'none'
+          }}
+        >
+          Add+
+        </button>
+        <button
+          onClick={() => setActiveTab('inventory')}
+          style={{
+            flex: 1,
+            minWidth: '140px',
+            padding: '12px 20px',
+            borderRadius: '24px',
+            border: 'none',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            background: activeTab === 'inventory'
+              ? '#8B7FB8'
+              : '#F5F5F5',
+            color: activeTab === 'inventory' ? '#FFFFFF' : '#666666',
+            boxShadow: activeTab === 'inventory' ? '0 4px 12px rgba(139, 127, 184, 0.3)' : 'none'
+          }}
+        >
+          Inventory
+        </button>
       </div>
 
+      {/* Add Tab Content */}
+      {activeTab === 'add' && (
+        <div>
+          {session?.user && <WeekNavigator onWeekChange={handleWeekChange} />}
 
-      <div style={{ marginTop: '20px', marginBottom: '20px' }} id="grocery-form">
-        <GroceryForm
-          onSubmit={extractedItems.length > 0 ? handleAddExtractedItem : handleAddGrocery}
-          loading={loading}
-          initialFoodName={currentExtractedItem?.name}
-          initialQuantity={currentExtractedItem?.quantity}
-          initialUnit={currentExtractedItem?.unit}
-          initialNutrition={currentExtractedItem?.nutrition}
-          extractedItemsCount={extractedItems.length}
-          currentItemIndex={selectedItemIndex}
-          onSkip={handleSkipExtractedItem}
-        />
-      </div>
-
-      <div style={{ marginTop: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <div
-            style={{
-              height: '3px',
-              width: '24px',
-              background: 'linear-gradient(to right, #8B7FB8, #D67BB8, #5B7FD4)'
-            }}
-          />
-          <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#2C2C2A', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-            This Week
-          </h2>
-        </div>
-        {isLoadingGroceries ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[1, 2, 3].map((i) => (
-              <div key={i} style={{ backgroundColor: '#F8F5FF', border: '1px solid #E8E4DC', borderRadius: '10px', padding: '16px', minHeight: '100px', animation: 'pulse 2s infinite' }} />
-            ))}
-            <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
+          <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+            <ReceiptUploader onItemsExtracted={handleItemsExtracted} />
           </div>
-        ) : (
-          <GroceryInventory
-            groceries={groceriesToDisplay}
-            onUpdate={handleUpdateGrocery}
-            onDelete={handleDeleteGrocery}
-          />
-        )}
-      </div>
+
+          <div style={{ marginTop: '20px', marginBottom: '20px' }} id="grocery-form">
+            <GroceryForm
+              onSubmit={extractedItems.length > 0 ? handleAddExtractedItem : handleAddGrocery}
+              loading={loading}
+              initialFoodName={currentExtractedItem?.name}
+              initialQuantity={currentExtractedItem?.quantity}
+              initialUnit={currentExtractedItem?.unit}
+              initialNutrition={currentExtractedItem?.nutrition}
+              extractedItemsCount={extractedItems.length}
+              currentItemIndex={selectedItemIndex}
+              onSkip={handleSkipExtractedItem}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Inventory Tab Content */}
+      {activeTab === 'inventory' && (
+        <div style={{ marginTop: '24px' }}>
+          {session?.user && <WeekNavigator onWeekChange={handleWeekChange} />}
+
+          {isLoadingGroceries ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {[1, 2, 3].map((i) => (
+                <div key={i} style={{ backgroundColor: '#F8F5FF', border: '1px solid #E8E4DC', borderRadius: '10px', padding: '16px', minHeight: '100px', animation: 'pulse 2s infinite' }} />
+              ))}
+              <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
+            </div>
+          ) : (
+            <GroceryInventory
+              groceries={groceriesToDisplay}
+              onUpdate={handleUpdateGrocery}
+              onDelete={handleDeleteGrocery}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

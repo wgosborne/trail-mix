@@ -222,58 +222,6 @@ function SettingsContent() {
         </div>
       )}
 
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#2C2C2A', marginBottom: '12px' }}>Strava Integration</h2>
-        {!loading && (
-          <>
-            {isConnected ? (
-              <div style={{
-                backgroundColor: '#F0EFE8',
-                border: '1px solid #D4C5E2',
-                borderRadius: '6px',
-                padding: '16px',
-                marginBottom: '12px'
-              }}>
-                <p style={{ fontSize: '14px', color: '#8B7FB8', marginBottom: '12px' }}>✓ Strava Connected</p>
-                <button
-                  onClick={handleDisconnect}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#DC3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 500
-                  }}
-                >
-                  Disconnect Strava
-                </button>
-              </div>
-            ) : (
-              <a
-                href="/api/strava/authorize"
-                style={{
-                  display: 'inline-block',
-                  padding: '10px 16px',
-                  backgroundColor: '#8B7FB8',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  textDecoration: 'none'
-                }}
-              >
-                Connect Strava
-              </a>
-            )}
-          </>
-        )}
-      </div>
-
       {isConnected && (
         <div style={{ marginBottom: '24px' }}>
           <StravaConnect
@@ -288,8 +236,21 @@ function SettingsContent() {
           backgroundColor: '#FFFFFF',
           border: '1px solid #E8E4DC',
           borderRadius: '10px',
-          padding: '20px'
-        }}>
+          padding: '20px',
+          boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
+          transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)'
+        }}
+        onMouseEnter={(e) => {
+          const el = e.currentTarget as HTMLDivElement;
+          el.style.transform = 'translateY(-6px)';
+          el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)';
+        }}
+        onMouseLeave={(e) => {
+          const el = e.currentTarget as HTMLDivElement;
+          el.style.transform = 'translateY(0)';
+          el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
+        }}
+        >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
             <div>
               <label style={{ fontSize: '11px', fontWeight: 700, color: '#2C2C2A', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '8px' }}>
@@ -390,12 +351,91 @@ function SettingsContent() {
         backgroundColor: '#F8F5FF',
         border: '1px solid #E8E4DC',
         borderRadius: '10px',
-        padding: '24px'
-      }}>
+        padding: '24px',
+        marginBottom: '24px',
+        boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
+        transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)'
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.transform = 'translateY(-6px)';
+        el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)';
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.transform = 'translateY(0)';
+        el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
+      }}
+      >
         <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#2C2C2A', marginBottom: '12px' }}>Account</h2>
         <p style={{ fontSize: '14px', color: '#999999', marginBottom: '8px' }}>Email: {session.user.email}</p>
         {session.user.name && (
           <p style={{ fontSize: '14px', color: '#999999' }}>Name: {session.user.name}</p>
+        )}
+      </div>
+
+      <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#2C2C2A', marginBottom: '12px' }}>Strava Integration</h2>
+        {!loading && (
+          <>
+            {isConnected ? (
+              <div style={{
+                backgroundColor: '#F0EFE8',
+                border: '1px solid #D4C5E2',
+                borderRadius: '6px',
+                padding: '16px',
+                marginBottom: '12px',
+                boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
+                transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)'
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLDivElement;
+                el.style.transform = 'translateY(-6px)';
+                el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)';
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLDivElement;
+                el.style.transform = 'translateY(0)';
+                el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
+              }}
+              >
+                <p style={{ fontSize: '14px', color: '#8B7FB8', marginBottom: '12px' }}>✓ Strava Connected</p>
+                <button
+                  onClick={handleDisconnect}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#DC3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 500
+                  }}
+                >
+                  Disconnect Strava
+                </button>
+              </div>
+            ) : (
+              <a
+                href="/api/strava/authorize"
+                style={{
+                  display: 'inline-block',
+                  padding: '10px 16px',
+                  backgroundColor: '#8B7FB8',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  textDecoration: 'none'
+                }}
+              >
+                Connect Strava
+              </a>
+            )}
+          </>
         )}
       </div>
     </div>

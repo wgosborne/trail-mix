@@ -103,6 +103,34 @@ export default function CaloriesDetailPage() {
   const deficit = burned - consumed;
   const goal = data.goals.dailyCalories * 7;
 
+  // Calculate daily breakdown
+  const weekStartDate = new Date(data.week.start + 'T00:00:00Z');
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
+  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const dayDate = new Date(weekStartDate);
+    dayDate.setUTCDate(dayDate.getUTCDate() + i);
+    const isFuture = dayDate > today;
+    const isPast = dayDate < today;
+    const dayName = daysOfWeek[i];
+
+    // Estimate daily calories: divide by days passed
+    const daysPassed = Math.max(1, Math.floor((today.getTime() - weekStartDate.getTime()) / 86400000) + 1);
+    const estimatedDailyCalories = isPast || dayDate.getTime() === today.getTime()
+      ? Math.round(consumed / daysPassed)
+      : 0;
+
+    return {
+      name: dayName,
+      date: dayDate.toUTCString().split(' ').slice(0, 4).join(' '),
+      isFuture,
+      calories: estimatedDailyCalories,
+      goalCalories: data.goals.dailyCalories
+    };
+  });
+
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
@@ -257,6 +285,81 @@ export default function CaloriesDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Daily Breakdown */}
+      <div style={{ marginTop: '32px' }}>
+        <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 16px 0', color: '#2C2C2A' }}>Daily Breakdown</h2>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+          gap: '12px'
+        }}>
+          {days.map((day) => (
+            <div
+              key={day.name}
+              style={{
+                backgroundColor: day.isFuture ? '#F5F5F5' : '#F8F5FF',
+                border: `1px solid ${day.isFuture ? '#E0E0E0' : '#E8E4DC'}`,
+                borderRadius: '10px',
+                padding: '16px',
+                textAlign: 'center',
+                boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
+                transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)',
+                opacity: day.isFuture ? 0.6 : 1,
+                cursor: 'default'
+              }}
+              onMouseEnter={(e) => {
+                if (!day.isFuture) {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.transform = 'translateY(-6px)';
+                  el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!day.isFuture) {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.transform = 'translateY(0)';
+                  el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
+                }
+              }}
+            >
+              <p style={{
+                fontSize: '12px',
+                fontWeight: 700,
+                color: day.isFuture ? '#999999' : '#2C2C2A',
+                margin: '0 0 8px 0',
+                textTransform: 'uppercase',
+                letterSpacing: '0.4px'
+              }}>
+                {day.name}
+              </p>
+              <p style={{
+                fontSize: '11px',
+                color: day.isFuture ? '#CCCCCC' : '#999999',
+                margin: '0 0 12px 0'
+              }}>
+                {day.date}
+              </p>
+              <p style={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: day.isFuture ? '#CCCCCC' : '#8B7FB8',
+                margin: '0 0 4px 0',
+                lineHeight: 1
+              }}>
+                {day.calories}
+              </p>
+              <p style={{
+                fontSize: '11px',
+                color: day.isFuture ? '#CCCCCC' : '#999999',
+                margin: 0
+              }}>
+                kcal
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

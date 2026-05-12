@@ -86,12 +86,12 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
   if (!isConnected) {
     return (
       <div style={{
-        backgroundColor: '#E3F2FD',
-        border: '1px solid #90CAF9',
+        backgroundColor: '#F0EFE8',
+        border: '1px solid #D4C5E2',
         borderRadius: '6px',
         padding: '16px'
       }}>
-        <p style={{ fontSize: '14px', color: '#1976D2', marginBottom: '12px' }}>
+        <p style={{ fontSize: '14px', color: '#8B7FB8', marginBottom: '12px' }}>
           Connect your Strava to see your training data and compare with nutrition.
         </p>
         <a
@@ -99,7 +99,7 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
           style={{
             display: 'inline-block',
             padding: '10px 16px',
-            backgroundColor: '#1976D2',
+            backgroundColor: '#8B7FB8',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -132,7 +132,7 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
           style={{
             padding: '8px 16px',
             fontSize: '13px',
-            backgroundColor: loading ? '#CCCCCC' : '#1976D2',
+            backgroundColor: loading ? '#CCCCCC' : '#8B7FB8',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -163,12 +163,25 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
       )}
 
       <div style={{
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#F8F5FF',
         padding: '16px',
         borderRadius: '6px',
-        marginBottom: '12px'
-      }}>
-        <p style={{ fontSize: '28px', fontWeight: 700, color: '#FF6B35', margin: '0 0 4px 0' }}>
+        marginBottom: '12px',
+        boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
+        transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)'
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.transform = 'translateY(-6px)';
+        el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)';
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.transform = 'translateY(0)';
+        el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
+      }}
+      >
+        <p style={{ fontSize: '28px', fontWeight: 700, color: '#8B7FB8', margin: '0 0 4px 0' }}>
           {Math.round(weekTotal.caloriesBurned)} cal
         </p>
         <p style={{ fontSize: '13px', color: '#999999', margin: 0 }}>burned this week</p>
@@ -184,11 +197,11 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
               <div
                 key={activity.stravaId}
                 style={{
-                  backgroundColor: '#FAFAFA',
+                  backgroundColor: '#F8F5FF',
                   padding: '10px',
                   borderRadius: '4px',
                   fontSize: '13px',
-                  borderLeft: '3px solid #FF6B35'
+                  borderLeft: '3px solid #8B7FB8'
                 }}
               >
                 <p style={{ fontWeight: 600, color: '#2C2C2A', margin: '0 0 4px 0' }}>

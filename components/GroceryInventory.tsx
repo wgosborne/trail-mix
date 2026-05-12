@@ -237,6 +237,18 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
             border: '1px solid #E8E4DC',
             borderRadius: '10px',
             padding: '16px',
+            boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
+            transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)',
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLDivElement;
+            el.style.transform = 'translateY(-6px)';
+            el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)';
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLDivElement;
+            el.style.transform = 'translateY(0)';
+            el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
@@ -244,7 +256,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
               style={{
                 height: '3px',
                 width: '24px',
-                background: 'linear-gradient(to right, #8B7FB8, #D67BB8, #5B7FD4)'
+                background: '#8B7FB8'
               }}
             />
             <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>INVENTORY TOTAL</p>
@@ -303,6 +315,18 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
               border: '1px solid #E8E4DC',
               borderRadius: '10px',
               padding: '16px',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
+              transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)',
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.style.transform = 'translateY(-6px)';
+              el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)';
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.style.transform = 'translateY(0)';
+              el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
