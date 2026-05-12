@@ -187,7 +187,7 @@ function SettingsContent() {
         <div style={{
           height: '3px',
           width: '36px',
-          background: 'linear-gradient(to right, #8B7FB8, #D67BB8, #5B7FD4)',
+          background: '#8B7FB8',
           marginBottom: '12px'
         }} />
         <h1 style={{ fontSize: '28px', fontWeight: 700, color: '#2C2C2A', marginBottom: '8px', letterSpacing: '-0.3px' }}>Settings</h1>
@@ -196,9 +196,9 @@ function SettingsContent() {
 
       {successMessage && (
         <div style={{
-          backgroundColor: '#D4EDDA',
-          border: '1px solid #C3E6CB',
-          color: '#155724',
+          backgroundColor: '#F0EFE8',
+          border: '1px solid #D4C5E2',
+          color: '#8B7FB8',
           padding: '12px 16px',
           borderRadius: '6px',
           marginBottom: '16px',
@@ -228,13 +228,13 @@ function SettingsContent() {
           <>
             {isConnected ? (
               <div style={{
-                backgroundColor: '#D4EDDA',
-                border: '1px solid #C3E6CB',
+                backgroundColor: '#F0EFE8',
+                border: '1px solid #D4C5E2',
                 borderRadius: '6px',
                 padding: '16px',
                 marginBottom: '12px'
               }}>
-                <p style={{ fontSize: '14px', color: '#155724', marginBottom: '12px' }}>✓ Strava Connected</p>
+                <p style={{ fontSize: '14px', color: '#8B7FB8', marginBottom: '12px' }}>✓ Strava Connected</p>
                 <button
                   onClick={handleDisconnect}
                   style={{
@@ -257,7 +257,7 @@ function SettingsContent() {
                 style={{
                   display: 'inline-block',
                   padding: '10px 16px',
-                  backgroundColor: '#FF6B35',
+                  backgroundColor: '#8B7FB8',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -278,7 +278,6 @@ function SettingsContent() {
         <div style={{ marginBottom: '24px' }}>
           <StravaConnect
             isConnected={isConnected}
-            onSync={() => setSuccessMessage('Activities synced!')}
           />
         </div>
       )}
@@ -388,7 +387,7 @@ function SettingsContent() {
       </div>
 
       <div style={{
-        backgroundColor: '#F5F8FF',
+        backgroundColor: '#F8F5FF',
         border: '1px solid #E8E4DC',
         borderRadius: '10px',
         padding: '24px'
