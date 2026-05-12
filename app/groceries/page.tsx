@@ -365,6 +365,7 @@ export default function CameraTab() {
               groceries={groceriesToDisplay}
               onUpdate={handleUpdateGrocery}
               onDelete={handleDeleteGrocery}
+              weekStart={weekStart}
             />
           )}
         </div>

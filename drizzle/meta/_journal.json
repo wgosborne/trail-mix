@@ -15,6 +15,13 @@
       "when": 1778512824219,
       "tag": "0001_public_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778600616799,
+      "tag": "0002_woozy_lockjaw",
+      "breakpoints": true
     }
   ]
 }

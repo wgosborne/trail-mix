@@ -80,11 +80,53 @@ export const groceryLookup = pgTable(
   })
 );
 
+export const userMeals = pgTable(
+  'user_meals',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    mealName: varchar('meal_name', { length: 255 }).notNull(),
+    description: text('description'),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  table => ({
+    userIdx: index('idx_meals_user').on(table.userId),
+  })
+);
+
+export const mealIngredients = pgTable(
+  'meal_ingredients',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    mealId: uuid('meal_id').notNull().references(() => userMeals.id, { onDelete: 'cascade' }),
+    groceryId: uuid('grocery_id').notNull().references(() => userGroceryInventory.id, { onDelete: 'cascade' }),
+    quantityUsed: decimal('quantity_used', { precision: 8, scale: 2 }).notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  table => ({
+    mealIdx: index('idx_meal_ingredients_meal').on(table.mealId),
+    groceryIdx: index('idx_meal_ingredients_grocery').on(table.groceryId),
+  })
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   groceries: many(userGroceryInventory),
   sessions: many(sessions),
+  meals: many(userMeals),
 }));
 
-export const groceryRelations = relations(userGroceryInventory, ({ one }) => ({
+export const groceryRelations = relations(userGroceryInventory, ({ one, many }) => ({
   user: one(users, { fields: [userGroceryInventory.userId], references: [users.id] }),
+  mealIngredients: many(mealIngredients),
+}));
+
+export const mealRelations = relations(userMeals, ({ one, many }) => ({
+  user: one(users, { fields: [userMeals.userId], references: [users.id] }),
+  ingredients: many(mealIngredients),
+}));
+
+export const mealIngredientsRelations = relations(mealIngredients, ({ one }) => ({
+  meal: one(userMeals, { fields: [mealIngredients.mealId], references: [userMeals.id] }),
+  grocery: one(userGroceryInventory, { fields: [mealIngredients.groceryId], references: [userGroceryInventory.id] }),
 }));

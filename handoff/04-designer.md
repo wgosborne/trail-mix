@@ -1210,3 +1210,116 @@ export function getMacroTags(nutrition: Nutrition): MacroTag[] {
 - [x] Bulk items get consistent tags regardless of quantity
 - [x] All existing test cases pass with new logic
 - [x] Component integration unchanged (same exports)
+
+## Goal Macro Breakdown Pie Chart - Inventory Comparison (May 12, 2026)
+
+### Overview
+Added a second pie chart to the Inventory Total section showing the user's daily macro goal breakdown (target percentages) alongside the current consumed macros breakdown. This allows users to visually compare their inventory composition against their nutritional targets.
+
+### Implementation Details
+
+**Data Calculation**
+- Consumed macros pie chart: Same as before (protein, carbs, fat from purchased items in calories)
+- Goal macros pie chart: Calculated from user's daily macro goals (protein goal, carbs goal, fat goal)
+- Both convert to calories: protein 4 cal/g, carbs 4 cal/g, fat 9 cal/g
+- Both display percentages and calorie values
+
+**Pie Chart Layout**
+- Grid: `gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'` for responsive two-column or single-column layout
+- Height: 220px per chart (down from 250px for better fit in grid)
+- Outer radius: 70px (down from 80px for proportion)
+- Gap: 16px between charts
+
+**Labels & Titles**
+- "Consumed Macros" - shown for all users (guests and authenticated)
+- "Goal Macros" - shown only for authenticated users with goals available
+- Both labels: 12px, 600 weight, uppercase, 0.4px letter-spacing, centered above chart
+- Maintained same color scheme: Purple (#8B7FB8) for Protein, Pink (#D67BB8) for Carbs, Tan (#C9845F) for Fat
+
+**Data Fetching**
+- Macro goals fetched from `/api/nutrition?week=${weekStart}` endpoint
+- New `useEffect` hook in GroceryInventory component
+- Fetches only for authenticated users (session?.user check)
+- Requires `weekStart` prop passed from parent page
+- Data cached in component state: `macroGoals` state variable
+
+**Component Updates**
+
+1. **GroceryInventory.tsx Changes:**
+   - Added `useSession` import for auth checking
+   - New `MacroGoals` interface for type safety
+   - New `weekStart` optional prop to GroceryInventoryProps
+   - Added `macroGoals` state to store fetched goals
+   - Added `useEffect` to fetch goals on mount/update
+   - Calculate `goalMacroBreakdownData` from macro goals
+   - Conditional rendering of Goal Macros chart only for authenticated users
+   - Updated pie chart grid layout for side-by-side display
+
+2. **app/groceries/page.tsx Changes:**
+   - Pass `weekStart` prop to GroceryInventory component
+   - No other changes needed (page already manages weekStart state)
+
+**Responsive Design**
+- Grid auto-fits to 2 columns on desktop (minmax 280px)
+- Stacks to 1 column on mobile/tablet when space is constrained
+- Charts remain readable with 220px height
+- Label positioning centered above each chart
+
+**Visual Hierarchy**
+- Both pie charts use identical styling and color coding
+- Same tooltip format: `${value} cal`
+- Labels clearly differentiate Consumed vs. Goal
+- Goal chart only appears when user is authenticated (reduces clutter for guests)
+
+### User Benefits
+1. **Macro Planning**: Users can see their current inventory composition vs. their daily targets at a glance
+2. **Meal Composition**: Helps identify if inventory is protein-heavy, carb-heavy, or balanced vs. goals
+3. **Quick Comparison**: No need to switch tabs or pages to compare consumed vs. goal macros
+4. **Goal Visualization**: Makes abstract daily goals more concrete (visual representation)
+5. **Responsive**: Works on mobile and desktop without breaking layout
+
+### Testing Checklist
+- [x] Consumed Macros pie chart displays correctly (all users)
+- [x] Goal Macros pie chart displays for authenticated users only
+- [x] Goal pie chart hidden for guest users (session?.user check works)
+- [x] Goal percentages calculated correctly from user's daily targets
+- [x] Both pie charts use same color scheme (purple/pink/tan)
+- [x] Charts positioned side-by-side on desktop
+- [x] Charts stack vertically on mobile (responsive grid)
+- [x] Labels are clear and positioned above each chart
+- [x] Tooltips show calorie values on hover
+- [x] Pie chart sizes are proportional (70px radius)
+- [x] Goal data fetches when weekStart changes
+- [x] TypeScript compilation succeeds without errors
+- [x] Build completes successfully
+- [x] Charts update when macro goals are changed in settings
+- [x] No rendering errors in dev server
+
+### Files Modified
+- `components/GroceryInventory.tsx` - Added goal pie chart logic and UI
+- `app/groceries/page.tsx` - Pass weekStart prop to GroceryInventory
+- `handoff/04-designer.md` - This documentation
+
+### Visual Examples
+
+**Scenario 1: User with Balanced Goals (50% carbs, 30% protein, 20% fat)**
+- Consumed chart: Shows actual inventory breakdown (e.g., 40% carbs, 35% protein, 25% fat)
+- Goal chart: Shows target breakdown (50% carbs, 30% protein, 20% fat)
+- User can see they need more carbs, slightly less protein
+
+**Scenario 2: Athlete with High-Protein Goals (40% protein, 45% carbs, 15% fat)**
+- Consumed chart: 20% protein, 65% carbs, 15% fat (not enough protein)
+- Goal chart: 40% protein, 45% carbs, 15% fat (target)
+- User immediately sees protein shortfall
+
+**Scenario 3: Guest User**
+- Only Consumed Macros chart displays
+- Goal Macros chart hidden (no authenticated user session)
+- Clean, simple interface for exploration
+
+### Next Improvements
+1. **Interactive Comparison**: Click on pie chart to show difference (consumed - goal)
+2. **Daily vs. Weekly Goals**: Toggle between daily and weekly macro targets
+3. **Smart Recommendations**: "Add 30g protein to match goals" suggestions
+4. **Goal Adjustment**: Quick inline button to adjust goals based on inventory
+5. **Historical Comparison**: Show how this week's inventory compares to previous weeks

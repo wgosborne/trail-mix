@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 import { ConfirmDialog } from './ConfirmDialog';
 import { AdjustAmountDialog } from './AdjustAmountDialog';
 import { EditNutritionDialog } from './EditNutritionDialog';
 import { showSuccess, showError } from '@/lib/toast';
 import { getMacroTags, getTagColor } from '@/lib/macro-tags';
+import { useSession } from 'next-auth/react';
 
 interface Grocery {
   id: string;
@@ -22,18 +23,29 @@ interface Grocery {
   };
 }
 
+interface MacroGoals {
+  dailyCalories: number;
+  dailyProtein: number;
+  dailyCarbs: number;
+  dailyFat: number;
+}
+
 interface GroceryInventoryProps {
   groceries: Grocery[];
   onUpdate: (id: string, percentConsumed: number) => void;
   onDelete: (id: string) => void;
+  weekStart?: string;
 }
 
-export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInventoryProps) {
+export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: GroceryInventoryProps) {
+  const { data: session } = useSession();
+  const [isInventoryExpanded, setIsInventoryExpanded] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string }>({
     isOpen: false,
     id: '',
     name: '',
   });
+  const [macroGoals, setMacroGoals] = useState<MacroGoals | null>(null);
   const [adjustDialog, setAdjustDialog] = useState<{
     isOpen: boolean;
     id: string;
@@ -154,6 +166,25 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
       isLoading: false,
     });
   };
+
+  // Fetch macro goals for authenticated users
+  useEffect(() => {
+    if (session?.user && weekStart) {
+      const fetchGoals = async () => {
+        try {
+          const response = await fetch(`/api/nutrition?week=${weekStart}`);
+          if (response.ok) {
+            const data = await response.json();
+            setMacroGoals(data.goals);
+          }
+        } catch (error) {
+          console.error('Error fetching macro goals:', error);
+        }
+      };
+      fetchGoals();
+    }
+  }, [session, weekStart]);
+
   if (!groceries.length) {
     return (
       <p
@@ -190,7 +221,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
 
-  // Calculate macro breakdown for pie chart (calories from each macro)
+  // Calculate macro breakdown for consumed pie chart (calories from each macro)
   const proteinCals = inventoryMacros.protein * 4;
   const carbsCals = inventoryMacros.carbs * 4;
   const fatCals = inventoryMacros.fat * 9;
@@ -199,6 +230,24 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
     { name: 'Carbs', value: Math.round(carbsCals), color: '#D67BB8' },
     { name: 'Fat', value: Math.round(fatCals), color: '#C9845F' },
   ];
+
+  // Calculate goal macro breakdown (calories from each macro goal)
+  let goalMacroBreakdownData = [
+    { name: 'Protein', value: 0, color: '#8B7FB8' },
+    { name: 'Carbs', value: 0, color: '#D67BB8' },
+    { name: 'Fat', value: 0, color: '#C9845F' },
+  ];
+
+  if (macroGoals) {
+    const goalProteinCals = macroGoals.dailyProtein * 4;
+    const goalCarbsCals = macroGoals.dailyCarbs * 4;
+    const goalFatCals = macroGoals.dailyFat * 9;
+    goalMacroBreakdownData = [
+      { name: 'Protein', value: Math.round(goalProteinCals), color: '#8B7FB8' },
+      { name: 'Carbs', value: Math.round(goalCarbsCals), color: '#D67BB8' },
+      { name: 'Fat', value: Math.round(goalFatCals), color: '#C9845F' },
+    ];
+  }
 
   return (
     <>
@@ -252,7 +301,30 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
             el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          {/* Header - Clickable to toggle expand/collapse */}
+          <button
+            onClick={() => setIsInventoryExpanded(!isInventoryExpanded)}
+            style={{
+              background: 'none',
+              border: 'none',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '12px',
+              cursor: 'pointer',
+              padding: '0',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLButtonElement;
+              el.style.opacity = '0.8';
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLButtonElement;
+              el.style.opacity = '1';
+            }}
+          >
             <div
               style={{
                 height: '3px',
@@ -260,9 +332,35 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
                 background: '#8B7FB8'
               }}
             />
-            <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>INVENTORY TOTAL</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '12px', textAlign: 'center', marginBottom: '16px' }}>
+            <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A', flex: 1, textAlign: 'left' }}>INVENTORY TOTAL</p>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '24px',
+                height: '24px',
+                transition: 'transform 0.3s ease',
+                transform: isInventoryExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+              }}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="#8B7FB8"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="6 9 10 13 14 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          {/* Summary Stats - Always visible */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '12px', textAlign: 'center', marginBottom: isInventoryExpanded ? '16px' : '0px', transition: 'margin-bottom 0.3s ease' }}>
             <div>
               <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Calories</p>
               <p style={{ fontSize: '18px', fontWeight: 700, color: '#5B7FD4' }}>{Math.round(inventoryMacros.calories)}</p>
@@ -280,30 +378,83 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
               <p style={{ fontSize: '18px', fontWeight: 700, color: '#C9845F' }}>{inventoryMacros.fat.toFixed(1)}g</p>
             </div>
           </div>
-          <div style={{ width: '100%', height: '250px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={macroBreakdownData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {macroBreakdownData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => `${value} cal`}
-                  contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DC', borderRadius: '8px' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+
+          {/* Pie Charts - Collapse/Expand */}
+          {isInventoryExpanded && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginTop: '12px', animation: 'fadeIn 0.3s ease' }}>
+              <style>{`
+                @keyframes fadeIn {
+                  from {
+                    opacity: 0;
+                    max-height: 0;
+                  }
+                  to {
+                    opacity: 1;
+                    max-height: 300px;
+                  }
+                }
+              `}</style>
+              {/* Inventory Macros Pie Chart */}
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '12px', textAlign: 'center' }}>Inventory Macros</p>
+                <div style={{ width: '100%', height: '220px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={macroBreakdownData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                        outerRadius={70}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {macroBreakdownData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) => `${value} cal`}
+                        contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DC', borderRadius: '8px' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Goal Macros Pie Chart (only show if authenticated and goals available) */}
+              {session?.user && macroGoals && (
+                <div>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '12px', textAlign: 'center' }}>Goal Macros</p>
+                  <div style={{ width: '100%', height: '220px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={goalMacroBreakdownData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                          outerRadius={70}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {goalMacroBreakdownData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value) => `${value} cal`}
+                          contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DC', borderRadius: '8px' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Grocery Items */}

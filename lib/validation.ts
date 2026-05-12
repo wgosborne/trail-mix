@@ -76,6 +76,49 @@ export const confirmationSchema = z.object({
     .refine(val => val === true, { message: 'Confirmation required' })
 });
 
+// Meal ingredient schema
+export const mealIngredientSchema = z.object({
+  groceryId: z.string()
+    .uuid('Invalid grocery ID'),
+  quantityUsed: z.number()
+    .positive('Quantity used must be greater than 0'),
+});
+
+// Create meal schema
+export const createMealSchema = z.object({
+  mealName: z.string()
+    .min(1, 'Meal name is required')
+    .max(255, 'Meal name must be 255 characters or less'),
+  description: z.string()
+    .max(1000, 'Description must be 1000 characters or less')
+    .optional()
+    .nullable(),
+  ingredients: z.array(mealIngredientSchema)
+    .min(1, 'At least one ingredient is required'),
+});
+
+// Update meal schema (partial)
+export const updateMealSchema = z.object({
+  mealName: z.string()
+    .min(1, 'Meal name is required')
+    .max(255, 'Meal name must be 255 characters or less')
+    .optional(),
+  description: z.string()
+    .max(1000, 'Description must be 1000 characters or less')
+    .optional()
+    .nullable(),
+  ingredients: z.array(mealIngredientSchema)
+    .min(1, 'At least one ingredient is required')
+    .optional(),
+}).strict();
+
+// Eat meal schema
+export const eatMealSchema = z.object({
+  dateConsumed: z.string()
+    .date('Invalid date format (YYYY-MM-DD)')
+    .optional(),
+});
+
 // Helper function to format validation errors for the user
 export function formatValidationError(error: z.ZodError<any>): string {
   const issues = error.issues || [];
