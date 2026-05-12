@@ -132,22 +132,28 @@ Return ONLY the JSON object, no markdown or extra text.`,
     }
 
     // Validate and transform response
+    const caloriesValue = parsed.nutrition?.calories ?? 0;
+    const proteinValue = parsed.nutrition?.protein ?? 0;
+    const carbsValue = parsed.nutrition?.carbs ?? 0;
+    const fatValue = parsed.nutrition?.fat ?? 0;
+    const fiberValue = parsed.nutrition?.fiber ?? undefined;
+
     const result: SearchResult = {
       id: `claude-${Date.now()}`,
       name: parsed.name || trimmedQuery,
       servingSize: parsed.servingSize,
       servingSizeUnit: parsed.servingSizeUnit,
       nutrition: {
-        calories: Math.round(parsed.nutrition?.calories || 0),
-        protein: Math.round(parsed.nutrition?.protein * 100) / 100 || 0,
-        carbs: Math.round(parsed.nutrition?.carbs * 100) / 100 || 0,
-        fat: Math.round(parsed.nutrition?.fat * 100) / 100 || 0,
-        fiber: parsed.nutrition?.fiber ? Math.round(parsed.nutrition.fiber * 100) / 100 : undefined,
+        calories: Math.round(caloriesValue),
+        protein: Math.round(proteinValue * 100) / 100,
+        carbs: Math.round(carbsValue * 100) / 100,
+        fat: Math.round(fatValue * 100) / 100,
+        fiber: fiberValue !== undefined ? Math.round(fiberValue * 100) / 100 : undefined,
       },
     };
 
-    // Only return if we have some nutrition data
-    if (result.nutrition.calories === 0 && result.nutrition.protein === 0) {
+    // Only return if we have actual data from Claude (parsed successfully)
+    if (parsed.nutrition === undefined || parsed.nutrition === null) {
       return NextResponse.json(
         {
           error: 'no_nutrition_found',

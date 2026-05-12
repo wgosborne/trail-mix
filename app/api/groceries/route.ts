@@ -69,11 +69,11 @@ export async function POST(req: NextRequest) {
       foodName,
       unit,
       {
-        calories: totalCalories ? Number(totalCalories) : null,
-        proteinG: proteinG ? Number(proteinG) : null,
-        carbsG: carbsG ? Number(carbsG) : null,
-        fatG: fatG ? Number(fatG) : null,
-        fiberG: body.fiberG ? parseFloat(body.fiberG) : null,
+        calories: totalCalories !== null && totalCalories !== undefined ? Number(totalCalories) : null,
+        proteinG: proteinG !== null && proteinG !== undefined ? Number(proteinG) : null,
+        carbsG: carbsG !== null && carbsG !== undefined ? Number(carbsG) : null,
+        fatG: fatG !== null && fatG !== undefined ? Number(fatG) : null,
+        fiberG: body.fiberG !== null && body.fiberG !== undefined ? parseFloat(body.fiberG) : null,
       },
       'user'
     );
