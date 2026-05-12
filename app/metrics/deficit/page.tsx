@@ -124,7 +124,7 @@ export default function DeficitDetailPage() {
           margin: '0 0 8px 0',
           lineHeight: 1
         }}>
-          {deficit > 0 ? '+' : ''}{(deficit / 1000).toFixed(1)}K
+          {deficit >= 0 ? '+' : '-'}{Math.abs(deficit).toLocaleString()}
         </p>
         <p style={{
           fontSize: '14px',
@@ -239,8 +239,8 @@ export default function DeficitDetailPage() {
           lineHeight: '1.5'
         }}>
           {deficit > 0
-            ? `You're in a calorie surplus of ${(deficit / 1000).toFixed(1)}K calories this week. You've eaten more than you burned, which is great for building muscle and energy levels.`
-            : `You're in a calorie deficit of ${Math.abs(deficit / 1000).toFixed(1)}K calories this week. You've burned more than you consumed, which supports fat loss goals.`}
+            ? `You're in a calorie surplus of ${Math.abs(deficit).toLocaleString()} calories this week. You've eaten more than you burned, which is great for building muscle and energy levels.`
+            : `You're in a calorie deficit of ${Math.abs(deficit).toLocaleString()} calories this week. You've burned more than you consumed, which supports fat loss goals.`}
         </p>
         <p style={{
           fontSize: '12px',

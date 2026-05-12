@@ -6,6 +6,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { AdjustAmountDialog } from './AdjustAmountDialog';
 import { EditNutritionDialog } from './EditNutritionDialog';
 import { showSuccess, showError } from '@/lib/toast';
+import { getMacroTags, getTagColor } from '@/lib/macro-tags';
 
 interface Grocery {
   id: string;
@@ -332,9 +333,34 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 700, color: '#2C2C2A', marginBottom: '4px' }}>{grocery.foodName}</p>
-                <p style={{ fontSize: '12px', color: '#999999' }}>
+                <p style={{ fontSize: '12px', color: '#999999', marginBottom: '8px' }}>
                   {grocery.quantityBought} {grocery.unit}
                 </p>
+
+                {/* Macro Category Tags */}
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {getMacroTags(grocery.nutrition).map((tag) => {
+                    const colors = getTagColor(tag);
+                    return (
+                      <span
+                        key={tag}
+                        style={{
+                          backgroundColor: colors.bg,
+                          border: `1px solid ${colors.border}`,
+                          color: colors.text,
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                          display: 'inline-block'
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '12px', marginLeft: '12px' }}>
                 <button
