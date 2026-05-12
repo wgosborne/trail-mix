@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 import { ConfirmDialog } from './ConfirmDialog';
 import { AdjustAmountDialog } from './AdjustAmountDialog';
 import { showSuccess } from '@/lib/toast';
@@ -112,6 +113,16 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
 
+  // Calculate macro breakdown for pie chart (calories from each macro)
+  const proteinCals = inventoryMacros.protein * 4;
+  const carbsCals = inventoryMacros.carbs * 4;
+  const fatCals = inventoryMacros.fat * 9;
+  const macroBreakdownData = [
+    { name: 'Protein', value: Math.round(proteinCals), color: '#8B7FB8' },
+    { name: 'Carbs', value: Math.round(carbsCals), color: '#D67BB8' },
+    { name: 'Fat', value: Math.round(fatCals), color: '#C9845F' },
+  ];
+
   return (
     <>
       <ConfirmDialog
@@ -154,7 +165,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
             />
             <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>INVENTORY TOTAL</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '12px', textAlign: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '12px', textAlign: 'center', marginBottom: '16px' }}>
             <div>
               <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Calories</p>
               <p style={{ fontSize: '18px', fontWeight: 700, color: '#5B7FD4' }}>{Math.round(inventoryMacros.calories)}</p>
@@ -171,6 +182,30 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
               <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Fat</p>
               <p style={{ fontSize: '18px', fontWeight: 700, color: '#C9845F' }}>{inventoryMacros.fat.toFixed(1)}g</p>
             </div>
+          </div>
+          <div style={{ width: '100%', height: '250px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={macroBreakdownData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {macroBreakdownData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value) => `${value} cal`}
+                  contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DC', borderRadius: '8px' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
