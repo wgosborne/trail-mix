@@ -34,6 +34,11 @@ export const groceryUpdateSchema = z.object({
     .min(1, 'Food name is required')
     .max(255, 'Food name must be 255 characters or less')
     .optional(),
+  totalCalories: z.number().nonnegative('Calories must be 0 or greater').optional().nullable(),
+  proteinG: z.number().nonnegative('Protein must be 0 or greater').optional().nullable(),
+  carbsG: z.number().nonnegative('Carbs must be 0 or greater').optional().nullable(),
+  fatG: z.number().nonnegative('Fat must be 0 or greater').optional().nullable(),
+  fiberG: z.number().nonnegative('Fiber must be 0 or greater').optional().nullable(),
 }).strict();
 
 // User goals/targets schema

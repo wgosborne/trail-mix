@@ -5,6 +5,7 @@ import { userGroceryInventory } from '@/schema/db';
 import { eq, and } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { groceryUpdateSchema, formatValidationError } from '@/lib/validation';
+import { upsertLookup } from '@/lib/grocery-lookup';
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -25,12 +26,28 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    const { percentConsumed, foodName } = validationResult.data;
+    const { percentConsumed, foodName, totalCalories, proteinG, carbsG, fatG, fiberG } = validationResult.data;
 
     // Build update object
     const updates: any = {};
     if (percentConsumed !== undefined) updates.percentConsumed = percentConsumed.toString();
     if (foodName !== undefined) updates.foodName = foodName.trim();
+    if (totalCalories !== undefined) updates.totalCalories = totalCalories ? totalCalories.toString() : null;
+    if (proteinG !== undefined) updates.proteinG = proteinG ? proteinG.toString() : null;
+    if (carbsG !== undefined) updates.carbsG = carbsG ? carbsG.toString() : null;
+    if (fatG !== undefined) updates.fatG = fatG ? fatG.toString() : null;
+    if (fiberG !== undefined) updates.fiberG = fiberG ? fiberG.toString() : null;
+
+    // Get the grocery before updating to access foodName and unit for lookup sync
+    const groceryBefore = await db
+      .select()
+      .from(userGroceryInventory)
+      .where(and(eq(userGroceryInventory.id, id as any), eq(userGroceryInventory.userId, userId as any)))
+      .limit(1);
+
+    if (groceryBefore.length === 0) {
+      return NextResponse.json({ error: 'Grocery not found' }, { status: 404 });
+    }
 
     // Update grocery (verify user owns it)
     const result = await db
@@ -38,6 +55,23 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       .set(updates)
       .where(and(eq(userGroceryInventory.id, id as any), eq(userGroceryInventory.userId, userId as any)))
       .returning();
+
+    // If nutrition was updated, sync to lookup table with 'user' source
+    if (result.length > 0 && (totalCalories !== undefined || proteinG !== undefined || carbsG !== undefined || fatG !== undefined || fiberG !== undefined)) {
+      const grocery = result[0];
+      await upsertLookup(
+        grocery.foodName,
+        grocery.unit,
+        {
+          calories: grocery.totalCalories ? Number(grocery.totalCalories) : null,
+          proteinG: grocery.proteinG ? Number(grocery.proteinG) : null,
+          carbsG: grocery.carbsG ? Number(grocery.carbsG) : null,
+          fatG: grocery.fatG ? Number(grocery.fatG) : null,
+          fiberG: grocery.fiberG ? Number(grocery.fiberG) : null,
+        },
+        'user'
+      );
+    }
 
     if (result.length === 0) {
       return NextResponse.json({ error: 'Grocery not found' }, { status: 404 });

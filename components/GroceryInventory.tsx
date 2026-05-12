@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 import { ConfirmDialog } from './ConfirmDialog';
 import { AdjustAmountDialog } from './AdjustAmountDialog';
-import { showSuccess } from '@/lib/toast';
+import { EditNutritionDialog } from './EditNutritionDialog';
+import { showSuccess, showError } from '@/lib/toast';
 
 interface Grocery {
   id: string;
@@ -42,6 +43,26 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
     isLoading: boolean;
   }>({ isOpen: false, id: '', name: '', quantityBought: 0, unit: '', percentConsumed: 0, isLoading: false });
 
+  const [editDialog, setEditDialog] = useState<{
+    isOpen: boolean;
+    id: string;
+    name: string;
+    nutrition: {
+      totalCalories: number | null;
+      proteinG: number | null;
+      carbsG: number | null;
+      fatG: number | null;
+      fiberG: number | null;
+    };
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    id: '',
+    name: '',
+    nutrition: { totalCalories: null, proteinG: null, carbsG: null, fatG: null, fiberG: null },
+    isLoading: false,
+  });
+
   const handleDeleteClick = (id: string, name: string) => {
     setDeleteConfirm({ isOpen: true, id, name });
   };
@@ -76,6 +97,61 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
 
   const handleCancelAdjust = () => {
     setAdjustDialog({ isOpen: false, id: '', name: '', quantityBought: 0, unit: '', percentConsumed: 0, isLoading: false });
+  };
+
+  const handleEditClick = (
+    id: string,
+    name: string,
+    nutrition: { totalCalories: number | null; proteinG: number | null; carbsG: number | null; fatG: number | null; fiberG: number | null }
+  ) => {
+    setEditDialog({ isOpen: true, id, name, nutrition, isLoading: false });
+  };
+
+  const handleConfirmEdit = async (nutrition: {
+    totalCalories: number | null;
+    proteinG: number | null;
+    carbsG: number | null;
+    fatG: number | null;
+    fiberG: number | null;
+  }) => {
+    setEditDialog((prev) => ({ ...prev, isLoading: true }));
+    try {
+      const response = await fetch(`/api/groceries/${editDialog.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nutrition),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        showError(error.error || 'Failed to update nutrition');
+        setEditDialog((prev) => ({ ...prev, isLoading: false }));
+        return;
+      }
+
+      onUpdate(editDialog.id, 0); // Trigger re-fetch of groceries
+      showSuccess(`Updated ${editDialog.name} nutrition info`);
+      setEditDialog({
+        isOpen: false,
+        id: '',
+        name: '',
+        nutrition: { totalCalories: null, proteinG: null, carbsG: null, fatG: null, fiberG: null },
+        isLoading: false,
+      });
+    } catch (error) {
+      showError('Failed to update nutrition');
+      setEditDialog((prev) => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditDialog({
+      isOpen: false,
+      id: '',
+      name: '',
+      nutrition: { totalCalories: null, proteinG: null, carbsG: null, fatG: null, fiberG: null },
+      isLoading: false,
+    });
   };
   if (!groceries.length) {
     return (
@@ -144,6 +220,14 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
         isLoading={adjustDialog.isLoading}
         onConfirm={handleConfirmAdjust}
         onCancel={handleCancelAdjust}
+      />
+      <EditNutritionDialog
+        isOpen={editDialog.isOpen}
+        itemName={editDialog.name}
+        currentNutrition={editDialog.nutrition}
+        isLoading={editDialog.isLoading}
+        onConfirm={handleConfirmEdit}
+        onCancel={handleCancelEdit}
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* Inventory Total - Moved to Top */}
@@ -276,11 +360,17 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
 
             {/* Nutrition Info - Color-coded cards - Responsive */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))',
-              gap: '8px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               marginBottom: '12px'
             }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))',
+                gap: '8px',
+                flex: 1
+              }}>
               {/* Calories - Blue */}
               <div
                 style={{
@@ -336,6 +426,32 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
                 <p style={{ fontSize: '9px', fontWeight: 700, color: '#C9845F', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Fat</p>
                 <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>{grocery.nutrition.fat.toFixed(1)}g</p>
               </div>
+              </div>
+              <button
+                onClick={() => handleEditClick(grocery.id, grocery.foodName, {
+                  totalCalories: grocery.nutrition.calories,
+                  proteinG: grocery.nutrition.protein,
+                  carbsG: grocery.nutrition.carbs,
+                  fatG: grocery.nutrition.fat,
+                  fiberG: null,
+                })}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#5B7FD4',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  textDecoration: 'underline',
+                  padding: '4px 6px',
+                  marginLeft: '8px',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#4A6FBE')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#5B7FD4')}
+              >
+                Edit
+              </button>
             </div>
 
             {/* Consumed Slider */}
