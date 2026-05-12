@@ -17,6 +17,13 @@ function getWeekStart(date: Date = new Date()): string {
   return monday.toISOString().split('T')[0];
 }
 
+// Helper function to get the previous week's Monday
+function getPreviousWeekStart(weekStart: string): string {
+  const date = new Date(weekStart);
+  date.setUTCDate(date.getUTCDate() - 7);
+  return date.toISOString().split('T')[0];
+}
+
 // POST /api/groceries - Create new grocery
 export async function POST(req: NextRequest) {
   try {
@@ -122,7 +129,27 @@ export async function GET(req: NextRequest) {
       where: and(eq(userGroceryInventory.userId, userId), eq(userGroceryInventory.weekStart, weekStart as any)),
     });
 
-    const formattedGroceries = groceries.map((g) => ({
+    // Fetch unconsumed items from the previous week to carry over
+    const previousWeekStart = getPreviousWeekStart(weekStart);
+    const unconsumedFromPrevious = await db.query.userGroceryInventory.findMany({
+      where: and(
+        eq(userGroceryInventory.userId, userId),
+        eq(userGroceryInventory.weekStart, previousWeekStart as any)
+      ),
+    });
+
+    // Filter to only unconsumed items (percentConsumed < 100)
+    const carriedOverItems = unconsumedFromPrevious
+      .filter((item) => Number(item.percentConsumed) < 100)
+      .map((item) => ({
+        ...item,
+        percentConsumed: 0 as any, // Reset consumption for the new week
+      }));
+
+    // Combine current week items with carried-over items
+    const allGroceries = [...groceries, ...carriedOverItems];
+
+    const formattedGroceries = allGroceries.map((g) => ({
       id: g.id,
       foodName: g.foodName,
       quantityBought: Number(g.quantityBought),
