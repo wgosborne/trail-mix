@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { ConfirmDialog } from './ConfirmDialog';
+import { AdjustAmountDialog } from './AdjustAmountDialog';
+import { showSuccess } from '@/lib/toast';
 
 interface Grocery {
   id: string;
@@ -27,8 +29,17 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string }>({
     isOpen: false,
     id: '',
-    name: ''
+    name: '',
   });
+  const [adjustDialog, setAdjustDialog] = useState<{
+    isOpen: boolean;
+    id: string;
+    name: string;
+    quantityBought: number;
+    unit: string;
+    percentConsumed: number;
+    isLoading: boolean;
+  }>({ isOpen: false, id: '', name: '', quantityBought: 0, unit: '', percentConsumed: 0, isLoading: false });
 
   const handleDeleteClick = (id: string, name: string) => {
     setDeleteConfirm({ isOpen: true, id, name });
@@ -41,6 +52,29 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
 
   const handleCancelDelete = () => {
     setDeleteConfirm({ isOpen: false, id: '', name: '' });
+  };
+
+  const handleAdjustClick = (id: string, name: string, quantityBought: number, unit: string, percentConsumed: number) => {
+    setAdjustDialog({
+      isOpen: true,
+      id,
+      name,
+      quantityBought,
+      unit,
+      percentConsumed,
+      isLoading: false,
+    });
+  };
+
+  const handleConfirmAdjust = (newPercent: number) => {
+    setAdjustDialog((prev) => ({ ...prev, isLoading: true }));
+    onUpdate(adjustDialog.id, newPercent);
+    showSuccess(`Updated ${adjustDialog.name} to ${newPercent}% consumed`);
+    setAdjustDialog({ isOpen: false, id: '', name: '', quantityBought: 0, unit: '', percentConsumed: 0, isLoading: false });
+  };
+
+  const handleCancelAdjust = () => {
+    setAdjustDialog({ isOpen: false, id: '', name: '', quantityBought: 0, unit: '', percentConsumed: 0, isLoading: false });
   };
   if (!groceries.length) {
     return (
@@ -79,6 +113,16 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
+      <AdjustAmountDialog
+        isOpen={adjustDialog.isOpen}
+        itemName={adjustDialog.name}
+        quantityBought={adjustDialog.quantityBought}
+        unit={adjustDialog.unit}
+        currentPercentConsumed={adjustDialog.percentConsumed}
+        isLoading={adjustDialog.isLoading}
+        onConfirm={handleConfirmAdjust}
+        onCancel={handleCancelAdjust}
+      />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* Grocery Items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -99,28 +143,50 @@ export function GroceryInventory({ groceries, onUpdate, onDelete }: GroceryInven
                   {grocery.quantityBought} {grocery.unit}
                 </p>
               </div>
-              <button
-                onClick={() => handleDeleteClick(grocery.id, grocery.foodName)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#D67BB8',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  marginLeft: '12px',
-                  textDecoration: 'underline',
-                  transition: 'color 0.2s',
-                  padding: '6px 8px',
-                  minHeight: '44px',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = '#B85A9A')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = '#D67BB8')}
-              >
-                Remove
-              </button>
+              <div style={{ display: 'flex', gap: '12px', marginLeft: '12px' }}>
+                <button
+                  onClick={() => handleAdjustClick(grocery.id, grocery.foodName, grocery.quantityBought, grocery.unit, grocery.percentConsumed)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#5B7FD4',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    textDecoration: 'underline',
+                    transition: 'color 0.2s',
+                    padding: '6px 8px',
+                    minHeight: '44px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#4A6FBE')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#5B7FD4')}
+                >
+                  Adjust
+                </button>
+                <button
+                  onClick={() => handleDeleteClick(grocery.id, grocery.foodName)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#D67BB8',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    textDecoration: 'underline',
+                    transition: 'color 0.2s',
+                    padding: '6px 8px',
+                    minHeight: '44px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#B85A9A')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#D67BB8')}
+                >
+                  Remove
+                </button>
+              </div>
             </div>
 
             {/* Nutrition Info - Color-coded cards - Responsive */}
