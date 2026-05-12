@@ -267,6 +267,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
               <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Quantity</label>
               <input
                 type="number"
+                min="0"
                 placeholder="Quantity"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
@@ -344,6 +345,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                 <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Calories (kcal)</label>
                 <input
                   type="number"
+                  min="0"
                   placeholder="Calories"
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
@@ -364,6 +366,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                 <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Protein (g)</label>
                 <input
                   type="number"
+                  min="0"
                   placeholder="Protein (g)"
                   value={protein}
                   onChange={(e) => setProtein(e.target.value)}
@@ -384,6 +387,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                 <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Carbs (g)</label>
                 <input
                   type="number"
+                  min="0"
                   placeholder="Carbs (g)"
                   value={carbs}
                   onChange={(e) => setCarbs(e.target.value)}
@@ -404,6 +408,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                 <label style={{ fontSize: '10px', fontWeight: 600, color: '#666666', display: 'block', marginBottom: '4px' }}>Fat (g)</label>
                 <input
                   type="number"
+                  min="0"
                   placeholder="Fat (g)"
                   value={fat}
                   onChange={(e) => setFat(e.target.value)}

@@ -258,6 +258,7 @@ function SettingsContent() {
               </label>
               <input
                 type="number"
+                min="0"
                 value={goals.dailyCalGoal}
                 onChange={(e) => setGoals({ ...goals, dailyCalGoal: parseInt(e.target.value) || 0 })}
                 style={{
@@ -266,7 +267,8 @@ function SettingsContent() {
                   border: '1px solid #E8E4DC',
                   borderRadius: '8px',
                   fontSize: '13px',
-                  fontFamily: 'inherit'
+                  fontFamily: 'inherit',
+                  minHeight: '44px',
                 }}
               />
             </div>
@@ -276,6 +278,7 @@ function SettingsContent() {
               </label>
               <input
                 type="number"
+                min="0"
                 step="0.1"
                 value={goals.dailyProteinG}
                 onChange={(e) => setGoals({ ...goals, dailyProteinG: parseFloat(e.target.value) || 0 })}
@@ -285,7 +288,8 @@ function SettingsContent() {
                   border: '1px solid #E8E4DC',
                   borderRadius: '8px',
                   fontSize: '13px',
-                  fontFamily: 'inherit'
+                  fontFamily: 'inherit',
+                  minHeight: '44px',
                 }}
               />
             </div>
@@ -295,6 +299,7 @@ function SettingsContent() {
               </label>
               <input
                 type="number"
+                min="0"
                 step="0.1"
                 value={goals.dailyCarbsG}
                 onChange={(e) => setGoals({ ...goals, dailyCarbsG: parseFloat(e.target.value) || 0 })}
@@ -304,7 +309,8 @@ function SettingsContent() {
                   border: '1px solid #E8E4DC',
                   borderRadius: '8px',
                   fontSize: '13px',
-                  fontFamily: 'inherit'
+                  fontFamily: 'inherit',
+                  minHeight: '44px',
                 }}
               />
             </div>
@@ -314,6 +320,7 @@ function SettingsContent() {
               </label>
               <input
                 type="number"
+                min="0"
                 step="0.1"
                 value={goals.dailyFatG}
                 onChange={(e) => setGoals({ ...goals, dailyFatG: parseFloat(e.target.value) || 0 })}
@@ -323,7 +330,8 @@ function SettingsContent() {
                   border: '1px solid #E8E4DC',
                   borderRadius: '8px',
                   fontSize: '13px',
-                  fontFamily: 'inherit'
+                  fontFamily: 'inherit',
+                  minHeight: '44px',
                 }}
               />
             </div>

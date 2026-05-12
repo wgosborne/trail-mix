@@ -94,7 +94,6 @@ export function EditNutritionDialog({
               step={0.1}
               value={nutrition.totalCalories ?? ''}
               onChange={(e) => handleChange('totalCalories', e.target.value)}
-              placeholder="0"
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -121,7 +120,6 @@ export function EditNutritionDialog({
               step={0.1}
               value={nutrition.proteinG ?? ''}
               onChange={(e) => handleChange('proteinG', e.target.value)}
-              placeholder="0"
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -148,7 +146,6 @@ export function EditNutritionDialog({
               step={0.1}
               value={nutrition.carbsG ?? ''}
               onChange={(e) => handleChange('carbsG', e.target.value)}
-              placeholder="0"
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -175,7 +172,6 @@ export function EditNutritionDialog({
               step={0.1}
               value={nutrition.fatG ?? ''}
               onChange={(e) => handleChange('fatG', e.target.value)}
-              placeholder="0"
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -202,7 +198,6 @@ export function EditNutritionDialog({
               step={0.1}
               value={nutrition.fiberG ?? ''}
               onChange={(e) => handleChange('fiberG', e.target.value)}
-              placeholder="0"
               style={{
                 width: '100%',
                 padding: '10px 12px',
