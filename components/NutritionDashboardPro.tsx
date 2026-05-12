@@ -604,7 +604,7 @@ export function NutritionDashboardPro({
               letterSpacing: '0.4px',
               margin: '0 0 8px 0'
             }}>
-              Weekly Deficit
+              Calorie Deficit
             </p>
             <p style={{
               fontSize: '32px',
@@ -613,14 +613,14 @@ export function NutritionDashboardPro({
               margin: '0 0 8px 0',
               lineHeight: 1
             }}>
-              {deficit > 0 ? '+' : ''}{(deficit / 1000).toFixed(1)}K
+              {deficit >= 0 ? '+' : '-'}{Math.abs(deficit).toLocaleString()}
             </p>
             <p style={{
               fontSize: '12px',
               color: '#999999',
               margin: '0 0 12px 0'
             }}>
-              calories on pace
+              cal · day {days} of 7
             </p>
             <div style={{
               display: 'inline-flex',
