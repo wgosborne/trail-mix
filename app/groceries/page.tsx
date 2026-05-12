@@ -5,6 +5,7 @@ import { GroceryForm } from '@/components/GroceryForm';
 import { GroceryInventory } from '@/components/GroceryInventory';
 import { WeekNavigator } from '@/components/WeekNavigator';
 import { ReceiptUploader } from '@/components/ReceiptUploader';
+import { MealsTab } from '@/components/MealsTab';
 import { useGuestGroceries } from '@/hooks/useGuestGroceries';
 import { showSuccess, showError } from '@/lib/toast';
 import { useState, useEffect } from 'react';
@@ -59,12 +60,13 @@ export default function CameraTab() {
   const [authLoading, setAuthLoading] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ParsedItem[]>([]);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'add' | 'inventory'>('add');
+  const [activeTab, setActiveTab] = useState<'add' | 'inventory' | 'meals'>('add');
   const [weekStart, setWeekStart] = useState<string>(() => {
     const d = new Date();
-    const dayOfWeek = d.getUTCDay();
-    const diff = d.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-    const monday = new Date(d.setUTCDate(diff));
+    const dayOfWeek = d.getDay();
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - daysFromMonday);
     return monday.toISOString().split('T')[0];
   });
 
@@ -321,6 +323,27 @@ export default function CameraTab() {
         >
           Inventory
         </button>
+        <button
+          onClick={() => setActiveTab('meals')}
+          style={{
+            flex: 1,
+            minWidth: '140px',
+            padding: '12px 20px',
+            borderRadius: '24px',
+            border: 'none',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            background: activeTab === 'meals'
+              ? '#8B7FB8'
+              : '#F5F5F5',
+            color: activeTab === 'meals' ? '#FFFFFF' : '#666666',
+            boxShadow: activeTab === 'meals' ? '0 4px 12px rgba(139, 127, 184, 0.3)' : 'none'
+          }}
+        >
+          Meals
+        </button>
       </div>
 
       {/* Add Tab Content */}
@@ -368,6 +391,14 @@ export default function CameraTab() {
               weekStart={weekStart}
             />
           )}
+        </div>
+      )}
+
+      {/* Meals Tab Content */}
+      {activeTab === 'meals' && (
+        <div style={{ marginTop: '24px' }}>
+          {session?.user && <WeekNavigator onWeekChange={handleWeekChange} />}
+          <MealsTab weekStart={weekStart} />
         </div>
       )}
     </div>
