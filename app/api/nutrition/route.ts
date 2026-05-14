@@ -22,12 +22,29 @@ export async function GET(request: NextRequest) {
     where: eq(users.id, userId),
   });
 
-  const groceries = await db.query.userGroceryInventory.findMany({
+  // Fetch groceries for the current week
+  const weekGroceries = await db.query.userGroceryInventory.findMany({
     where: and(
       eq(userGroceryInventory.userId, userId),
       eq(userGroceryInventory.weekStart, weekStart)
     ),
   });
+
+  // Fetch unconsumed items from previous week (carryover)
+  const previousWeekStart = getPreviousWeekStart(weekStart);
+  const previousWeekGroceries = await db.query.userGroceryInventory.findMany({
+    where: and(
+      eq(userGroceryInventory.userId, userId),
+      eq(userGroceryInventory.weekStart, previousWeekStart)
+    ),
+  });
+
+  const carriedOverItems = previousWeekGroceries.filter(
+    (item) => Number(item.percentConsumed) < 100
+  );
+
+  // Combine current week + carryover items
+  const groceries = [...weekGroceries, ...carriedOverItems];
 
   // Calculate consumed macros
   const totals = groceries.reduce(
@@ -66,6 +83,12 @@ export async function GET(request: NextRequest) {
       dailyFat: parseFloat(user?.dailyFatG || '65'),
     },
   });
+}
+
+function getPreviousWeekStart(weekStart: string): string {
+  const date = new Date(weekStart);
+  date.setUTCDate(date.getUTCDate() - 7);
+  return date.toISOString().split('T')[0];
 }
 
 function getWeekEnd(weekStart: string): string {

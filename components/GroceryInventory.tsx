@@ -39,7 +39,7 @@ interface GroceryInventoryProps {
 
 export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: GroceryInventoryProps) {
   const { data: session } = useSession();
-  const [isInventoryExpanded, setIsInventoryExpanded] = useState(true);
+  const [isInventoryExpanded, setIsInventoryExpanded] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string }>({
     isOpen: false,
     id: '',
@@ -655,7 +655,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
               </button>
             </div>
 
-            {/* Consumed Slider */}
+            {/* Consumed Slider - Mobile Friendly */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0' }}>
               <input
                 type="range"
@@ -665,15 +665,45 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
                 onChange={(e) => onUpdate(grocery.id, parseFloat(e.target.value))}
                 style={{
                   flex: 1,
-                  height: '8px',
-                  backgroundColor: '#E8E4DC',
-                  borderRadius: '4px',
+                  height: '12px',
                   appearance: 'none',
-                  cursor: 'pointer',
+                  WebkitAppearance: 'none',
                   outline: 'none',
-                  WebkitAppearance: 'slider-horizontal'
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  background: `linear-gradient(to right, #8B7FB8 0%, #8B7FB8 ${grocery.percentConsumed}%, #E8E4DC ${grocery.percentConsumed}%, #E8E4DC 100%)`
                 } as any}
               />
+              <style>{`
+                input[type='range'] {
+                  -webkit-appearance: none;
+                }
+
+                input[type='range']::-webkit-slider-thumb {
+                  -webkit-appearance: none;
+                  width: 32px;
+                  height: 32px;
+                  background-color: #8B7FB8;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  box-shadow: 0 4px 12px rgba(139, 127, 184, 0.3);
+                }
+
+                input[type='range']::-moz-range-thumb {
+                  width: 32px;
+                  height: 32px;
+                  background-color: #8B7FB8;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  border: none;
+                  box-shadow: 0 4px 12px rgba(139, 127, 184, 0.3);
+                }
+
+                input[type='range']::-moz-range-track {
+                  background: transparent;
+                  border: none;
+                }
+              `}</style>
               <span style={{ fontSize: '12px', fontWeight: 600, color: '#2C2C2A', minWidth: '50px', textAlign: 'right' }}>
                 {Math.round(grocery.percentConsumed)}%
               </span>

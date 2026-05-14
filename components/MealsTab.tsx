@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from './ConfirmDialog';
-import { CreateMealForm } from './CreateMealForm';
 import { EatMealDialog } from './EatMealDialog';
 import { showSuccess, showError } from '@/lib/toast';
 
@@ -34,12 +34,10 @@ interface MealsTabProps {
 }
 
 export function MealsTab({ weekStart }: MealsTabProps) {
+  const router = useRouter();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingMealId, setEditingMealId] = useState<string | null>(null);
 
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
@@ -127,11 +125,6 @@ export function MealsTab({ weekStart }: MealsTabProps) {
     }
   };
 
-  const handleMealSaved = () => {
-    setShowCreateForm(false);
-    setEditingMealId(null);
-    fetchMeals();
-  };
 
   if (loading) {
     return (
@@ -199,46 +192,34 @@ export function MealsTab({ weekStart }: MealsTabProps) {
       />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {/* Create/Edit Form */}
-        {showCreateForm ? (
-          <CreateMealForm
-            weekStart={weekStart}
-            editingMealId={editingMealId}
-            onSaved={handleMealSaved}
-            onCancel={() => {
-              setShowCreateForm(false);
-              setEditingMealId(null);
-            }}
-          />
-        ) : (
-          <button
-            onClick={() => setShowCreateForm(true)}
-            style={{
-              width: '100%',
-              padding: '16px',
-              backgroundColor: '#8B7FB8',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              minHeight: '44px',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#7A6FA7';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#8B7FB8';
-            }}
-          >
-            + Create New Meal
-          </button>
-        )}
+        {/* Create New Meal Button */}
+        <button
+          onClick={() => router.push('/groceries/meals/new')}
+          style={{
+            width: '100%',
+            padding: '16px',
+            backgroundColor: '#8B7FB8',
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '13px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            minHeight: '44px',
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#7A6FA7';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#8B7FB8';
+          }}
+        >
+          + Create New Meal
+        </button>
 
         {/* Meals List */}
-        {meals.length === 0 && !showCreateForm ? (
+        {meals.length === 0 ? (
           <p
             className="text-center py-12 font-medium"
             style={{ color: '#999999', padding: '24px' }}
@@ -299,30 +280,6 @@ export function MealsTab({ weekStart }: MealsTabProps) {
                       onMouseLeave={(e) => (e.currentTarget.style.color = '#155724')}
                     >
                       Eat
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingMealId(meal.id);
-                        setShowCreateForm(true);
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#5B7FD4',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        textDecoration: 'underline',
-                        transition: 'color 0.2s',
-                        padding: '6px 8px',
-                        minHeight: '44px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = '#4A6FBE')}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = '#5B7FD4')}
-                    >
-                      Edit
                     </button>
                     <button
                       onClick={() => handleDeleteClick(meal.id, meal.name)}

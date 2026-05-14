@@ -120,35 +120,13 @@ export async function GET(req: NextRequest) {
 
     const userId = (session.user as any).id;
 
-    // Get weekStart query param or calculate current week
-    const searchParams = req.nextUrl.searchParams;
-    const weekStartParam = searchParams.get('weekStart');
-    const weekStart = weekStartParam || getWeekStart();
-
-    // Fetch groceries for the specified week
+    // Fetch all unconsumed groceries (not fully consumed)
     const groceries = await db.query.userGroceryInventory.findMany({
-      where: and(eq(userGroceryInventory.userId, userId), eq(userGroceryInventory.weekStart, weekStart as any)),
+      where: eq(userGroceryInventory.userId, userId),
     });
 
-    // Fetch unconsumed items from the previous week to carry over
-    const previousWeekStart = getPreviousWeekStart(weekStart);
-    const unconsumedFromPrevious = await db.query.userGroceryInventory.findMany({
-      where: and(
-        eq(userGroceryInventory.userId, userId),
-        eq(userGroceryInventory.weekStart, previousWeekStart as any)
-      ),
-    });
-
-    // Filter to only unconsumed items (percentConsumed < 100)
-    const carriedOverItems = unconsumedFromPrevious
-      .filter((item) => Number(item.percentConsumed) < 100)
-      .map((item) => ({
-        ...item,
-        percentConsumed: 0 as any, // Reset consumption for the new week
-      }));
-
-    // Combine current week items with carried-over items
-    const allGroceries = [...groceries, ...carriedOverItems];
+    // Filter out fully consumed items
+    const allGroceries = groceries.filter((item) => Number(item.percentConsumed) < 100);
 
     const formattedGroceries = allGroceries.map((g) => ({
       id: g.id,
