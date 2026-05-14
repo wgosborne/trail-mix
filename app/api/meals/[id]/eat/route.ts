@@ -154,9 +154,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
 function getWeekStart(date: Date = new Date()): string {
   const d = new Date(date);
-  const dayOfWeek = d.getUTCDay();
-  const diff = d.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-  const monday = new Date(d.setUTCDate(diff));
+  const dayOfWeek = d.getDay();
+  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - daysFromMonday);
   return monday.toISOString().split('T')[0];
 }
 
