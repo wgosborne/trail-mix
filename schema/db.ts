@@ -35,6 +35,7 @@ export const userGroceryInventory = pgTable(
     fiberG: decimal('fiber_g', { precision: 7, scale: 2 }),
     dateAdded: date('date_added').notNull(),
     weekStart: date('week_start').notNull(),
+    isTemporary: boolean('is_temporary').default(false),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },

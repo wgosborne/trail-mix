@@ -8,17 +8,19 @@ import { showSuccess, showError } from '@/lib/toast';
 
 interface Meal {
   id: string;
-  name: string;
+  mealName: string;
+  description?: string;
   ingredients: Array<{
+    id: string;
     groceryId: string;
-    groceryName: string;
-    quantity: number;
-    unit: string;
-    nutrition: {
-      calories: number;
-      protein: number;
-      carbs: number;
-      fat: number;
+    quantityUsed: number;
+    grocery: {
+      foodName: string;
+      unit: string;
+      totalCalories: number | null;
+      proteinG: number | null;
+      carbsG: number | null;
+      fatG: number | null;
     };
   }>;
   nutrition: {
@@ -27,6 +29,8 @@ interface Meal {
     carbs: number;
     fat: number;
   };
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface MealsTabProps {
@@ -65,7 +69,7 @@ export function MealsTab({ weekStart }: MealsTabProps) {
         throw new Error('Failed to fetch meals');
       }
       const data = await response.json();
-      setMeals(data.meals || []);
+      setMeals(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching meals:', err);
       setError('Failed to load meals');
@@ -98,7 +102,46 @@ export function MealsTab({ weekStart }: MealsTabProps) {
   };
 
   const handleEatClick = (meal: Meal) => {
-    setEatDialog({ isOpen: true, meal, isLoading: false });
+    const transformedMeal = {
+      id: meal.id,
+      name: meal.mealName,
+      ingredients: meal.ingredients.map((ing) => {
+        const quantityBought = ing.grocery.quantityBought || 1;
+        const caloriesPerUnit = (ing.grocery.totalCalories || 0) / quantityBought;
+        const proteinPerUnit = (ing.grocery.proteinG || 0) / quantityBought;
+        const carbsPerUnit = (ing.grocery.carbsG || 0) / quantityBought;
+        const fatPerUnit = (ing.grocery.fatG || 0) / quantityBought;
+
+        return {
+          groceryId: ing.groceryId,
+          groceryName: ing.grocery.foodName,
+          quantity: ing.quantityUsed,
+          unit: ing.grocery.unit,
+          nutrition: {
+            calories: caloriesPerUnit * ing.quantityUsed,
+            protein: proteinPerUnit * ing.quantityUsed,
+            carbs: carbsPerUnit * ing.quantityUsed,
+            fat: fatPerUnit * ing.quantityUsed,
+          },
+        };
+      }),
+      nutrition: {
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+      },
+    };
+
+    // Calculate total nutrition
+    transformedMeal.ingredients.forEach((ing) => {
+      transformedMeal.nutrition.calories += ing.nutrition.calories;
+      transformedMeal.nutrition.protein += ing.nutrition.protein;
+      transformedMeal.nutrition.carbs += ing.nutrition.carbs;
+      transformedMeal.nutrition.fat += ing.nutrition.fat;
+    });
+
+    setEatDialog({ isOpen: true, meal: transformedMeal as any, isLoading: false });
   };
 
   const handleConfirmEat = async () => {
@@ -108,6 +151,8 @@ export function MealsTab({ weekStart }: MealsTabProps) {
     try {
       const response = await fetch(`/api/meals/${eatDialog.meal.id}/eat`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
       });
 
       if (!response.ok) {
@@ -231,6 +276,7 @@ export function MealsTab({ weekStart }: MealsTabProps) {
             {meals.map((meal) => (
               <div
                 key={meal.id}
+                onClick={() => router.push(`/groceries/meals/${meal.id}`)}
                 style={{
                   backgroundColor: '#F8F5FF',
                   border: '1px solid #E8E4DC',
@@ -238,6 +284,7 @@ export function MealsTab({ weekStart }: MealsTabProps) {
                   padding: '16px',
                   boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
                   transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)',
+                  cursor: 'pointer',
                 }}
                 onMouseEnter={(e) => {
                   const el = e.currentTarget as HTMLDivElement;
@@ -253,7 +300,7 @@ export function MealsTab({ weekStart }: MealsTabProps) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontWeight: 700, color: '#2C2C2A', marginBottom: '8px', fontSize: '15px' }}>
-                      {meal.name}
+                      {meal.mealName}
                     </p>
                     <p style={{ fontSize: '12px', color: '#999999', marginBottom: '8px' }}>
                       {meal.ingredients.length} ingredient{meal.ingredients.length !== 1 ? 's' : ''}
@@ -261,7 +308,10 @@ export function MealsTab({ weekStart }: MealsTabProps) {
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
                     <button
-                      onClick={() => handleEatClick(meal)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEatClick(meal);
+                      }}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -282,7 +332,10 @@ export function MealsTab({ weekStart }: MealsTabProps) {
                       Eat
                     </button>
                     <button
-                      onClick={() => handleDeleteClick(meal.id, meal.name)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(meal.id, meal.mealName);
+                      }}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -365,20 +418,6 @@ export function MealsTab({ weekStart }: MealsTabProps) {
                   >
                     <p style={{ fontSize: '9px', fontWeight: 700, color: '#C9845F', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Fat</p>
                     <p style={{ fontSize: '14px', fontWeight: 700, color: '#2C2C2A' }}>{meal.nutrition.fat.toFixed(1)}g</p>
-                  </div>
-                </div>
-
-                {/* Ingredients List */}
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #E8E4DC' }}>
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '8px' }}>
-                    Ingredients
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {meal.ingredients.map((ing, idx) => (
-                      <p key={idx} style={{ fontSize: '12px', color: '#666666', margin: 0 }}>
-                        {ing.quantity} {ing.unit} {ing.groceryName}
-                      </p>
-                    ))}
                   </div>
                 </div>
               </div>

@@ -7,6 +7,7 @@ import { AdjustAmountDialog } from './AdjustAmountDialog';
 import { EditNutritionDialog } from './EditNutritionDialog';
 import { showSuccess, showError } from '@/lib/toast';
 import { getMacroTags, getTagColor } from '@/lib/macro-tags';
+import { clearCache } from '@/lib/cache';
 import { useSession } from 'next-auth/react';
 
 interface Grocery {
@@ -143,6 +144,15 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
       }
 
       onUpdate(editDialog.id, 0); // Trigger re-fetch of groceries
+      // Clear nutrition cache for all weeks since nutrition data affects calculations
+      if (typeof window !== 'undefined') {
+        const keys = Object.keys(sessionStorage);
+        keys.forEach((key) => {
+          if (key.startsWith('nutrition_')) {
+            clearCache(key);
+          }
+        });
+      }
       showSuccess(`Updated ${editDialog.name} nutrition info`);
       setEditDialog({
         isOpen: false,

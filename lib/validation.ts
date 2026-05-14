@@ -22,6 +22,7 @@ export const grocerySchema = z.object({
     .optional()
     .default(0),
   dateAdded: z.string().date('Invalid date format (YYYY-MM-DD)').optional(),
+  isTemporary: z.boolean().optional().default(false),
 });
 
 // Grocery update schema (partial)

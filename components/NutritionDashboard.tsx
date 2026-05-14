@@ -293,27 +293,27 @@ export function NutritionDashboard({
         <div style={{ backgroundColor: '#F8F5FF', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <p style={{ fontSize: '10px', fontWeight: 700, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', margin: '0 0 4px 0' }}>
-              TOTAL CONSUMED
+              CONSUMED (SO FAR)
             </p>
-            <p style={{ fontSize: '24px', fontWeight: 700, color: '#2C2C2A', margin: '0 0 8px 0', lineHeight: 1 }}>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: '#2C2C2A', margin: '0 0 4px 0', lineHeight: 1 }}>
               {Math.round(totalConsumed).toLocaleString()}
             </p>
+            <p style={{ fontSize: '11px', color: '#999999', margin: '4px 0 0 0' }}>of ~{Math.round(dailyGoal * days).toLocaleString()} pace</p>
           </div>
-          <p style={{ fontSize: '11px', color: '#999999', margin: 0 }}>cal</p>
         </div>
         <div style={{ backgroundColor: '#FFF5F8', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <p style={{ fontSize: '10px', fontWeight: 700, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', margin: '0 0 4px 0' }}>
-              DAILY AVERAGE vs GOAL
+              WEEK PROGRESS
             </p>
             <p style={{ fontSize: '18px', fontWeight: 700, color: '#2C2C2A', margin: '0 0 4px 0', lineHeight: 1 }}>
-              {avgConsumed} / {dailyGoal}
+              Day {days} of 7
             </p>
             <div style={{ width: '100%', height: '4px', backgroundColor: '#F0E8F5', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
-              <div style={{ height: '100%', backgroundColor: '#D67BB8', width: `${Math.min(100, (avgConsumed / dailyGoal) * 100)}%`, borderRadius: '2px' }} />
+              <div style={{ height: '100%', backgroundColor: '#D67BB8', width: `${(days / 7) * 100}%`, borderRadius: '2px' }} />
             </div>
           </div>
-          <p style={{ fontSize: '11px', color: '#999999', margin: '4px 0 0 0' }}>cal/day</p>
+          <p style={{ fontSize: '11px', color: '#999999', margin: '4px 0 0 0' }}>days elapsed</p>
         </div>
         {isStravaConnected && stravaCaloriesBurned > 0 && (
           <div style={{ backgroundColor: '#F5F8FF', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -332,72 +332,17 @@ export function NutritionDashboard({
           <div style={{ backgroundColor: '#FFF8F5', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <p style={{ fontSize: '10px', fontWeight: 700, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', margin: '0 0 4px 0' }}>
-                NET
+                NET / DAY
               </p>
               <p style={{ fontSize: '24px', fontWeight: 700, color: netPerDay >= 0 ? '#155724' : '#856404', margin: '0 0 4px 0', lineHeight: 1 }}>
                 {netPerDay >= 0 ? '+' : ''}{netPerDay.toLocaleString()}
               </p>
             </div>
-            <p style={{ fontSize: '11px', color: '#999999', margin: 0 }}>cal</p>
+            <p style={{ fontSize: '11px', color: '#999999', margin: 0 }}>avg daily</p>
           </div>
         )}
       </div>
 
-      {/* Consumed vs Burned Chart */}
-      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E8E4DC', borderRadius: '10px', padding: '16px' }}>
-        <div style={{ height: '3px', width: '24px', background: 'linear-gradient(to right, #8B7FB8, #D67BB8, #5B7FD4)', marginBottom: '12px' }} />
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#2C2C2A', textTransform: 'uppercase', letterSpacing: '0.4px', margin: '0 0 16px 0' }}>
-          Consumed vs Burned
-        </p>
-
-        {weeklyChartData.length > 0 ? (
-          <div style={{ position: 'relative', height: '280px', width: '100%', overflow: 'hidden', marginBottom: '16px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyChartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E8E4DC" />
-                <XAxis dataKey="label" stroke="#999999" fontSize={12} />
-                <YAxis stroke="#999999" fontSize={12} />
-                <Legend wrapperStyle={{ paddingTop: '12px' }} />
-                <Bar dataKey="consumed" fill="#D67BB8" name="Consumed" />
-                {isStravaConnected && <Bar dataKey="burned" fill="#5B7FD4" name="Burned" />}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <p style={{ fontSize: '13px', color: '#999999', textAlign: 'center', padding: '24px 0' }}>Loading chart data...</p>
-        )}
-
-        {isStravaConnected && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              onClick={async () => {
-                if (onStravaSync) {
-                  setSyncingStrava(true);
-                  try {
-                    await onStravaSync();
-                  } finally {
-                    setSyncingStrava(false);
-                  }
-                }
-              }}
-              disabled={syncingStrava}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#F8F5FF',
-                border: '1px solid #8B7FB8',
-                borderRadius: '6px',
-                color: '#8B7FB8',
-                cursor: syncingStrava ? 'not-allowed' : 'pointer',
-                fontSize: '13px',
-                fontWeight: 600,
-                opacity: syncingStrava ? 0.6 : 1,
-              }}
-            >
-              {syncingStrava ? 'Syncing...' : 'Sync from Strava'}
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

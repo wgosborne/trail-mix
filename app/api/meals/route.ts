@@ -66,9 +66,40 @@ export async function POST(req: NextRequest) {
     // Fetch ingredient details for response
     const ingredientDetails = await db.query.mealIngredients.findMany({
       where: eq(mealIngredients.mealId, meal.id as any),
-      with: {
-        grocery: true,
-      },
+    });
+
+    // Fetch groceries for ingredient details
+    const ingredientGroceries = await db.query.userGroceryInventory.findMany({
+      where: eq(userGroceryInventory.userId, userId as any),
+    });
+    const groceryMap = new Map(ingredientGroceries.map(g => [g.id, g]));
+
+    const formattedIngredients = ingredientDetails.map(ing => ({
+      id: ing.id,
+      groceryId: ing.groceryId,
+      quantityUsed: Number(ing.quantityUsed),
+      grocery: groceryMap.get(ing.groceryId as any),
+    }));
+
+    // Calculate nutrition totals - account for quantityBought
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFat = 0;
+
+    formattedIngredients.forEach((ing) => {
+      if (ing.grocery) {
+        const quantityBought = Number(ing.grocery.quantityBought) || 1;
+        const caloriesPerUnit = (Number(ing.grocery.totalCalories) || 0) / quantityBought;
+        const proteinPerUnit = (Number(ing.grocery.proteinG) || 0) / quantityBought;
+        const carbsPerUnit = (Number(ing.grocery.carbsG) || 0) / quantityBought;
+        const fatPerUnit = (Number(ing.grocery.fatG) || 0) / quantityBought;
+
+        totalCalories += caloriesPerUnit * Number(ing.quantityUsed);
+        totalProtein += proteinPerUnit * Number(ing.quantityUsed);
+        totalCarbs += carbsPerUnit * Number(ing.quantityUsed);
+        totalFat += fatPerUnit * Number(ing.quantityUsed);
+      }
     });
 
     return NextResponse.json(
@@ -76,21 +107,15 @@ export async function POST(req: NextRequest) {
         id: meal.id,
         mealName: meal.mealName,
         description: meal.description,
-        ingredients: ingredientDetails.map(ing => ({
-          id: ing.id,
-          groceryId: ing.groceryId,
-          quantityUsed: Number(ing.quantityUsed),
-          grocery: {
-            id: ing.grocery.id,
-            foodName: ing.grocery.foodName,
-            unit: ing.grocery.unit,
-            totalCalories: ing.grocery.totalCalories ? Number(ing.grocery.totalCalories) : null,
-            proteinG: ing.grocery.proteinG ? Number(ing.grocery.proteinG) : null,
-            carbsG: ing.grocery.carbsG ? Number(ing.grocery.carbsG) : null,
-            fatG: ing.grocery.fatG ? Number(ing.grocery.fatG) : null,
-          },
-        })),
+        ingredients: formattedIngredients,
+        nutrition: {
+          calories: totalCalories,
+          protein: totalProtein,
+          carbs: totalCarbs,
+          fat: totalFat,
+        },
         createdAt: meal.createdAt,
+        updatedAt: meal.updatedAt,
       },
       { status: 201 }
     );
@@ -100,7 +125,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET /api/meals - List all user meals with ingredient details
+// GET /api/meals - List all user meals
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -111,43 +136,72 @@ export async function GET(req: NextRequest) {
 
     const userId = (session.user as any).id;
 
-    // Fetch all meals for the user
+    // Fetch all meals for the user with their ingredients
     const meals = await db.query.userMeals.findMany({
       where: eq(userMeals.userId, userId as any),
       with: {
-        ingredients: {
-          with: {
-            grocery: true,
-          },
-        },
+        ingredients: true,
       },
     });
 
-    const formattedMeals = meals.map(meal => ({
-      id: meal.id,
-      mealName: meal.mealName,
-      description: meal.description,
-      ingredients: meal.ingredients.map(ing => ({
+    // Fetch groceries to get food names
+    const groceries = await db.query.userGroceryInventory.findMany({
+      where: eq(userGroceryInventory.userId, userId as any),
+    });
+    const groceryMap = new Map(groceries.map(g => [g.id, g]));
+
+    const formattedMeals = meals.map(meal => {
+      const ingredients = ((meal as any).ingredients || []).map((ing: any) => ({
         id: ing.id,
         groceryId: ing.groceryId,
         quantityUsed: Number(ing.quantityUsed),
-        grocery: {
-          id: ing.grocery.id,
-          foodName: ing.grocery.foodName,
-          unit: ing.grocery.unit,
-          totalCalories: ing.grocery.totalCalories ? Number(ing.grocery.totalCalories) : null,
-          proteinG: ing.grocery.proteinG ? Number(ing.grocery.proteinG) : null,
-          carbsG: ing.grocery.carbsG ? Number(ing.grocery.carbsG) : null,
-          fatG: ing.grocery.fatG ? Number(ing.grocery.fatG) : null,
+        grocery: groceryMap.get(ing.groceryId as any),
+      }));
+
+      // Calculate nutrition totals - account for quantityBought
+      let totalCalories = 0;
+      let totalProtein = 0;
+      let totalCarbs = 0;
+      let totalFat = 0;
+
+      ingredients.forEach((ing) => {
+        if (ing.grocery) {
+          const quantityBought = Number(ing.grocery.quantityBought) || 1;
+          const caloriesPerUnit = (Number(ing.grocery.totalCalories) || 0) / quantityBought;
+          const proteinPerUnit = (Number(ing.grocery.proteinG) || 0) / quantityBought;
+          const carbsPerUnit = (Number(ing.grocery.carbsG) || 0) / quantityBought;
+          const fatPerUnit = (Number(ing.grocery.fatG) || 0) / quantityBought;
+
+          totalCalories += caloriesPerUnit * Number(ing.quantityUsed);
+          totalProtein += proteinPerUnit * Number(ing.quantityUsed);
+          totalCarbs += carbsPerUnit * Number(ing.quantityUsed);
+          totalFat += fatPerUnit * Number(ing.quantityUsed);
+        }
+      });
+
+      return {
+        id: meal.id,
+        mealName: meal.mealName,
+        description: meal.description,
+        ingredients,
+        nutrition: {
+          calories: totalCalories,
+          protein: totalProtein,
+          carbs: totalCarbs,
+          fat: totalFat,
         },
-      })),
-      createdAt: meal.createdAt,
-      updatedAt: meal.updatedAt,
-    }));
+        createdAt: meal.createdAt,
+        updatedAt: meal.updatedAt,
+      };
+    });
 
     return NextResponse.json(formattedMeals, { status: 200 });
   } catch (error) {
     console.error('Error fetching meals:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Stack:', error.stack);
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

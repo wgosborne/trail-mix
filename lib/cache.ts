@@ -45,3 +45,18 @@ export function setCached<T>(key: string, data: T, ttlMs: number = 2 * 60 * 1000
     console.error('Cache write error:', error);
   }
 }
+
+/**
+ * Clear a specific cache entry from sessionStorage.
+ */
+export function clearCache(key: string): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    sessionStorage.removeItem(key);
+  } catch (error) {
+    console.error('Cache clear error:', error);
+  }
+}

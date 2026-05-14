@@ -82,24 +82,29 @@ export async function POST(request: NextRequest) {
           role: 'user',
           content: `You are a nutrition database assistant. For the food item: "${trimmedQuery}"
 
-Return ONLY valid JSON with nutrition information for a standard serving. Include:
+Return ONLY valid JSON with nutrition information for ONE SERVING (singular item). Include:
 - name: The food name (cleaned, no extra details)
-- servingSize: Standard serving amount (e.g., 100 for 100g, 1 for 1 cup)
-- servingSizeUnit: Unit of serving (g, cup, oz, count, etc.)
-- nutrition: calories, protein (g), carbs (g), fat (g), fiber (g)
+- servingSize: Amount of ONE serving (e.g., 100 for 100g, 1 for 1 egg/cup/tortilla)
+- servingSizeUnit: Unit of ONE serving (g, cup, oz, count, etc.)
+- nutrition: calories, protein (g), carbs (g), fat (g), fiber (g) - MUST BE PER ONE SERVING
 
-Return as a single food object. All nutrition values must be per serving. Estimate if needed.
+CRITICAL: If the item is countable (eggs, tortillas, slices, etc.), return nutrition for ONE ITEM, not a package/carton/dozen.
+- 1 egg = ~70 cal (NOT a carton)
+- 1 tortilla = ~50 cal (NOT a package)
+- 1 slice = ~80 cal (NOT a loaf)
+
+All nutrition values must be per single serving. Estimate if needed.
 
 Example response:
 {
-  "name": "Grilled Chicken Breast",
-  "servingSize": 100,
-  "servingSizeUnit": "g",
+  "name": "Large Egg",
+  "servingSize": 1,
+  "servingSizeUnit": "count",
   "nutrition": {
-    "calories": 165,
-    "protein": 31,
-    "carbs": 0,
-    "fat": 3.6,
+    "calories": 70,
+    "protein": 6,
+    "carbs": 0.4,
+    "fat": 5,
     "fiber": 0
   }
 }

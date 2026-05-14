@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    const { foodName, quantityBought, unit, totalCalories, proteinG, carbsG, fatG, dateAdded } = validationResult.data;
+    const { foodName, quantityBought, unit, totalCalories, proteinG, carbsG, fatG, dateAdded, isTemporary } = validationResult.data;
 
     // Calculate week start
     const date = dateAdded ? new Date(dateAdded) : new Date();
@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
         fiberG: body.fiberG ? parseFloat(body.fiberG).toString() : null,
         dateAdded: dateAddedStr as any,
         weekStart: weekStart as any,
+        isTemporary: isTemporary || false,
       })
       .returning();
 
@@ -120,9 +121,9 @@ export async function GET(req: NextRequest) {
 
     const userId = (session.user as any).id;
 
-    // Fetch all unconsumed groceries (not fully consumed)
+    // Fetch all unconsumed groceries (not fully consumed, not temporary)
     const groceries = await db.query.userGroceryInventory.findMany({
-      where: eq(userGroceryInventory.userId, userId),
+      where: and(eq(userGroceryInventory.userId, userId), eq(userGroceryInventory.isTemporary, false)),
     });
 
     // Filter out fully consumed items

@@ -8,6 +8,7 @@ import { ReceiptUploader } from '@/components/ReceiptUploader';
 import { MealsTab } from '@/components/MealsTab';
 import { useGuestGroceries } from '@/hooks/useGuestGroceries';
 import { showSuccess, showError } from '@/lib/toast';
+import { clearCache } from '@/lib/cache';
 import { useState, useEffect } from 'react';
 
 interface AuthGrocery {
@@ -120,6 +121,8 @@ export default function CameraTab() {
           // Only add if it's for the current week being viewed
           if (newGrocery.weekStart === weekStart) {
             setAuthGroceries([...authGroceries, newGrocery]);
+            // Clear nutrition cache so dashboard fetches fresh data
+            clearCache(`nutrition_${weekStart}`);
           }
           showSuccess(`Added ${grocery.quantityBought} ${grocery.unit} ${grocery.foodName}`);
         } else {
@@ -152,6 +155,8 @@ export default function CameraTab() {
         if (response.ok) {
           const updated = await response.json();
           setAuthGroceries(authGroceries.map((g) => (g.id === id ? updated : g)));
+          // Clear nutrition cache so dashboard fetches fresh data
+          clearCache(`nutrition_${weekStart}`);
         } else {
           const errorData = await response.json().catch(() => ({ error: 'Failed to update' }));
           showError(errorData.error || 'Failed to update grocery');
@@ -176,6 +181,8 @@ export default function CameraTab() {
 
         if (response.ok || response.status === 204) {
           setAuthGroceries(authGroceries.filter((g) => g.id !== id));
+          // Clear nutrition cache so dashboard fetches fresh data
+          clearCache(`nutrition_${weekStart}`);
           showSuccess('Grocery deleted');
         } else {
           const errorData = await response.json().catch(() => ({ error: 'Failed to delete' }));
