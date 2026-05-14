@@ -554,8 +554,8 @@ export function NutritionDashboardPro({
             </div>
           </DashboardCard>
 
-          {/* Card: Avg Calories */}
-          <DashboardCard onClick={() => router.push('/metrics/calories')}>
+          {/* Card: Week Progress */}
+          <DashboardCard>
             <p style={{
               fontSize: '10px',
               fontWeight: 700,
@@ -564,7 +564,7 @@ export function NutritionDashboardPro({
               letterSpacing: '0.4px',
               margin: '0 0 8px 0'
             }}>
-              Avg. Calories
+              Week Progress
             </p>
             <p style={{
               fontSize: '32px',
@@ -573,24 +573,29 @@ export function NutritionDashboardPro({
               margin: '0 0 8px 0',
               lineHeight: 1
             }}>
-              {avgConsumed}
+              Day {days} of 7
             </p>
             <p style={{
               fontSize: '12px',
               color: '#999999',
               margin: '0 0 12px 0'
             }}>
-              kcal per day
+              days elapsed
             </p>
-            <div style={{ height: '40px' }}>
-              <MiniBarChart
-                data={weeklyChartData.slice(0, 7).map((week) => ({
-                  label: week.label,
-                  value: week.consumed,
-                  color: '#8B7FB8'
-                }))}
-                height={40}
-              />
+            <div style={{
+              width: '100%',
+              height: '6px',
+              backgroundColor: '#F0E8F5',
+              borderRadius: '3px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                height: '100%',
+                backgroundColor: '#D67BB8',
+                width: `${(days / 7) * 100}%`,
+                borderRadius: '3px',
+                transition: 'width 0.3s ease'
+              }} />
             </div>
           </DashboardCard>
 
