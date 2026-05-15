@@ -493,9 +493,9 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
               el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 700, color: '#2C2C2A', marginBottom: '4px' }}>{grocery.foodName}</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px', gap: '12px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontWeight: 700, color: '#2C2C2A', marginBottom: '4px', wordBreak: 'break-word' }}>{grocery.foodName}</p>
                 <p style={{ fontSize: '12px', color: '#999999', marginBottom: '8px' }}>
                   {grocery.quantityBought} {grocery.unit}
                 </p>
@@ -525,7 +525,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
                   })}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '12px', marginLeft: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
                 <button
                   onClick={() => handleAdjustClick(grocery.id, grocery.foodName, grocery.quantityBought, grocery.unit, grocery.percentConsumed)}
                   style={{
@@ -540,7 +540,8 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
                     padding: '6px 8px',
                     minHeight: '44px',
                     display: 'flex',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    whiteSpace: 'nowrap'
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = '#4A6FBE')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = '#5B7FD4')}
@@ -561,7 +562,8 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
                     padding: '6px 8px',
                     minHeight: '44px',
                     display: 'flex',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    whiteSpace: 'nowrap'
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = '#B85A9A')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = '#D67BB8')}
