@@ -10,7 +10,7 @@ export async function verifyMigrations() {
       AND column_name = 'is_temporary'
     `);
 
-    if (result.rows.length === 0) {
+    if ((result as any[]).length === 0) {
       console.error(
         '❌ MIGRATION ERROR: is_temporary column missing from user_grocery_inventory table\n' +
         'Run this SQL in your Neon database:\n' +

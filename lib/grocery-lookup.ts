@@ -52,27 +52,29 @@ export async function upsertLookup(
   console.log('[UPSERT-LOOKUP] Inserting/updating:', { name, normalizedName, unit, source, nutrition });
 
   try {
+    const insertValues = {
+      normalizedName: normalizedName as string,
+      unit: unit as string,
+      calories: nutrition.calories as any,
+      proteinG: nutrition.proteinG as any,
+      carbsG: nutrition.carbsG as any,
+      fatG: nutrition.fatG as any,
+      fiberG: nutrition.fiberG as any,
+      source: source as 'claude' | 'user',
+      timesUsed: 1 as number,
+    };
+
     await db
       .insert(groceryLookup)
-      .values({
-        normalizedName,
-        unit,
-        calories: nutrition.calories,
-        proteinG: nutrition.proteinG,
-        carbsG: nutrition.carbsG,
-        fatG: nutrition.fatG,
-        fiberG: nutrition.fiberG,
-        source,
-        timesUsed: 1,
-      })
+      .values(insertValues)
       .onConflictDoUpdate({
         target: [groceryLookup.normalizedName, groceryLookup.unit],
         set: {
-          calories: nutrition.calories,
-          proteinG: nutrition.proteinG,
-          carbsG: nutrition.carbsG,
-          fatG: nutrition.fatG,
-          fiberG: nutrition.fiberG,
+          calories: nutrition.calories as any,
+          proteinG: nutrition.proteinG as any,
+          carbsG: nutrition.carbsG as any,
+          fatG: nutrition.fatG as any,
+          fiberG: nutrition.fiberG as any,
           source: sql`CASE WHEN ${groceryLookup.source} = 'user' THEN 'user' ELSE ${source} END`,
           timesUsed: sql`${groceryLookup.timesUsed} + 1`,
           updatedAt: new Date(),
