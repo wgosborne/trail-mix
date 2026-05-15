@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, decimal, date, index, boolean, integer, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, decimal, date, index, boolean, integer, uniqueIndex, json } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const users = pgTable('users', {
@@ -27,6 +27,7 @@ export const userGroceryInventory = pgTable(
     quantityBought: decimal('quantity_bought', { precision: 8, scale: 2 }).notNull(),
     unit: varchar('unit', { length: 50 }).notNull(),
     percentConsumed: decimal('percent_consumed', { precision: 5, scale: 2 }).default('0'),
+    consumedByWeek: json('consumed_by_week').$type<Record<string, number>>().default({}),
     caloriesPerUnit: decimal('calories_per_unit', { precision: 8, scale: 2 }),
     totalCalories: decimal('total_calories', { precision: 8, scale: 2 }),
     proteinG: decimal('protein_g', { precision: 7, scale: 2 }),

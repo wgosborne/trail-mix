@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from './ConfirmDialog';
 import { EatMealDialog } from './EatMealDialog';
 import { showSuccess, showError } from '@/lib/toast';
+import { clearCache } from '@/lib/cache';
 
 interface Meal {
   id: string;
@@ -15,6 +16,7 @@ interface Meal {
     groceryId: string;
     quantityUsed: number;
     grocery: {
+      quantityBought?: number;
       foodName: string;
       unit: string;
       totalCalories: number | null;
@@ -35,9 +37,10 @@ interface Meal {
 
 interface MealsTabProps {
   weekStart: string;
+  onMealLogged?: () => void;
 }
 
-export function MealsTab({ weekStart }: MealsTabProps) {
+export function MealsTab({ weekStart, onMealLogged }: MealsTabProps) {
   const router = useRouter();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,17 +155,26 @@ export function MealsTab({ weekStart }: MealsTabProps) {
       const response = await fetch(`/api/meals/${eatDialog.meal.id}/eat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ dateConsumed: weekStart }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to log meal');
       }
 
-      // Remove meal from list after eating
-      setMeals(meals.filter((m) => m.id !== eatDialog.meal!.id));
-      showSuccess(`Logged "${eatDialog.meal.name}" as eaten`);
+      // Clear nutrition and grocery cache to force refresh
+      clearCache(`nutrition_${weekStart}`);
+      clearCache(`groceries_${weekStart}`);
+
+      const mealName = (eatDialog.meal as any).name;
+      showSuccess(`Logged "${mealName}" as eaten`);
       setEatDialog({ isOpen: false, meal: null, isLoading: false });
+
+      // Notify parent to refresh nutrition and inventory data
+      onMealLogged?.();
+
+      // Re-fetch meals for this week to reflect consumption
+      await fetchMeals();
     } catch (err) {
       console.error('Error eating meal:', err);
       showError('Failed to log meal');
@@ -230,7 +242,7 @@ export function MealsTab({ weekStart }: MealsTabProps) {
 
       <EatMealDialog
         isOpen={eatDialog.isOpen}
-        meal={eatDialog.meal}
+        meal={eatDialog.meal as any}
         isLoading={eatDialog.isLoading}
         onConfirm={handleConfirmEat}
         onCancel={() => setEatDialog({ isOpen: false, meal: null, isLoading: false })}

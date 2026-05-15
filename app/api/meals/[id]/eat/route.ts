@@ -27,6 +27,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const { dateConsumed } = validationResult.data;
+    // If dateConsumed is provided as YYYY-MM-DD, use it directly as the weekStart
+    // Otherwise, calculate it from the current date
+    const consumedWeekStartFromParam = dateConsumed ? dateConsumed : null;
     const consumedDate = dateConsumed ? new Date(dateConsumed) : new Date();
 
     // Verify meal belongs to user and get its ingredients
@@ -49,6 +52,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'Meal has no ingredients' }, { status: 400 });
     }
 
+    // Helper to get week start from a date
+    function getWeekStart(date: Date = new Date()): string {
+      const d = new Date(date);
+      const dayOfWeek = d.getUTCDay();
+      const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const monday = new Date(d);
+      monday.setUTCDate(d.getUTCDate() - daysFromMonday);
+      return monday.toISOString().split('T')[0];
+    }
+
+    // Use dateConsumed directly if provided, otherwise calculate from consumedDate
+    const consumedWeekStart = consumedWeekStartFromParam || getWeekStart(consumedDate);
+
     // For each ingredient, calculate the amount consumed and update the grocery
     const updatedGroceries = [];
 
@@ -64,11 +80,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const percentUsed = (quantityUsed / quantityBought) * 100;
       const newPercentConsumed = Math.min(100, currentConsumed + percentUsed);
 
-      // Update the grocery
+      // Update consumedByWeek tracking for the specific week
+      const consumedByWeek = (grocery.consumedByWeek as any) || {};
+      const weekConsumption = parseFloat((consumedByWeek[consumedWeekStart] || '0').toString());
+      consumedByWeek[consumedWeekStart] = weekConsumption + percentUsed;
+
+      // Update the grocery - track consumption per week
       const updated = await db
         .update(userGroceryInventory)
         .set({
           percentConsumed: newPercentConsumed.toString() as any,
+          consumedByWeek: consumedByWeek as any,
           updatedAt: consumedDate,
         })
         .where(eq(userGroceryInventory.id, grocery.id as any))
@@ -83,9 +105,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId as any),
     });
-
-    // Get week start for the consumed date
-    const consumedWeekStart = getWeekStart(consumedDate);
 
     // Get all groceries for that week to calculate totals
     const weekGroceries = await db.query.userGroceryInventory.findMany({
@@ -154,15 +173,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
 function getWeekStart(date: Date = new Date()): string {
   const d = new Date(date);
-  const dayOfWeek = d.getDay();
+  const dayOfWeek = d.getUTCDay();
   const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const monday = new Date(d);
-  monday.setDate(d.getDate() - daysFromMonday);
+  monday.setUTCDate(d.getUTCDate() - daysFromMonday);
   return monday.toISOString().split('T')[0];
 }
 
 function getWeekEnd(weekStart: string): string {
   const date = new Date(weekStart);
-  date.setDate(date.getDate() + 6);
+  date.setUTCDate(date.getUTCDate() + 6);
   return date.toISOString().split('T')[0];
 }

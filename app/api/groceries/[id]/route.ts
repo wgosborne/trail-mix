@@ -26,19 +26,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    const { percentConsumed, foodName, totalCalories, proteinG, carbsG, fatG, fiberG } = validationResult.data;
+    const { percentConsumed, foodName, totalCalories, proteinG, carbsG, fatG, fiberG, weekStart: updateWeekStart } = validationResult.data;
 
-    // Build update object
-    const updates: any = {};
-    if (percentConsumed !== undefined) updates.percentConsumed = percentConsumed.toString();
-    if (foodName !== undefined) updates.foodName = foodName.trim();
-    if (totalCalories !== undefined) updates.totalCalories = totalCalories ? totalCalories.toString() : null;
-    if (proteinG !== undefined) updates.proteinG = proteinG ? proteinG.toString() : null;
-    if (carbsG !== undefined) updates.carbsG = carbsG ? carbsG.toString() : null;
-    if (fatG !== undefined) updates.fatG = fatG ? fatG.toString() : null;
-    if (fiberG !== undefined) updates.fiberG = fiberG ? fiberG.toString() : null;
-
-    // Get the grocery before updating to access foodName and unit for lookup sync
+    // Get the grocery before updating to access foodName, unit, and current state
     const groceryBefore = await db
       .select()
       .from(userGroceryInventory)
@@ -48,6 +38,36 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (groceryBefore.length === 0) {
       return NextResponse.json({ error: 'Grocery not found' }, { status: 404 });
     }
+
+    const groceryItem = groceryBefore[0];
+
+    // Build update object
+    const updates: any = {};
+    if (percentConsumed !== undefined) {
+      updates.percentConsumed = percentConsumed.toString();
+
+      // Track consumption by week - when percentConsumed changes, record the change in consumedByWeek
+      const oldPercent = parseFloat((groceryItem.percentConsumed || '0').toString());
+      const newPercent = percentConsumed;
+      const consumptionIncrease = newPercent - oldPercent;
+
+      if (consumptionIncrease > 0) {
+        // Record this week's consumption increase
+        const trackingWeek = updateWeekStart || groceryItem.weekStart;
+        const consumedByWeek = (groceryItem.consumedByWeek as any) || {};
+        const existingWeekConsumption = parseFloat((consumedByWeek[trackingWeek] || '0').toString());
+        consumedByWeek[trackingWeek] = existingWeekConsumption + consumptionIncrease;
+        updates.consumedByWeek = consumedByWeek;
+      }
+    }
+
+    if (foodName !== undefined) updates.foodName = foodName.trim();
+    if (totalCalories !== undefined) updates.totalCalories = totalCalories ? totalCalories.toString() : null;
+    if (proteinG !== undefined) updates.proteinG = proteinG ? proteinG.toString() : null;
+    if (carbsG !== undefined) updates.carbsG = carbsG ? carbsG.toString() : null;
+    if (fatG !== undefined) updates.fatG = fatG ? fatG.toString() : null;
+    if (fiberG !== undefined) updates.fiberG = fiberG ? fiberG.toString() : null;
+    if (updateWeekStart !== undefined) updates.weekStart = updateWeekStart;
 
     // Update grocery (verify user owns it)
     const result = await db

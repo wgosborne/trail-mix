@@ -21,8 +21,11 @@ export async function getValidStravaToken(userId: string): Promise<string> {
   const expiryWithBuffer = new Date((user.stravaTokenExpiresAt?.getTime() || 0) - bufferMs);
 
   if (expiryWithBuffer > now) {
+    console.log(`[Strava] Token valid until ${user.stravaTokenExpiresAt}`);
     return user.stravaToken;
   }
+
+  console.log(`[Strava] Token expired at ${user.stravaTokenExpiresAt}, attempting refresh...`);
 
   if (!user.stravaRefreshToken) {
     throw new Error('Strava token expired - please reconnect');
@@ -41,13 +44,18 @@ export async function getValidStravaToken(userId: string): Promise<string> {
     });
 
     if (!refreshResponse.ok) {
+      const errorBody = await refreshResponse.text();
+      console.error(`[Strava] Refresh failed: ${refreshResponse.status}`, errorBody.substring(0, 500));
       throw new Error(`Strava refresh failed with status ${refreshResponse.status}`);
     }
 
     const newTokenData = await refreshResponse.json();
     if (!newTokenData.access_token || !newTokenData.refresh_token) {
+      console.error('[Strava] Refresh response missing tokens:', newTokenData);
       throw new Error('Strava refresh response missing tokens');
     }
+
+    console.log(`[Strava] Token refreshed successfully, expires at ${new Date(newTokenData.expires_at * 1000)}`);
 
     await db
       .update(users)
