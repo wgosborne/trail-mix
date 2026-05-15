@@ -126,10 +126,10 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
 
   function getWeekStart(date: Date = new Date()): string {
     const d = new Date(date);
-    const dayOfWeek = d.getDay();
+    const dayOfWeek = d.getUTCDay();
     const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const monday = new Date(d);
-    monday.setDate(d.getDate() - daysFromMonday);
+    monday.setUTCDate(d.getUTCDate() - daysFromMonday);
     return monday.toISOString().split('T')[0];
   }
 
@@ -281,7 +281,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                   color: '#2C2C2A',
                   backgroundColor: '#FFFFFF'
                 }}
-                step="0.1"
+                step="0.01"
               />
               {errors.quantity && <p style={{ color: '#D67BB8', fontSize: '11px', marginTop: '4px' }}>{errors.quantity}</p>}
             </div>
@@ -359,7 +359,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                     color: '#2C2C2A',
                     backgroundColor: '#FFFFFF'
                   }}
-                  step="0.1"
+                  step="0.01"
                 />
                 {errors.calories && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.calories}</p>}
               </div>
@@ -380,7 +380,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                     color: '#2C2C2A',
                     backgroundColor: '#FFFFFF'
                   }}
-                  step="0.1"
+                  step="0.01"
                 />
                 {errors.protein && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.protein}</p>}
               </div>
@@ -401,7 +401,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                     color: '#2C2C2A',
                     backgroundColor: '#FFFFFF'
                   }}
-                  step="0.1"
+                  step="0.01"
                 />
                 {errors.carbs && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.carbs}</p>}
               </div>
@@ -422,7 +422,7 @@ export function GroceryForm({ onSubmit, loading, initialFoodName, initialQuantit
                     color: '#2C2C2A',
                     backgroundColor: '#FFFFFF'
                   }}
-                  step="0.1"
+                  step="0.01"
                 />
                 {errors.fat && <p style={{ color: '#D67BB8', fontSize: '10px', marginTop: '2px' }}>{errors.fat}</p>}
               </div>

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const weekParam = request.nextUrl.searchParams.get('week') || getCurrentWeekStart();
     const weekStart = new Date(weekParam);
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 7);
+    weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
 
     const after = Math.floor(weekStart.getTime() / 1000);
     const before = Math.floor(weekEnd.getTime() / 1000);
@@ -33,7 +33,12 @@ export async function GET(request: NextRequest) {
     );
 
     if (!response.ok) {
-      throw new Error('Strava API error');
+      const responseBody = await response.text();
+      console.error(
+        `Strava API error: ${response.status} ${response.statusText}`,
+        responseBody.substring(0, 500)
+      );
+      throw new Error(`Strava API error: ${response.status}`);
     }
 
     let activities = await response.json();
@@ -127,9 +132,9 @@ export async function GET(request: NextRequest) {
 
 function getCurrentWeekStart(date: Date = new Date()): string {
   const d = new Date(date);
-  const dayOfWeek = d.getDay();
+  const dayOfWeek = d.getUTCDay();
   const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const monday = new Date(d);
-  monday.setDate(d.getDate() - daysFromMonday);
+  monday.setUTCDate(d.getUTCDate() - daysFromMonday);
   return monday.toISOString().split('T')[0];
 }

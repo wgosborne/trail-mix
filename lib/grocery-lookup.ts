@@ -49,30 +49,38 @@ export async function upsertLookup(
 ) {
   const normalizedName = normalizeName(name);
 
-  await db
-    .insert(groceryLookup)
-    .values({
-      normalizedName,
-      unit,
-      calories: nutrition.calories !== null ? nutrition.calories.toString() : null,
-      proteinG: nutrition.proteinG !== null ? nutrition.proteinG.toString() : null,
-      carbsG: nutrition.carbsG !== null ? nutrition.carbsG.toString() : null,
-      fatG: nutrition.fatG !== null ? nutrition.fatG.toString() : null,
-      fiberG: nutrition.fiberG !== null ? nutrition.fiberG.toString() : null,
-      source,
-      timesUsed: 1,
-    })
-    .onConflictDoUpdate({
-      target: [groceryLookup.normalizedName, groceryLookup.unit],
-      set: {
-        calories: nutrition.calories !== null ? nutrition.calories.toString() : null,
-        proteinG: nutrition.proteinG !== null ? nutrition.proteinG.toString() : null,
-        carbsG: nutrition.carbsG !== null ? nutrition.carbsG.toString() : null,
-        fatG: nutrition.fatG !== null ? nutrition.fatG.toString() : null,
-        fiberG: nutrition.fiberG !== null ? nutrition.fiberG.toString() : null,
-        source: sql`CASE WHEN ${groceryLookup.source} = 'user' THEN 'user' ELSE ${source} END`,
-        timesUsed: sql`${groceryLookup.timesUsed} + 1`,
-        updatedAt: new Date(),
-      },
-    });
+  console.log('[UPSERT-LOOKUP] Inserting/updating:', { name, normalizedName, unit, source, nutrition });
+
+  try {
+    await db
+      .insert(groceryLookup)
+      .values({
+        normalizedName,
+        unit,
+        calories: nutrition.calories,
+        proteinG: nutrition.proteinG,
+        carbsG: nutrition.carbsG,
+        fatG: nutrition.fatG,
+        fiberG: nutrition.fiberG,
+        source,
+        timesUsed: 1,
+      })
+      .onConflictDoUpdate({
+        target: [groceryLookup.normalizedName, groceryLookup.unit],
+        set: {
+          calories: nutrition.calories,
+          proteinG: nutrition.proteinG,
+          carbsG: nutrition.carbsG,
+          fatG: nutrition.fatG,
+          fiberG: nutrition.fiberG,
+          source: sql`CASE WHEN ${groceryLookup.source} = 'user' THEN 'user' ELSE ${source} END`,
+          timesUsed: sql`${groceryLookup.timesUsed} + 1`,
+          updatedAt: new Date(),
+        },
+      });
+    console.log('[UPSERT-LOOKUP] Successfully upserted');
+  } catch (error) {
+    console.error('[UPSERT-LOOKUP] Error:', error);
+    throw error;
+  }
 }

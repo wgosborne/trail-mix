@@ -5,6 +5,7 @@ import { GroceryForm } from '@/components/GroceryForm';
 import { GroceryInventory } from '@/components/GroceryInventory';
 import { WeekNavigator } from '@/components/WeekNavigator';
 import { ReceiptUploader } from '@/components/ReceiptUploader';
+import { RestaurantLookup } from '@/components/RestaurantLookup';
 import { MealsTab } from '@/components/MealsTab';
 import { useGuestGroceries } from '@/hooks/useGuestGroceries';
 import { showSuccess, showError } from '@/lib/toast';
@@ -61,22 +62,14 @@ export default function CameraTab() {
   const [authLoading, setAuthLoading] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ParsedItem[]>([]);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'add' | 'inventory' | 'meals'>('add');
-  const [weekStart, setWeekStart] = useState<string>(() => {
-    const d = new Date();
-    const dayOfWeek = d.getDay();
-    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const monday = new Date(d);
-    monday.setDate(d.getDate() - daysFromMonday);
-    return monday.toISOString().split('T')[0];
-  });
+  const [activeTab, setActiveTab] = useState<'add' | 'inventory' | 'meals'>('inventory');
 
   // Fetch groceries for authenticated users
   useEffect(() => {
     if (session?.user) {
-      fetchAuthGroceries(weekStart);
+      fetchAuthGroceries(guestGroceries.weekStart);
     }
-  }, [session, weekStart]);
+  }, [session, guestGroceries.weekStart]);
 
   const fetchAuthGroceries = async (week: string) => {
     setAuthLoading(true);
@@ -93,6 +86,13 @@ export default function CameraTab() {
     } finally {
       setAuthLoading(false);
     }
+  };
+
+  const handleMealLogged = () => {
+    // Clear caches and refresh inventory and nutrition data
+    clearCache(`nutrition_${guestGroceries.weekStart}`);
+    clearCache(`groceries_${guestGroceries.weekStart}`);
+    fetchAuthGroceries(guestGroceries.weekStart);
   };
 
   const handleAddGrocery = async (grocery: any) => {
@@ -119,10 +119,10 @@ export default function CameraTab() {
         if (response.ok) {
           const newGrocery = await response.json();
           // Only add if it's for the current week being viewed
-          if (newGrocery.weekStart === weekStart) {
+          if (newGrocery.weekStart === guestGroceries.weekStart) {
             setAuthGroceries([...authGroceries, newGrocery]);
             // Clear nutrition cache so dashboard fetches fresh data
-            clearCache(`nutrition_${weekStart}`);
+            clearCache(`nutrition_${guestGroceries.weekStart}`);
           }
           showSuccess(`Added ${grocery.quantityBought} ${grocery.unit} ${grocery.foodName}`);
         } else {
@@ -149,14 +149,16 @@ export default function CameraTab() {
         const response = await fetch(`/api/groceries/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ percentConsumed }),
+          body: JSON.stringify({ percentConsumed, weekStart: guestGroceries.weekStart }),
         });
 
         if (response.ok) {
           const updated = await response.json();
           setAuthGroceries(authGroceries.map((g) => (g.id === id ? updated : g)));
-          // Clear nutrition cache so dashboard fetches fresh data
-          clearCache(`nutrition_${weekStart}`);
+          // Clear nutrition cache for current week AND previous week (carryover items)
+          const prevWeekStart = getPreviousWeekStart(guestGroceries.weekStart);
+          clearCache(`nutrition_${guestGroceries.weekStart}`);
+          clearCache(`nutrition_${prevWeekStart}`);
         } else {
           const errorData = await response.json().catch(() => ({ error: 'Failed to update' }));
           showError(errorData.error || 'Failed to update grocery');
@@ -171,6 +173,12 @@ export default function CameraTab() {
     }
   };
 
+  const getPreviousWeekStart = (weekStart: string): string => {
+    const date = new Date(weekStart);
+    date.setUTCDate(date.getUTCDate() - 7);
+    return date.toISOString().split('T')[0];
+  };
+
   const handleDeleteGrocery = async (id: string) => {
     if (session?.user) {
       // For authenticated users, use API
@@ -182,7 +190,7 @@ export default function CameraTab() {
         if (response.ok || response.status === 204) {
           setAuthGroceries(authGroceries.filter((g) => g.id !== id));
           // Clear nutrition cache so dashboard fetches fresh data
-          clearCache(`nutrition_${weekStart}`);
+          clearCache(`nutrition_${guestGroceries.weekStart}`);
           showSuccess('Grocery deleted');
         } else {
           const errorData = await response.json().catch(() => ({ error: 'Failed to delete' }));
@@ -199,9 +207,6 @@ export default function CameraTab() {
     }
   };
 
-  const handleWeekChange = (newWeekStart: string) => {
-    setWeekStart(newWeekStart);
-  };
 
   const handleItemsExtracted = (items: ParsedItem[]) => {
     setExtractedItems(items);
@@ -260,7 +265,7 @@ export default function CameraTab() {
   const groceriesToDisplay: DisplayGrocery[] = session?.user
     ? authGroceries.map(transformAuthGrocery)
     : guestGroceries.groceries
-      .filter((g) => g.weekStart === weekStart)
+      .filter((g) => g.weekStart === guestGroceries.weekStart)
       .map((g) => ({
         id: g.id,
         foodName: g.foodName,
@@ -356,10 +361,14 @@ export default function CameraTab() {
       {/* Add Tab Content */}
       {activeTab === 'add' && (
         <div>
-          {session?.user && <WeekNavigator onWeekChange={handleWeekChange} />}
+          {session?.user && <WeekNavigator value={guestGroceries.weekStart} onWeekChange={guestGroceries.setWeekStart} />}
 
           <div style={{ marginTop: '20px', marginBottom: '20px' }}>
             <ReceiptUploader onItemsExtracted={handleItemsExtracted} />
+          </div>
+
+          <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+            <RestaurantLookup onAddItem={handleAddGrocery} />
           </div>
 
           <div style={{ marginTop: '20px', marginBottom: '20px' }} id="grocery-form">
@@ -381,7 +390,7 @@ export default function CameraTab() {
       {/* Inventory Tab Content */}
       {activeTab === 'inventory' && (
         <div style={{ marginTop: '24px' }}>
-          {session?.user && <WeekNavigator onWeekChange={handleWeekChange} />}
+          {session?.user && <WeekNavigator value={guestGroceries.weekStart} onWeekChange={guestGroceries.setWeekStart} />}
 
           {isLoadingGroceries ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -395,7 +404,7 @@ export default function CameraTab() {
               groceries={groceriesToDisplay}
               onUpdate={handleUpdateGrocery}
               onDelete={handleDeleteGrocery}
-              weekStart={weekStart}
+              weekStart={guestGroceries.weekStart}
             />
           )}
         </div>
@@ -404,8 +413,8 @@ export default function CameraTab() {
       {/* Meals Tab Content */}
       {activeTab === 'meals' && (
         <div style={{ marginTop: '24px' }}>
-          {session?.user && <WeekNavigator onWeekChange={handleWeekChange} />}
-          <MealsTab weekStart={weekStart} />
+          {session?.user && <WeekNavigator value={guestGroceries.weekStart} onWeekChange={guestGroceries.setWeekStart} />}
+          <MealsTab weekStart={guestGroceries.weekStart} onMealLogged={handleMealLogged} />
         </div>
       )}
     </div>

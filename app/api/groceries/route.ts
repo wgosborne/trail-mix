@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { userGroceryInventory } from '@/schema/db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { grocerySchema, formatValidationError } from '@/lib/validation';
 import { z } from 'zod';
@@ -11,10 +11,10 @@ import { upsertLookup } from '@/lib/grocery-lookup';
 // Helper function to calculate week start from a date
 function getWeekStart(date: Date = new Date()): string {
   const d = new Date(date);
-  const dayOfWeek = d.getDay();
+  const dayOfWeek = d.getUTCDay();
   const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const monday = new Date(d);
-  monday.setDate(d.getDate() - daysFromMonday);
+  monday.setUTCDate(d.getUTCDate() - daysFromMonday);
   return monday.toISOString().split('T')[0];
 }
 
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
     const grocery = result[0];
 
     // Cache nutrition data in the lookup table for future lookups
+    console.log('[POST-GROCERIES] Caching nutrition for:', { foodName, unit });
     await upsertLookup(
       foodName,
       unit,
@@ -86,6 +87,7 @@ export async function POST(req: NextRequest) {
       },
       'user'
     );
+    console.log('[POST-GROCERIES] Cached successfully');
 
     return NextResponse.json(
       {
@@ -121,15 +123,15 @@ export async function GET(req: NextRequest) {
 
     const userId = (session.user as any).id;
 
-    // Fetch all unconsumed groceries (not fully consumed, not temporary)
-    const groceries = await db.query.userGroceryInventory.findMany({
+    // Fetch all unconsumed groceries (not fully consumed, not temporary) - ignore week
+    const allGroceries = await db.query.userGroceryInventory.findMany({
       where: and(eq(userGroceryInventory.userId, userId), eq(userGroceryInventory.isTemporary, false)),
     });
 
     // Filter out fully consumed items
-    const allGroceries = groceries.filter((item) => Number(item.percentConsumed) < 100);
+    const unconsumedGroceries = allGroceries.filter((item) => Number(item.percentConsumed) < 100);
 
-    const formattedGroceries = allGroceries.map((g) => ({
+    const formattedGroceries = unconsumedGroceries.map((g) => ({
       id: g.id,
       foodName: g.foodName,
       quantityBought: Number(g.quantityBought),

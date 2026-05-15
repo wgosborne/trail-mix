@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react';
 
 interface WeekNavigatorProps {
   onWeekChange: (weekStart: string) => void;
+  value?: string;
 }
 
 // Helper function to calculate week start from a date
 function getWeekStart(date: Date = new Date()): string {
   const d = new Date(date);
-  const dayOfWeek = d.getDay();
+  const dayOfWeek = d.getUTCDay();
   const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const monday = new Date(d);
-  monday.setDate(d.getDate() - daysFromMonday);
+  monday.setUTCDate(d.getUTCDate() - daysFromMonday);
   return monday.toISOString().split('T')[0];
 }
 
@@ -20,20 +21,26 @@ function getWeekStart(date: Date = new Date()): string {
 function getWeekDates(weekStart: string): { monday: Date; sunday: Date } {
   const monday = new Date(weekStart);
   const sunday = new Date(weekStart);
-  sunday.setDate(sunday.getDate() + 6);
+  sunday.setUTCDate(sunday.getUTCDate() + 6);
   return { monday, sunday };
 }
 
 // Format date for display (e.g., "May 5")
 function formatDate(date: Date): string {
-  const month = date.toLocaleString('en-US', { month: 'short' });
-  const day = date.getDate();
+  const month = date.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+  const day = date.getUTCDate();
   return `${month} ${day}`;
 }
 
-export function WeekNavigator({ onWeekChange }: WeekNavigatorProps) {
-  const [weekStart, setWeekStart] = useState<string>(getWeekStart());
+export function WeekNavigator({ onWeekChange, value }: WeekNavigatorProps) {
+  const [weekStart, setWeekStart] = useState<string>(value ?? getWeekStart());
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (value && value !== weekStart) {
+      setWeekStart(value);
+    }
+  }, [value]);
 
   useEffect(() => {
     setIsLoading(false);
@@ -45,13 +52,13 @@ export function WeekNavigator({ onWeekChange }: WeekNavigatorProps) {
 
   // Calculate if next week button should be disabled
   const nextWeekStart = new Date(weekStart);
-  nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+  nextWeekStart.setUTCDate(nextWeekStart.getUTCDate() + 7);
   const nextWeekStartStr = nextWeekStart.toISOString().split('T')[0];
   const isNextWeekInFuture = nextWeekStartStr > currentWeekStart;
 
   const handlePrevWeek = () => {
     const prevWeekStart = new Date(weekStart);
-    prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+    prevWeekStart.setUTCDate(prevWeekStart.getUTCDate() - 7);
     const prevWeekStartStr = prevWeekStart.toISOString().split('T')[0];
     setIsLoading(true);
     setWeekStart(prevWeekStartStr);
@@ -61,7 +68,7 @@ export function WeekNavigator({ onWeekChange }: WeekNavigatorProps) {
   const handleNextWeek = () => {
     if (!isNextWeekInFuture) {
       const nextWeekStart = new Date(weekStart);
-      nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+      nextWeekStart.setUTCDate(nextWeekStart.getUTCDate() + 7);
       const nextWeekStartStr = nextWeekStart.toISOString().split('T')[0];
       setIsLoading(true);
       setWeekStart(nextWeekStartStr);

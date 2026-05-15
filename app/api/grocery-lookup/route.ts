@@ -18,15 +18,20 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const { normalizeName } = await import('@/lib/grocery-lookup');
+    console.log('[GROCERY-LOOKUP] Searching for:', { name, unit, normalized: normalizeName(name) });
+
     const row = await findInLookup(name, unit);
 
     if (!row) {
+      console.log('[GROCERY-LOOKUP] Not found in database');
       return NextResponse.json(
         { error: 'not_found', message: 'No cached nutrition data found for this item' },
         { status: 404 }
       );
     }
 
+    console.log('[GROCERY-LOOKUP] Found:', row);
     return NextResponse.json(row);
   } catch (error) {
     console.error('[GROCERY-LOOKUP] Error:', error);

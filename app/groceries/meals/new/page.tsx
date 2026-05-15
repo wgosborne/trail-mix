@@ -5,10 +5,10 @@ import { MealBuilder } from '@/components/MealBuilder';
 
 function getWeekStart(date: Date = new Date()): string {
   const d = new Date(date);
-  const dayOfWeek = d.getDay();
+  const dayOfWeek = d.getUTCDay();
   const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const monday = new Date(d);
-  monday.setDate(d.getDate() - daysFromMonday);
+  monday.setUTCDate(d.getUTCDate() - daysFromMonday);
   return monday.toISOString().split('T')[0];
 }
 

@@ -1,5 +1,17 @@
 /**
- * Retrieve cached data from sessionStorage if available and not expired.
+ * Determine storage type based on key.
+ * Use localStorage for Strava data (persistent across sessions).
+ * Use sessionStorage for other data (session-only).
+ */
+function getStorageType(key: string): 'localStorage' | 'sessionStorage' {
+  if (key.startsWith('strava_')) {
+    return 'localStorage';
+  }
+  return 'sessionStorage';
+}
+
+/**
+ * Retrieve cached data if available and not expired.
  * Returns null if the item doesn't exist or has expired.
  */
 export function getCached<T>(key: string): T | null {
@@ -8,14 +20,15 @@ export function getCached<T>(key: string): T | null {
   }
 
   try {
-    const item = sessionStorage.getItem(key);
+    const storage = getStorageType(key) === 'localStorage' ? localStorage : sessionStorage;
+    const item = storage.getItem(key);
     if (!item) {
       return null;
     }
 
     const { data, expiresAt } = JSON.parse(item);
     if (Date.now() > expiresAt) {
-      sessionStorage.removeItem(key);
+      storage.removeItem(key);
       return null;
     }
 
@@ -27,27 +40,37 @@ export function getCached<T>(key: string): T | null {
 }
 
 /**
- * Store data in sessionStorage with optional TTL (default: 2 minutes).
- * Data will be automatically expired based on the ttlMs parameter.
+ * Store data in cache with optional TTL.
+ * Strava data uses localStorage (24 hour TTL) for persistence across sessions.
+ * Other data uses sessionStorage (2 minute TTL default) for session-only caching.
  */
-export function setCached<T>(key: string, data: T, ttlMs: number = 2 * 60 * 1000): void {
+export function setCached<T>(
+  key: string,
+  data: T,
+  ttlMs?: number
+): void {
   if (typeof window === 'undefined') {
     return;
   }
 
   try {
+    // Default TTL: 24 hours for Strava, 2 minutes for others
+    const defaultTtl = key.startsWith('strava_') ? 24 * 60 * 60 * 1000 : 2 * 60 * 1000;
+    const finalTtl = ttlMs ?? defaultTtl;
+
+    const storage = getStorageType(key) === 'localStorage' ? localStorage : sessionStorage;
     const item = {
       data,
-      expiresAt: Date.now() + ttlMs,
+      expiresAt: Date.now() + finalTtl,
     };
-    sessionStorage.setItem(key, JSON.stringify(item));
+    storage.setItem(key, JSON.stringify(item));
   } catch (error) {
     console.error('Cache write error:', error);
   }
 }
 
 /**
- * Clear a specific cache entry from sessionStorage.
+ * Clear a specific cache entry.
  */
 export function clearCache(key: string): void {
   if (typeof window === 'undefined') {
@@ -55,7 +78,8 @@ export function clearCache(key: string): void {
   }
 
   try {
-    sessionStorage.removeItem(key);
+    const storage = getStorageType(key) === 'localStorage' ? localStorage : sessionStorage;
+    storage.removeItem(key);
   } catch (error) {
     console.error('Cache clear error:', error);
   }

@@ -40,6 +40,7 @@ export const groceryUpdateSchema = z.object({
   carbsG: z.number().nonnegative('Carbs must be 0 or greater').optional().nullable(),
   fatG: z.number().nonnegative('Fat must be 0 or greater').optional().nullable(),
   fiberG: z.number().nonnegative('Fiber must be 0 or greater').optional().nullable(),
+  weekStart: z.string().optional(),
 }).strict();
 
 // User goals/targets schema

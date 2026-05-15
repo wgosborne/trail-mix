@@ -164,7 +164,7 @@ export async function GET(req: NextRequest) {
       let totalCarbs = 0;
       let totalFat = 0;
 
-      ingredients.forEach((ing) => {
+      ingredients.forEach((ing: any) => {
         if (ing.grocery) {
           const quantityBought = Number(ing.grocery.quantityBought) || 1;
           const caloriesPerUnit = (Number(ing.grocery.totalCalories) || 0) / quantityBought;

@@ -407,9 +407,23 @@ function MealEditor({ meal, weekStart }: { meal: FetchedMeal; weekStart: string 
                     inputMode='decimal'
                     value={ing.quantityUsed}
                     onChange={(e) => {
-                      const num = parseFloat(e.target.value);
-                      if (!isNaN(num) && num > 0) updateQuantity(ing.groceryId, num);
+                      const val = e.target.value;
+                      if (val === '') {
+                        updateQuantity(ing.groceryId, 0);
+                      } else {
+                        const num = parseFloat(val);
+                        if (!isNaN(num) && num >= 0) {
+                          updateQuantity(ing.groceryId, num);
+                        }
+                      }
                     }}
+                    onBlur={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (isNaN(val) || val < 0.1) {
+                        updateQuantity(ing.groceryId, 1);
+                      }
+                    }}
+                    onFocus={(e) => e.currentTarget.select()}
                     style={{ flex: 1, padding: '0.5rem', border: '1px solid #E8E4DC', borderRadius: '0.375rem', minHeight: '44px' }}
                   />
                   <span style={{ fontSize: '0.875rem', color: '#999999', minWidth: '3rem' }}>{ing.grocery.unit}</span>

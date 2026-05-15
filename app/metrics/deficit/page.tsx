@@ -14,6 +14,25 @@ interface NutritionData {
   };
 }
 
+function getCurrentWeekStart(date: Date = new Date()): string {
+  const d = new Date(date);
+  const dayOfWeek = d.getUTCDay();
+  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const monday = new Date(d);
+  monday.setUTCDate(d.getUTCDate() - daysFromMonday);
+  return monday.toISOString().split('T')[0];
+}
+
+function getDaysElapsed(weekStart: string): number {
+  const today = new Date();
+  const start = new Date(weekStart);
+  const days = Math.min(
+    7,
+    Math.max(1, Math.floor((today.getTime() - start.getTime()) / 86400000) + 1),
+  );
+  return days;
+}
+
 interface StravaData {
   weekTotal: {
     caloriesBurned: number;
@@ -27,12 +46,7 @@ export default function DeficitDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get current week
-    const date = new Date();
-    const dayOfWeek = date.getUTCDay();
-    const diff = date.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-    const monday = new Date(date.setUTCDate(diff));
-    const weekStart = monday.toISOString().split('T')[0];
+    const weekStart = getCurrentWeekStart();
 
     const cached = getCached<NutritionData>(`nutrition_${weekStart}`);
     const stravaCached = getCached<StravaData>(`strava_${weekStart}`);
@@ -72,10 +86,27 @@ export default function DeficitDetailPage() {
     );
   }
 
+  const weekStart = getCurrentWeekStart();
+  const days = getDaysElapsed(weekStart);
   const consumed = Math.round(data.totals.caloriesConsumed);
   const burned = stravaData?.weekTotal.caloriesBurned ?? 0;
-  const deficit = burned - consumed;
-  const isOnTrack = deficit >= -500;
+  const expectedConsumed = Math.round(data.goals.dailyCalories * days);
+  const netIntake = consumed - burned;
+  const deficit = netIntake - expectedConsumed;
+
+  let statusColor = "#34A853"; // green
+  let statusBgColor = "#D1F2D6";
+  let statusLabel = "✓ Deficit";
+
+  if (deficit > 0 && deficit <= 200) {
+    statusColor = "#E67E22"; // orange/yellow
+    statusBgColor = "#FFF8DC";
+    statusLabel = "⚠ Close";
+  } else if (deficit > 200) {
+    statusColor = "#FF6B6B"; // red
+    statusBgColor = "#FFE5E5";
+    statusLabel = "✗ Surplus";
+  }
 
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
@@ -100,48 +131,84 @@ export default function DeficitDetailPage() {
       {/* Main Deficit Card */}
       <div
         style={{
-          backgroundColor: isOnTrack ? '#D1F2D6' : '#FFE5E5',
+          backgroundColor: statusBgColor,
           borderRadius: '16px',
           padding: '24px',
-          border: `2px solid ${isOnTrack ? '#34A853' : '#FF6B6B'}`,
+          border: `2px solid ${statusColor}`,
           marginBottom: '24px'
         }}
       >
         <p style={{
           fontSize: '12px',
           fontWeight: 700,
-          color: isOnTrack ? '#34A853' : '#FF6B6B',
+          color: statusColor,
           textTransform: 'uppercase',
           letterSpacing: '0.4px',
           margin: '0 0 12px 0'
         }}>
-          {isOnTrack ? 'On Track' : 'Needs Work'}
+          {statusLabel}
         </p>
         <p style={{
           fontSize: '48px',
           fontWeight: 700,
-          color: isOnTrack ? '#34A853' : '#FF6B6B',
+          color: statusColor,
           margin: '0 0 8px 0',
           lineHeight: 1
         }}>
-          {deficit >= 0 ? '+' : '-'}{Math.abs(deficit).toLocaleString()}
+          {Math.abs(deficit).toLocaleString()}
         </p>
         <p style={{
           fontSize: '14px',
-          color: isOnTrack ? '#34A853' : '#FF6B6B',
+          color: statusColor,
           margin: 0
         }}>
-          calories on pace this week
+          {deficit <= 0 ? 'Deficit' : 'Surplus'} vs goal • Day {days} of 7
         </p>
       </div>
 
       {/* Breakdown */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
+        gridTemplateColumns: '1fr 1fr 1fr',
         gap: '16px',
         marginBottom: '24px'
       }}>
+        <div
+          style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '12px',
+            padding: '16px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+          }}
+        >
+          <p style={{
+            fontSize: '11px',
+            fontWeight: 700,
+            color: '#999999',
+            textTransform: 'uppercase',
+            letterSpacing: '0.4px',
+            margin: '0 0 8px 0'
+          }}>
+            Consumed
+          </p>
+          <p style={{
+            fontSize: '28px',
+            fontWeight: 700,
+            color: '#D67BB8',
+            margin: '0 0 4px 0',
+            lineHeight: 1
+          }}>
+            {consumed}
+          </p>
+          <p style={{
+            fontSize: '11px',
+            color: '#999999',
+            margin: 0
+          }}>
+            kcal this week
+          </p>
+        </div>
+
         <div
           style={{
             backgroundColor: '#FFFFFF',
@@ -194,23 +261,23 @@ export default function DeficitDetailPage() {
             letterSpacing: '0.4px',
             margin: '0 0 8px 0'
           }}>
-            Consumed
+            Goal (Day {days})
           </p>
           <p style={{
             fontSize: '28px',
             fontWeight: 700,
-            color: '#D67BB8',
+            color: '#8B7FB8',
             margin: '0 0 4px 0',
             lineHeight: 1
           }}>
-            {consumed}
+            {expectedConsumed}
           </p>
           <p style={{
             fontSize: '11px',
             color: '#999999',
             margin: 0
           }}>
-            kcal this week
+            kcal so far
           </p>
         </div>
       </div>
@@ -238,9 +305,9 @@ export default function DeficitDetailPage() {
           margin: '0 0 8px 0',
           lineHeight: '1.5'
         }}>
-          {deficit > 0
-            ? `You're in a calorie surplus of ${Math.abs(deficit).toLocaleString()} calories this week. You've eaten more than you burned, which is great for building muscle and energy levels.`
-            : `You're in a calorie deficit of ${Math.abs(deficit).toLocaleString()} calories this week. You've burned more than you consumed, which supports fat loss goals.`}
+          {deficit <= 0
+            ? `You're in a deficit of ${Math.abs(deficit).toLocaleString()} calories relative to your goal for ${days} days. Your net intake (consumed - burned) is under your target, which supports fat loss goals.`
+            : `You're in a surplus of ${Math.abs(deficit).toLocaleString()} calories relative to your goal for ${days} days. Your net intake (consumed - burned) exceeds your target for the days so far.`}
         </p>
         <p style={{
           fontSize: '12px',
@@ -248,7 +315,7 @@ export default function DeficitDetailPage() {
           margin: 0,
           fontStyle: 'italic'
         }}>
-          The optimal range is typically -500 to +500 calories per week for balanced progress.
+          Green: Deficit. Yellow: Within 200 cal of goal. Red: Over 200 cal surplus.
         </p>
       </div>
     </div>
