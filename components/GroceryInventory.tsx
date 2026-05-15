@@ -372,22 +372,22 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
           </button>
 
           {/* Summary Stats - Always visible */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '12px', textAlign: 'center', marginBottom: isInventoryExpanded ? '16px' : '0px', transition: 'margin-bottom 0.3s ease' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', textAlign: 'center', marginBottom: isInventoryExpanded ? '16px' : '0px', transition: 'margin-bottom 0.3s ease' }}>
             <div>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Calories</p>
-              <p style={{ fontSize: '18px', fontWeight: 700, color: '#5B7FD4' }}>{Math.round(inventoryMacros.calories)}</p>
+              <p data-macro-label="" style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Calories</p>
+              <p data-macro-value="" style={{ fontSize: '18px', fontWeight: 700, color: '#5B7FD4' }}>{Math.round(inventoryMacros.calories)}</p>
             </div>
             <div>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Protein</p>
-              <p style={{ fontSize: '18px', fontWeight: 700, color: '#8B7FB8' }}>{inventoryMacros.protein.toFixed(1)}g</p>
+              <p data-macro-label="" style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Protein</p>
+              <p data-macro-value="" style={{ fontSize: '18px', fontWeight: 700, color: '#8B7FB8' }}>{inventoryMacros.protein.toFixed(1)}g</p>
             </div>
             <div>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Carbs</p>
-              <p style={{ fontSize: '18px', fontWeight: 700, color: '#D67BB8' }}>{inventoryMacros.carbs.toFixed(1)}g</p>
+              <p data-macro-label="" style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Carbs</p>
+              <p data-macro-value="" style={{ fontSize: '18px', fontWeight: 700, color: '#D67BB8' }}>{inventoryMacros.carbs.toFixed(1)}g</p>
             </div>
             <div>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Fat</p>
-              <p style={{ fontSize: '18px', fontWeight: 700, color: '#C9845F' }}>{inventoryMacros.fat.toFixed(1)}g</p>
+              <p data-macro-label="" style={{ fontSize: '11px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>Fat</p>
+              <p data-macro-value="" style={{ fontSize: '18px', fontWeight: 700, color: '#C9845F' }}>{inventoryMacros.fat.toFixed(1)}g</p>
             </div>
           </div>
 
@@ -580,8 +580,8 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
             }}>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))',
-                gap: '8px',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '6px',
                 flex: 1
               }}>
               {/* Calories - Blue */}
@@ -725,6 +725,16 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
       </div>
 
       </div>
+      <style>{`
+        @media (max-width: 400px) {
+          [data-macro-label] {
+            font-size: 10px !important;
+          }
+          [data-macro-value] {
+            font-size: 16px !important;
+          }
+        }
+      `}</style>
     </>
   );
 }

@@ -928,8 +928,8 @@ export function NutritionDashboardPro({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(80px, 1fr))",
-              gap: "12px",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: "8px",
               textAlign: "center",
               marginBottom: macroExpanded ? "16px" : "0px",
               transition: "margin-bottom 0.3s ease"
@@ -937,6 +937,7 @@ export function NutritionDashboardPro({
           >
             <div>
               <p
+                data-macro-label=""
                 style={{
                   fontSize: "11px",
                   fontWeight: 600,
@@ -949,6 +950,7 @@ export function NutritionDashboardPro({
                 Calories
               </p>
               <p
+                data-macro-value=""
                 style={{
                   fontSize: "18px",
                   fontWeight: 700,
@@ -961,6 +963,7 @@ export function NutritionDashboardPro({
             </div>
             <div>
               <p
+                data-macro-label=""
                 style={{
                   fontSize: "11px",
                   fontWeight: 600,
@@ -973,6 +976,7 @@ export function NutritionDashboardPro({
                 Protein
               </p>
               <p
+                data-macro-value=""
                 style={{
                   fontSize: "18px",
                   fontWeight: 700,
@@ -985,6 +989,7 @@ export function NutritionDashboardPro({
             </div>
             <div>
               <p
+                data-macro-label=""
                 style={{
                   fontSize: "11px",
                   fontWeight: 600,
@@ -997,6 +1002,7 @@ export function NutritionDashboardPro({
                 Carbs
               </p>
               <p
+                data-macro-value=""
                 style={{
                   fontSize: "18px",
                   fontWeight: 700,
@@ -1009,6 +1015,7 @@ export function NutritionDashboardPro({
             </div>
             <div>
               <p
+                data-macro-label=""
                 style={{
                   fontSize: "11px",
                   fontWeight: 600,
@@ -1021,6 +1028,7 @@ export function NutritionDashboardPro({
                 Fat
               </p>
               <p
+                data-macro-value=""
                 style={{
                   fontSize: "18px",
                   fontWeight: 700,
@@ -1552,9 +1560,19 @@ export function NutritionDashboardPro({
           50% { opacity: 0.5; }
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 480px) {
           [data-container] {
             max-width: 100vw !important;
+          }
+        }
+
+        @media (max-width: 400px) {
+          /* iPhone SE / small phones - tighten spacing */
+          [data-macro-label] {
+            font-size: 10px !important;
+          }
+          [data-macro-value] {
+            font-size: 16px !important;
           }
         }
 
