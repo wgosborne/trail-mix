@@ -25,6 +25,19 @@ interface NutritionData {
   };
 }
 
+interface Grocery {
+  id: string;
+  foodName: string;
+  quantityBought: number;
+  unit: string;
+  percentConsumed: number;
+  totalCalories: number | null;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  weekStart: string;
+}
+
 interface WeeklyChartData {
   week: string;
   label: string;
@@ -92,6 +105,16 @@ async function fetchStravaWeek(
     return { caloriesBurned: data.weekTotal.caloriesBurned };
   } catch {
     return null;
+  }
+}
+
+async function fetchGroceries(): Promise<Grocery[]> {
+  try {
+    const response = await fetch(`/api/groceries`);
+    if (!response.ok) return [];
+    return await response.json();
+  } catch {
+    return [];
   }
 }
 
@@ -382,6 +405,8 @@ export function NutritionDashboardPro({
   const [error, setError] = useState<string | null>(null);
   const [weeklyChartData, setWeeklyChartData] = useState<WeeklyChartData[]>([]);
   const [syncingStrava, setSyncingStrava] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [groceries, setGroceries] = useState<Grocery[]>([]);
 
   useEffect(() => {
     async function fetchNutrition() {
@@ -448,6 +473,7 @@ export function NutritionDashboardPro({
 
     fetchNutrition();
     fetchWeeklyChartData();
+    fetchGroceries().then(setGroceries);
   }, [weekStart, isStravaConnected]);
 
   if (loading && !data) {
@@ -580,6 +606,19 @@ export function NutritionDashboardPro({
   const deficit = Math.round(netIntake - expectedConsumedSoFar);
   const isOnTrack = deficit <= 500; // within reasonable range (want to be under goal)
 
+  // Get groceries for this week with consumption data
+  const weekGroceries = groceries.filter(
+    (g) => g.weekStart === weekStart && g.percentConsumed > 0,
+  );
+
+  // Calculate calories per grocery item
+  const groceriesWithCalories = weekGroceries
+    .map((g) => ({
+      ...g,
+      consumedCalories: (g.totalCalories || 0) * (g.percentConsumed / 100),
+    }))
+    .sort((a, b) => b.consumedCalories - a.consumedCalories);
+
   return (
     <div
       style={{
@@ -592,6 +631,168 @@ export function NutritionDashboardPro({
         position: "relative",
       }}
     >
+      {/* Breakdown Modal */}
+      {showBreakdown && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "flex-end",
+            zIndex: 1000,
+          }}
+          onClick={() => setShowBreakdown(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: "20px 20px 0 0",
+              padding: "24px",
+              maxHeight: "80vh",
+              width: "100%",
+              overflowY: "auto",
+              boxShadow: "0 -12px 32px rgba(0, 0, 0, 0.15)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "20px",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#2C2C2A",
+                  margin: 0,
+                }}
+              >
+                Calorie Breakdown
+              </h2>
+              <button
+                onClick={() => setShowBreakdown(false)}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  fontSize: "24px",
+                  cursor: "pointer",
+                  padding: 0,
+                  color: "#999999",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+            >
+              {groceriesWithCalories.length === 0 ? (
+                <p
+                  style={{
+                    color: "#999999",
+                    textAlign: "center",
+                    margin: "20px 0",
+                  }}
+                >
+                  No foods consumed this week
+                </p>
+              ) : (
+                <>
+                  {groceriesWithCalories.map((g) => (
+                    <div
+                      key={g.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "12px",
+                        backgroundColor: "#F8F7FB",
+                        borderRadius: "8px",
+                        borderLeft: "4px solid #8B7FB8",
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <p
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            color: "#2C2C2A",
+                            margin: "0 0 4px 0",
+                          }}
+                        >
+                          {g.foodName}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "11px",
+                            color: "#999999",
+                            margin: 0,
+                          }}
+                        >
+                          {g.percentConsumed.toFixed(0)}% of {g.quantityBought}{" "}
+                          {g.unit}
+                        </p>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <p
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 700,
+                            color: "#8B7FB8",
+                            margin: "0 0 4px 0",
+                          }}
+                        >
+                          {g.consumedCalories.toFixed(0)} cal
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "11px",
+                            color: "#999999",
+                            margin: 0,
+                          }}
+                        >
+                          of {g.totalCalories} cal
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      paddingTop: "12px",
+                      borderTop: "1px solid #E8E4DC",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span style={{ color: "#2C2C2A" }}>Total Consumed</span>
+                    <span style={{ color: "#8B7FB8" }}>
+                      {Math.round(
+                        groceriesWithCalories.reduce(
+                          (sum, g) => sum + g.consumedCalories,
+                          0,
+                        ),
+                      )}{" "}
+                      cal
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header with title */}
       <div style={{ position: "relative", zIndex: 1, marginBottom: "16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -748,7 +949,11 @@ export function NutritionDashboardPro({
               margin: "0 0 16px 0",
             }}
           >
-            {rawDays === 7 ? "week started" : activeDays === rawDays ? "no days excluded" : "days excluded"}
+            {rawDays === 7
+              ? "week started"
+              : activeDays === rawDays
+                ? "no days excluded"
+                : "days excluded"}
           </p>
 
           {/* Day bubbles */}
@@ -764,14 +969,16 @@ export function NutritionDashboardPro({
               const isPast = i < rawDays;
               const isExcluded = excludedDays.includes(i);
               const isClickable = isPast && onToggleDay;
-              const bgColor =
-                !isPast ? "#E8E4DC" :
-                isExcluded ? "#E8E4DC" :
-                "#D67BB8";
-              const textColor =
-                !isPast ? "#CCCCCC" :
-                isExcluded ? "#999999" :
-                "#FFFFFF";
+              const bgColor = !isPast
+                ? "#E8E4DC"
+                : isExcluded
+                  ? "#E8E4DC"
+                  : "#D67BB8";
+              const textColor = !isPast
+                ? "#CCCCCC"
+                : isExcluded
+                  ? "#999999"
+                  : "#FFFFFF";
 
               return (
                 <button
@@ -797,12 +1004,16 @@ export function NutritionDashboardPro({
                   }}
                   onMouseEnter={(e) => {
                     if (isClickable && !isExcluded) {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#C86BA8";
+                      (
+                        e.currentTarget as HTMLButtonElement
+                      ).style.backgroundColor = "#C86BA8";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (isClickable && !isExcluded) {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#D67BB8";
+                      (
+                        e.currentTarget as HTMLButtonElement
+                      ).style.backgroundColor = "#D67BB8";
                     }
                   }}
                 >
@@ -823,153 +1034,6 @@ export function NutritionDashboardPro({
           >
             Tap days to exclude from calculations
           </p>
-        </DashboardCard>
-
-        {/* Card: Weekly Deficit */}
-        <DashboardCard onClick={() => router.push("/metrics/deficit")}>
-          <p
-            style={{
-              fontSize: "10px",
-              fontWeight: 700,
-              color: "#999999",
-              textTransform: "uppercase",
-              letterSpacing: "0.4px",
-              margin: "0 0 8px 0",
-            }}
-          >
-            Deficit vs Goal
-          </p>
-          <p
-            style={{
-              fontSize: "32px",
-              fontWeight: 700,
-              color: "#2C2C2A",
-              margin: "0 0 8px 0",
-              lineHeight: 1,
-            }}
-          >
-            {Math.abs(deficit).toLocaleString()}
-          </p>
-          <p
-            style={{
-              fontSize: "12px",
-              color: "#999999",
-              margin: "0 0 12px 0",
-            }}
-          >
-            {deficit <= 0 ? "Deficit" : "Surplus"} · {activeDays} of {rawDays} days
-          </p>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              backgroundColor:
-                deficit <= 0 ? "#D4F1E4" :
-                deficit <= 200 ? "#FFF8DC" :
-                "#FFE5E5",
-              borderRadius: "6px",
-              padding: "6px 12px",
-              marginBottom: "12px",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                color:
-                  deficit <= 0 ? "#0F6E56" :
-                  deficit <= 200 ? "#E67E22" :
-                  "#FF6B6B",
-              }}
-            >
-              {deficit <= 0 ? "✓ Deficit" : deficit <= 200 ? "⚠ Close" : "✗ Surplus"}
-            </span>
-          </div>
-
-          {/* Macro Recommendations */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "9px",
-                fontWeight: 700,
-                color: "#999999",
-                textTransform: "uppercase",
-                letterSpacing: "0.3px",
-                margin: "0 0 4px 0",
-              }}
-            >
-              Macro Adjustments
-            </p>
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "6px",
-              }}
-            >
-              {[
-                {
-                  label: "Protein",
-                  consumed: totals?.proteinConsumed ?? 0,
-                  goal: (goals?.dailyProtein ?? 150) * activeDays,
-                  color: "#FFB6C1",
-                },
-                {
-                  label: "Carbs",
-                  consumed: totals?.carbsConsumed ?? 0,
-                  goal: (goals?.dailyCarbs ?? 300) * activeDays,
-                  color: "#DDA0DD",
-                },
-                {
-                  label: "Fat",
-                  consumed: totals?.fatConsumed ?? 0,
-                  goal: (goals?.dailyFat ?? 80) * activeDays,
-                  color: "#FFD700",
-                },
-              ].map(({ label, consumed, goal, color }) => {
-                const diff = consumed - goal;
-                const isOver = diff > 0;
-                const percentDiff = Math.abs(Math.round((diff / goal) * 100));
-
-                if (percentDiff < 5) return null; // Don't show if within 5% of goal
-
-                return (
-                  <div
-                    key={label}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      backgroundColor: isOver
-                        ? "rgba(255, 107, 107, 0.1)"
-                        : "rgba(15, 110, 86, 0.1)",
-                      borderRadius: "4px",
-                      padding: "4px 8px",
-                      border: `1px solid ${isOver ? "#FFB6B6" : "#A8D5C4"}`,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "10px",
-                        fontWeight: 600,
-                        color: isOver ? "#FF6B6B" : "#0F6E56",
-                      }}
-                    >
-                      {isOver ? "↓" : "↑"} {isOver ? "Decrease" : "Increase"}{" "}
-                      {label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </DashboardCard>
 
         {/* Card: Macros vs Goal - Grid Layout */}
@@ -1072,7 +1136,14 @@ export function NutritionDashboardPro({
                 marginBottom: "8px",
               }}
             >
-              <span style={{ fontSize: "11px", color: "#999999" }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: "#999999",
+                  cursor: "pointer",
+                }}
+                onClick={() => setShowBreakdown(true)}
+              >
                 Consumed so far
               </span>
               <span
@@ -1114,8 +1185,168 @@ export function NutritionDashboardPro({
               <span
                 style={{ fontSize: "12px", fontWeight: 600, color: "#0F6E56" }}
               >
-                {Math.max(0, Math.round(dailyGoal * activeDays) - totalConsumed)} cal
+                {Math.max(
+                  0,
+                  Math.round(dailyGoal * activeDays) - totalConsumed,
+                )}{" "}
+                cal
               </span>
+            </div>
+          </div>
+        </DashboardCard>
+
+        {/* Card: Weekly Deficit */}
+        <DashboardCard onClick={() => router.push("/metrics/deficit")}>
+          <p
+            style={{
+              fontSize: "10px",
+              fontWeight: 700,
+              color: "#999999",
+              textTransform: "uppercase",
+              letterSpacing: "0.4px",
+              margin: "0 0 8px 0",
+            }}
+          >
+            Deficit vs Goal
+          </p>
+          <p
+            style={{
+              fontSize: "32px",
+              fontWeight: 700,
+              color: "#2C2C2A",
+              margin: "0 0 8px 0",
+              lineHeight: 1,
+            }}
+          >
+            {Math.abs(deficit).toLocaleString()}
+          </p>
+          <p
+            style={{
+              fontSize: "12px",
+              color: "#999999",
+              margin: "0 0 12px 0",
+            }}
+          >
+            {deficit <= 0 ? "Deficit" : "Surplus"} · {activeDays} of {rawDays}{" "}
+            days
+          </p>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              backgroundColor:
+                deficit <= 0
+                  ? "#D4F1E4"
+                  : deficit <= 200
+                    ? "#FFF8DC"
+                    : "#FFE5E5",
+              borderRadius: "6px",
+              padding: "6px 12px",
+              marginBottom: "12px",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 600,
+                color:
+                  deficit <= 0
+                    ? "#0F6E56"
+                    : deficit <= 200
+                      ? "#E67E22"
+                      : "#FF6B6B",
+              }}
+            >
+              {deficit <= 0
+                ? "✓ Deficit"
+                : deficit <= 200
+                  ? "⚠ Close"
+                  : "✗ Surplus"}
+            </span>
+          </div>
+
+          {/* Macro Recommendations */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "9px",
+                fontWeight: 700,
+                color: "#999999",
+                textTransform: "uppercase",
+                letterSpacing: "0.3px",
+                margin: "0 0 4px 0",
+              }}
+            >
+              Macro Adjustments
+            </p>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "6px",
+              }}
+            >
+              {[
+                {
+                  label: "Protein",
+                  consumed: totals?.proteinConsumed ?? 0,
+                  goal: (goals?.dailyProtein ?? 150) * activeDays,
+                  color: "#FFB6C1",
+                },
+                {
+                  label: "Carbs",
+                  consumed: totals?.carbsConsumed ?? 0,
+                  goal: (goals?.dailyCarbs ?? 300) * activeDays,
+                  color: "#DDA0DD",
+                },
+                {
+                  label: "Fat",
+                  consumed: totals?.fatConsumed ?? 0,
+                  goal: (goals?.dailyFat ?? 80) * activeDays,
+                  color: "#FFD700",
+                },
+              ].map(({ label, consumed, goal, color }) => {
+                const diff = consumed - goal;
+                const isOver = diff > 0;
+                const percentDiff = Math.abs(Math.round((diff / goal) * 100));
+
+                if (percentDiff < 5) return null;
+
+                return (
+                  <div
+                    key={label}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      backgroundColor: isOver
+                        ? "rgba(255, 107, 107, 0.1)"
+                        : "rgba(15, 110, 86, 0.1)",
+                      borderRadius: "4px",
+                      padding: "4px 8px",
+                      border: `1px solid ${isOver ? "#FFB6B6" : "#A8D5C4"}`,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        color: isOver ? "#FF6B6B" : "#0F6E56",
+                      }}
+                    >
+                      {isOver ? "↓" : "↑"} {isOver ? "Decrease" : "Increase"}{" "}
+                      {label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </DashboardCard>

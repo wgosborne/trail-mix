@@ -206,6 +206,8 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
     );
   }
 
+  const sortedGroceries = [...groceries].sort((a, b) => a.foodName.localeCompare(b.foodName));
+
   // Calculate consumed macros based on percentConsumed
   const consumedMacros = groceries.reduce(
     (acc, grocery) => {
@@ -469,7 +471,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
 
         {/* Grocery Items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {groceries.map((grocery) => (
+        {sortedGroceries.map((grocery) => (
           <div
             key={grocery.id}
             style={{

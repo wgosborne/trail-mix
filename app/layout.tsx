@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Syne } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { TabNavigation } from "@/components/TabNavigation";
+import { Header } from "@/components/Header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,9 +55,19 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" style={{ minHeight: '100vh' }}>
         <Providers>
-          {children}
+          <Header />
+          <div style={{
+            flex: 1,
+            paddingBottom: '80px',
+            paddingTop: '52px',
+            maxWidth: '100%',
+            overflow: 'auto'
+          }}>
+            {children}
+          </div>
+          <TabNavigation />
         </Providers>
       </body>
     </html>

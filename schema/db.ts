@@ -112,10 +112,26 @@ export const mealIngredients = pgTable(
   })
 );
 
+export const stravaActivitiesCache = pgTable(
+  'strava_activities_cache',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    weekStart: date('week_start').notNull(),
+    activities: json('activities').$type<any[]>().notNull(),
+    weekTotal: json('week_total').$type<any>().notNull(),
+    cachedAt: timestamp('cached_at').defaultNow(),
+  },
+  table => ({
+    userWeekIdx: uniqueIndex('idx_strava_cache_user_week').on(table.userId, table.weekStart),
+  })
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   groceries: many(userGroceryInventory),
   sessions: many(sessions),
   meals: many(userMeals),
+  stravaCache: many(stravaActivitiesCache),
 }));
 
 export const groceryRelations = relations(userGroceryInventory, ({ one, many }) => ({

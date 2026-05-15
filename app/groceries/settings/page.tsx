@@ -163,6 +163,23 @@ function SettingsContent() {
     }
   }
 
+  function handleClearCache() {
+    if (!confirm('Clear all cached data (nutrition, Strava, etc.)? This will refresh your data from the server.')) {
+      return;
+    }
+
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('nutrition_') || key.startsWith('strava_') || key.startsWith('user_')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    setSuccessMessage('Cache cleared successfully! Refreshing...');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  }
+
   if (!session?.user) {
     return (
       <div style={{ padding: '16px 20px' }}>
@@ -445,6 +462,45 @@ function SettingsContent() {
             )}
           </>
         )}
+      </div>
+
+      <div style={{
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #E8E4DC',
+        borderRadius: '10px',
+        padding: '20px',
+        boxShadow: '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)',
+        transition: 'all 0.3s cubic-bezier(0.23, 1, 0.320, 1)'
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.transform = 'translateY(-6px)';
+        el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)';
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.transform = 'translateY(0)';
+        el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)';
+      }}
+      >
+        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#2C2C2A', marginBottom: '12px' }}>Cache & Data</h2>
+        <p style={{ fontSize: '14px', color: '#999999', marginBottom: '12px' }}>Clear cached data to refresh nutrition and Strava information.</p>
+        <button
+          onClick={handleClearCache}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#DC3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 700,
+            minHeight: '44px'
+          }}
+        >
+          Clear Cache
+        </button>
       </div>
     </div>
   );

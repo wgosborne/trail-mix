@@ -37,13 +37,29 @@ export default function CaloriesDetailPage() {
     const cached = getCached<NutritionData>(`nutrition_${weekStart}`);
     const stravaCached = getCached<StravaData>(`strava_${weekStart}`);
 
-    if (cached) {
+    if (cached && stravaCached) {
       setData(cached);
-    }
-    if (stravaCached) {
       setStravaData(stravaCached);
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    // Fetch from API if not fully cached
+    Promise.all([
+      fetch(`/api/nutrition?week=${weekStart}`).then((res) => res.json()),
+      fetch(`/api/strava/activities?week=${weekStart}`).then((res) => res.json()),
+    ])
+      .then(([nutritionResult, stravaResult]) => {
+        setData(nutritionResult);
+        setStravaData(stravaResult);
+      })
+      .catch(() => {
+        if (cached) setData(cached);
+        if (stravaCached) setStravaData(stravaCached);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   if (loading) {

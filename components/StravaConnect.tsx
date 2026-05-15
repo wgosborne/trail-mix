@@ -28,28 +28,11 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
 
   async function handleSync() {
     const week = weekStart || getCurrentWeekStart();
-
-    // Check cache first - if cached, use it (don't refresh)
-    const cached = getCached<{ activities: StravaActivity[]; weekTotal: any }>(`strava_${week}`);
-    if (cached) {
-      setActivities(cached.activities);
-      setWeekTotal(cached.weekTotal);
-      onCaloriesUpdate?.(cached.weekTotal.caloriesBurned);
-      onSync?.(cached.weekTotal.caloriesBurned);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
-    // No cache, fetch and cache it
     setLoading(true);
     setError(null);
-    await refreshActivities(week);
-  }
 
-  async function refreshActivities(week: string) {
     try {
-      const response = await fetch(`/api/strava/activities?week=${week}`);
+      const response = await fetch(`/api/strava/activities?week=${week}&sync=true`);
 
       if (!response.ok) {
         const data = await response.json();
@@ -61,25 +44,28 @@ export function StravaConnect({ isConnected, onSync, onCaloriesUpdate, onDisconn
       setWeekTotal(data.weekTotal);
       setCached(`strava_${week}`, { activities: data.activities, weekTotal: data.weekTotal });
 
-      // Call callbacks with updated calorie data
       onCaloriesUpdate?.(data.weekTotal.caloriesBurned);
       onSync?.(data.weekTotal.caloriesBurned);
-      setLoading(false);
       setError(null);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to sync activities';
-      if (!activities.length) {
-        // Only show error if we have no cached data
-        console.error('Sync error:', err);
-        setError(errorMsg);
-      }
+      console.error('Sync error:', err);
+      setError(errorMsg);
+    } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
     if (isConnected) {
-      handleSync();
+      // Load from cache on mount, but don't fetch from Strava
+      const week = weekStart || getCurrentWeekStart();
+      const cached = getCached<{ activities: StravaActivity[]; weekTotal: any }>(`strava_${week}`);
+      if (cached) {
+        setActivities(cached.activities);
+        setWeekTotal(cached.weekTotal);
+      }
+      setLoading(false);
     }
   }, [isConnected]);
 

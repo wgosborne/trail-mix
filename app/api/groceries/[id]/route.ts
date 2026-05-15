@@ -46,19 +46,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (percentConsumed !== undefined) {
       updates.percentConsumed = percentConsumed.toString();
 
-      // Track consumption by week - when percentConsumed changes, record the change in consumedByWeek
-      const oldPercent = parseFloat((groceryItem.percentConsumed || '0').toString());
-      const newPercent = percentConsumed;
-      const consumptionIncrease = newPercent - oldPercent;
-
-      if (consumptionIncrease > 0) {
-        // Record this week's consumption increase
-        const trackingWeek = updateWeekStart || groceryItem.weekStart;
-        const consumedByWeek = (groceryItem.consumedByWeek as any) || {};
-        const existingWeekConsumption = parseFloat((consumedByWeek[trackingWeek] || '0').toString());
-        consumedByWeek[trackingWeek] = existingWeekConsumption + consumptionIncrease;
-        updates.consumedByWeek = consumedByWeek;
-      }
+      // Track consumption by week - sync consumedByWeek with the new percentConsumed value
+      const trackingWeek = updateWeekStart || groceryItem.weekStart;
+      const consumedByWeek = (groceryItem.consumedByWeek as any) || {};
+      consumedByWeek[trackingWeek] = percentConsumed;
+      updates.consumedByWeek = consumedByWeek;
     }
 
     if (foodName !== undefined) updates.foodName = foodName.trim();

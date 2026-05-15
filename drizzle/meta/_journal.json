@@ -36,6 +36,13 @@
       "when": 1778725793221,
       "tag": "0004_black_maginty",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778855455092,
+      "tag": "0005_add_strava_cache",
+      "breakpoints": true
     }
   ]
 }

@@ -11,6 +11,7 @@ interface NutritionData {
     proteinConsumed: number;
     carbsConsumed: number;
     fatConsumed: number;
+    caloriesConsumed: number;
   };
   goals: {
     dailyProtein: number;
@@ -19,9 +20,20 @@ interface NutritionData {
   };
 }
 
+interface Grocery {
+  id: string;
+  foodName: string;
+  quantityBought: number;
+  unit: string;
+  percentConsumed: number;
+  totalCalories: number | null;
+  weekStart: string;
+}
+
 export default function MacrosDetailPage() {
   const router = useRouter();
   const [data, setData] = useState<NutritionData | null>(null);
+  const [groceries, setGroceries] = useState<Grocery[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,6 +49,20 @@ export default function MacrosDetailPage() {
       setData(cached);
       setLoading(false);
     }
+
+    // Fetch from API if not cached
+    Promise.all([
+      fetch(`/api/nutrition?week=${weekStart}`).then((res) => res.json()),
+      fetch(`/api/groceries`).then((res) => res.json()),
+    ])
+      .then(([nutritionResult, groceriesResult]) => {
+        setData(nutritionResult);
+        setGroceries(groceriesResult);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   }, []);
 
   if (loading || !data) {
@@ -94,7 +120,7 @@ export default function MacrosDetailPage() {
   ];
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: '20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
         <button
           onClick={() => router.back()}
@@ -115,112 +141,133 @@ export default function MacrosDetailPage() {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '16px'
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: '12px',
+        marginBottom: '24px'
       }}>
         {macros.map((macro) => {
           const percentage = Math.min(100, (macro.value / macro.goal) * 100);
           const calories = macro.value * macro.caloriesPerUnit;
 
+          const bgColors = {
+            'Protein': '#FFE8F5',
+            'Carbs': '#F0E8FF',
+            'Fat': '#FFFEF0'
+          };
+
           return (
             <div
               key={macro.label}
               style={{
-                backgroundColor: '#FFFFFF',
-                borderRadius: '16px',
-                padding: '20px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                border: `2px solid ${macro.color}30`
+                backgroundColor: bgColors[macro.label as keyof typeof bgColors] || '#FFFFFF',
+                borderRadius: '12px',
+                padding: '12px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                border: `1px solid ${macro.color}30`
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                <div
-                  style={{
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '4px',
-                    backgroundColor: macro.color
-                  }}
-                />
-                <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#2C2C2A', margin: 0 }}>
+              <div style={{ marginBottom: '8px' }}>
+                <h3 style={{ fontSize: '12px', fontWeight: 700, color: '#2C2C2A', margin: 0, marginBottom: '4px' }}>
                   {macro.label}
-                </h2>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '32px', fontWeight: 700, color: macro.color, lineHeight: 1 }}>
+                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span style={{ fontSize: '18px', fontWeight: 700, color: macro.color, lineHeight: 1 }}>
                     {macro.value}
                   </span>
-                  <span style={{ fontSize: '14px', color: '#999999', alignSelf: 'flex-end' }}>
+                  <span style={{ fontSize: '10px', color: '#999999' }}>
                     / {Math.round(macro.goal)} {macro.unit}
                   </span>
                 </div>
+              </div>
 
-                <div style={{
-                  width: '100%',
-                  height: '8px',
-                  backgroundColor: '#E8E4DC',
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  marginBottom: '8px'
-                }}>
-                  <div
-                    style={{
-                      height: '100%',
-                      width: `${percentage}%`,
-                      backgroundColor: macro.color,
-                      borderRadius: '4px',
-                      transition: 'width 0.3s ease'
-                    }}
-                  />
-                </div>
+              <div style={{
+                width: '100%',
+                height: '6px',
+                backgroundColor: '#E8E4DC',
+                borderRadius: '3px',
+                overflow: 'hidden',
+                marginBottom: '6px'
+              }}>
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${percentage}%`,
+                    backgroundColor: macro.color,
+                    borderRadius: '3px',
+                    transition: 'width 0.3s ease'
+                  }}
+                />
+              </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '12px', color: '#999999' }}>
-                    {percentage.toFixed(0)}% of goal
-                  </span>
-                  <span style={{ fontSize: '12px', color: '#999999' }}>
-                    {calories} kcal
-                  </span>
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '9px', color: '#999999' }}>
+                  {percentage.toFixed(0)}%
+                </span>
+                <span style={{ fontSize: '9px', color: '#999999' }}>
+                  {calories} kcal
+                </span>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Summary */}
-      <div
-        style={{
-          marginTop: '24px',
-          backgroundColor: '#8B7FB8',
-          borderRadius: '16px',
-          padding: '20px',
-          color: '#FFFFFF'
-        }}
-      >
-        <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 12px 0' }}>Weekly Summary</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-          {macros.map((macro) => {
-            const calories = macro.value * macro.caloriesPerUnit;
-            const totalCalories = totals.proteinConsumed * 4 + totals.carbsConsumed * 4 + totals.fatConsumed * 9;
-            const percentage = totalCalories > 0 ? ((calories / totalCalories) * 100) : 0;
+      {/* Food Intake Breakdown */}
+      <div style={{ marginBottom: '12px' }}>
+        <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#2C2C2A', margin: '0 0 12px 0' }}>
+          Food Intake ({Math.round(data.totals.caloriesConsumed)} cal)
+        </h2>
 
-            return (
-              <div key={macro.label} style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.8)', margin: '0 0 4px 0' }}>
-                  {macro.label}
-                </p>
-                <p style={{ fontSize: '24px', fontWeight: 700, margin: '0 0 4px 0' }}>
-                  {percentage.toFixed(0)}%
-                </p>
-                <p style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', margin: 0 }}>
-                  {calories} kcal
-                </p>
-              </div>
-            );
-          })}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {groceries.filter(g => {
+            const weekStart = new Date();
+            const dayOfWeek = weekStart.getUTCDay();
+            const diff = weekStart.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            const monday = new Date(weekStart.setUTCDate(diff));
+            const currentWeekStart = monday.toISOString().split('T')[0];
+            return g.weekStart === currentWeekStart && g.percentConsumed > 0;
+          })
+            .sort((a, b) => {
+              const calA = (a.totalCalories || 0) * (a.percentConsumed / 100);
+              const calB = (b.totalCalories || 0) * (b.percentConsumed / 100);
+              return calB - calA;
+            })
+            .map((g) => {
+              const consumedCals = (g.totalCalories || 0) * (g.percentConsumed / 100);
+              return (
+                <div
+                  key={g.id}
+                  style={{
+                    backgroundColor: '#F8F5FF',
+                    padding: '10px',
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    borderLeft: '3px solid #8B7FB8'
+                  }}
+                >
+                  <p style={{ fontWeight: 600, color: '#2C2C2A', margin: '0 0 4px 0' }}>
+                    {g.foodName} • {g.percentConsumed.toFixed(0)}%
+                  </p>
+                  <p style={{ color: '#999999', margin: 0 }}>
+                    {consumedCals.toFixed(0)} cal • {g.quantityBought} {g.unit}
+                  </p>
+                </div>
+              );
+            })
+            .slice(0, 10)}
+
+          {groceries.filter(g => {
+            const weekStart = new Date();
+            const dayOfWeek = weekStart.getUTCDay();
+            const diff = weekStart.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            const monday = new Date(weekStart.setUTCDate(diff));
+            const currentWeekStart = monday.toISOString().split('T')[0];
+            return g.weekStart === currentWeekStart && g.percentConsumed > 0;
+          }).length === 0 && (
+            <p style={{ fontSize: '13px', color: '#999999', textAlign: 'center', marginTop: '12px' }}>
+              No foods consumed this week
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
-import { users } from '@/schema/db';
-import { eq } from 'drizzle-orm';
+import { users, stravaActivitiesCache } from '@/schema/db';
+import { eq, and } from 'drizzle-orm';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getValidStravaToken } from '@/lib/strava';
@@ -9,15 +9,39 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({
+      week: { start: getCurrentWeekStart(), end: '' },
+      activities: [],
+      weekTotal: { caloriesBurned: 0, distance: 0, movingTime: 0 }
+    });
   }
 
   const userId = (session.user as any).id as string;
+  const weekParam = request.nextUrl.searchParams.get('week') || getCurrentWeekStart();
+  const forceSync = request.nextUrl.searchParams.get('sync') === 'true';
 
   try {
-    const stravaToken = await getValidStravaToken(userId);
+    // Check cache first (unless forced sync)
+    if (!forceSync) {
+      const cached = await db.query.stravaActivitiesCache.findFirst({
+        where: and(
+          eq(stravaActivitiesCache.userId, userId),
+          eq(stravaActivitiesCache.weekStart, weekParam)
+        )
+      });
 
-    const weekParam = request.nextUrl.searchParams.get('week') || getCurrentWeekStart();
+      if (cached) {
+        return NextResponse.json({
+          week: { start: weekParam, end: '' },
+          activities: cached.activities,
+          weekTotal: cached.weekTotal,
+          fromCache: true
+        });
+      }
+    }
+
+    // No cache or forced sync - fetch from Strava
+    const stravaToken = await getValidStravaToken(userId);
     const weekStart = new Date(weekParam);
     const weekEnd = new Date(weekStart);
     weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
@@ -38,7 +62,12 @@ export async function GET(request: NextRequest) {
         `Strava API error: ${response.status} ${response.statusText}`,
         responseBody.substring(0, 500)
       );
-      throw new Error(`Strava API error: ${response.status}`);
+
+      return NextResponse.json({
+        week: { start: weekParam, end: weekEnd.toISOString().split('T')[0] },
+        activities: [],
+        weekTotal: { caloriesBurned: 0, distance: 0, movingTime: 0 }
+      });
     }
 
     let activities = await response.json();
@@ -59,43 +88,45 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Helper function to estimate calories from Strava data
     function estimateCalories(activity: any): number {
-      // If Strava provides explicit calories, use it
       if (activity.calories && activity.calories > 0) {
         return Math.round(activity.calories);
       }
 
-      // Estimate from kilojoules (1 kilocalorie = 4.184 kilojoules)
       if (activity.kilojoules && activity.kilojoules > 0) {
         return Math.round(activity.kilojoules / 4.184);
       }
 
-      // Estimate from power data and time
       if (activity.weighted_average_watts && activity.moving_time) {
-        // Power (watts) * Time (seconds) / 1000 = kilojoules
-        // Then convert to kcal: kilojoules / 4.184
         const kilojoules = (activity.weighted_average_watts * activity.moving_time) / 1000;
         return Math.round(kilojoules / 4.184);
       }
 
-      // Fallback: rough estimation based on activity type and duration
       const minutes = activity.moving_time / 60;
       const activityType = activity.type?.toLowerCase() || '';
 
       let caloriesPerMinute = 0;
       if (activityType.includes('run')) {
-        caloriesPerMinute = 12; // ~12 cal/min for running
+        caloriesPerMinute = 12;
       } else if (activityType.includes('ride')) {
-        caloriesPerMinute = 8; // ~8 cal/min for cycling
+        caloriesPerMinute = 8;
       } else if (activityType.includes('swim')) {
-        caloriesPerMinute = 10; // ~10 cal/min for swimming
+        caloriesPerMinute = 10;
       } else {
-        caloriesPerMinute = 7; // ~7 cal/min for general activities
+        caloriesPerMinute = 7;
       }
 
       return Math.round(minutes * caloriesPerMinute);
     }
+
+    const mappedActivities = activities.map((a: any) => ({
+      stravaId: a.id,
+      date: a.start_date_local?.split('T')[0],
+      type: a.type,
+      name: a.name,
+      durationMinutes: Math.round(a.moving_time / 60),
+      caloriesBurned: estimateCalories(a),
+    }));
 
     const weekTotal = activities.reduce(
       (acc: any, activity: any) => ({
@@ -106,27 +137,46 @@ export async function GET(request: NextRequest) {
       { caloriesBurned: 0, distance: 0, movingTime: 0 }
     );
 
+    // Cache the result
+    await db
+      .insert(stravaActivitiesCache)
+      .values({
+        userId,
+        weekStart: weekParam,
+        activities: mappedActivities,
+        weekTotal,
+      })
+      .onConflictDoUpdate({
+        target: [stravaActivitiesCache.userId, stravaActivitiesCache.weekStart],
+        set: {
+          activities: mappedActivities,
+          weekTotal,
+          cachedAt: new Date(),
+        },
+      });
+
     return NextResponse.json({
       week: { start: weekParam, end: weekEnd.toISOString().split('T')[0] },
-      activities: activities.map((a: any) => ({
-        stravaId: a.id,
-        date: a.start_date_local?.split('T')[0],
-        type: a.type,
-        name: a.name,
-        durationMinutes: Math.round(a.moving_time / 60),
-        caloriesBurned: estimateCalories(a),
-      })),
+      activities: mappedActivities,
       weekTotal,
     });
   } catch (error: any) {
-    console.error('Strava activities error:', error);
-    if (error.message?.includes('not connected')) {
-      return NextResponse.json({ error: 'Strava not connected' }, { status: 401 });
+    const errorMessage = error.message || 'Unknown error';
+    console.error('Strava activities error:', errorMessage, error);
+
+    if (errorMessage.includes('not connected')) {
+      return NextResponse.json({ error: 'Strava not connected', details: errorMessage }, { status: 401 });
     }
-    if (error.message?.includes('expired') || error.message?.includes('refresh failed')) {
-      return NextResponse.json({ error: 'Strava reconnect required' }, { status: 401 });
+    if (errorMessage.includes('expired') || errorMessage.includes('refresh failed')) {
+      return NextResponse.json({ error: 'Strava reconnect required', details: errorMessage }, { status: 401 });
     }
-    return NextResponse.json({ error: 'Failed to fetch activities' }, { status: 503 });
+
+    return NextResponse.json({
+      week: { start: getCurrentWeekStart(), end: '' },
+      activities: [],
+      weekTotal: { caloriesBurned: 0, distance: 0, movingTime: 0 },
+      error: errorMessage
+    });
   }
 }
 
