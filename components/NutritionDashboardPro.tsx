@@ -2,6 +2,7 @@
 
 import { useEffect, useState, memo } from "react";
 import { useRouter } from "next/navigation";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { WeekNavigator } from "./WeekNavigator";
 import { getCached, setCached } from "@/lib/cache";
 
@@ -407,6 +408,7 @@ export function NutritionDashboardPro({
   const [syncingStrava, setSyncingStrava] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [groceries, setGroceries] = useState<Grocery[]>([]);
+  const [macroExpanded, setMacroExpanded] = useState(false);
 
   useEffect(() => {
     async function fetchNutrition() {
@@ -573,10 +575,28 @@ export function NutritionDashboardPro({
   const hasData = totalConsumed > 0;
 
   const donutData = [
-    { name: "Protein", value: proteinCal, color: "#D67BB8" },
-    { name: "Carbs", value: carbsCal, color: "#8B7FB8" },
-    { name: "Fat", value: fatCal, color: "#FFD700" },
+    { name: "Protein", value: proteinCal, color: "#8B7FB8" },
+    { name: "Carbs", value: carbsCal, color: "#D67BB8" },
+    { name: "Fat", value: fatCal, color: "#C9845F" },
   ];
+
+  // Calculate goal macro breakdown (calories from each macro goal)
+  let goalMacroBreakdownData = [
+    { name: "Protein", value: 0, color: "#8B7FB8" },
+    { name: "Carbs", value: 0, color: "#D67BB8" },
+    { name: "Fat", value: 0, color: "#C9845F" },
+  ];
+
+  if (goals) {
+    const goalProteinCals = goals.dailyProtein * 4;
+    const goalCarbsCals = goals.dailyCarbs * 4;
+    const goalFatCals = goals.dailyFat * 9;
+    goalMacroBreakdownData = [
+      { name: "Protein", value: Math.round(goalProteinCals), color: "#8B7FB8" },
+      { name: "Carbs", value: Math.round(goalCarbsCals), color: "#D67BB8" },
+      { name: "Fat", value: Math.round(goalFatCals), color: "#C9845F" },
+    ];
+  }
 
   const avgConsumed = Math.round(totalConsumed / activeDays);
   const avgBurned = Math.round(stravaCaloriesBurned / activeDays);
@@ -827,95 +847,269 @@ export function NutritionDashboardPro({
           width: "100%",
         }}
       >
-        {/* Macro Circle Card - Floating Element */}
-        <DashboardCard onClick={() => router.push("/metrics/macros")}>
-          <p
+        {/* Consumed Macros - Dropdown Style */}
+        <div
+          style={{
+            backgroundColor: "#FFFFFF",
+            border: "1px solid #E8E4DC",
+            borderRadius: "10px",
+            padding: "16px",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)",
+            transition: "all 0.3s cubic-bezier(0.23, 1, 0.320, 1)",
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLDivElement;
+            el.style.transform = "translateY(-6px)";
+            el.style.boxShadow = "0 12px 32px rgba(0,0,0,0.15), 0 20px 44px rgba(0,0,0,0.08)";
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLDivElement;
+            el.style.transform = "translateY(0)";
+            el.style.boxShadow = "0 6px 18px rgba(0,0,0,0.1), 0 12px 30px rgba(0,0,0,0.06)";
+          }}
+        >
+          <button
+            onClick={() => setMacroExpanded(!macroExpanded)}
             style={{
-              fontSize: "10px",
-              fontWeight: 700,
-              color: "#999999",
-              textTransform: "uppercase",
-              letterSpacing: "0.4px",
-              margin: "0 0 12px 0",
-              textAlign: "center",
-            }}
-          >
-            Macro Split
-          </p>
-          <div
-            style={{
+              background: "none",
+              border: "none",
+              width: "100%",
               display: "flex",
-              justifyContent: "center",
+              alignItems: "center",
+              gap: "8px",
               marginBottom: "12px",
+              cursor: "pointer",
+              padding: "0",
+              transition: "all 0.2s ease",
             }}
           >
             <div
-              style={{ position: "relative", width: "100px", height: "100px" }}
+              style={{ height: "3px", width: "24px", background: "#8B7FB8" }}
+            />
+            <p
+              style={{
+                fontSize: "14px",
+                fontWeight: 700,
+                color: "#2C2C2A",
+                flex: 1,
+                textAlign: "left",
+                margin: 0,
+              }}
             >
-              <DonutChart data={donutData} size={100} />
-              <div
+              CONSUMED MACROS
+            </p>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "24px",
+                height: "24px",
+                transition: "transform 0.3s ease",
+                transform: macroExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+              }}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="#8B7FB8"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="6 9 10 13 14 9"></polyline>
+              </svg>
+            </div>
+          </button>
+
+          {/* Summary Stats - Always visible */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(80px, 1fr))",
+              gap: "12px",
+              textAlign: "center",
+              marginBottom: macroExpanded ? "16px" : "0px",
+              transition: "margin-bottom 0.3s ease"
+            }}
+          >
+            <div>
+              <p
                 style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  textAlign: "center",
-                  pointerEvents: "none",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "#999999",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.4px",
+                  marginBottom: "4px",
                 }}
               >
-                <p
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    color: "#2C2C2A",
-                    margin: 0,
-                    lineHeight: 1,
-                  }}
-                >
-                  P:C:F
-                </p>
-              </div>
+                Calories
+              </p>
+              <p
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#5B7FD4",
+                  margin: 0,
+                }}
+              >
+                {Math.round(totals?.caloriesConsumed ?? 0)}
+              </p>
+            </div>
+            <div>
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "#999999",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.4px",
+                  marginBottom: "4px",
+                }}
+              >
+                Protein
+              </p>
+              <p
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#8B7FB8",
+                  margin: 0,
+                }}
+              >
+                {(totals?.proteinConsumed ?? 0).toFixed(1)}g
+              </p>
+            </div>
+            <div>
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "#999999",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.4px",
+                  marginBottom: "4px",
+                }}
+              >
+                Carbs
+              </p>
+              <p
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#D67BB8",
+                  margin: 0,
+                }}
+              >
+                {(totals?.carbsConsumed ?? 0).toFixed(1)}g
+              </p>
+            </div>
+            <div>
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "#999999",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.4px",
+                  marginBottom: "4px",
+                }}
+              >
+                Fat
+              </p>
+              <p
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#C9845F",
+                  margin: 0,
+                }}
+              >
+                {(totals?.fatConsumed ?? 0).toFixed(1)}g
+              </p>
             </div>
           </div>
 
-          {/* Legend */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-            }}
-          >
-            {[
-              { label: "Protein", color: "#FFB6C1" },
-              { label: "Carbs", color: "#DDA0DD" },
-              { label: "Fat", color: "#FFD700" },
-            ].map(({ label, color }) => (
-              <div
-                key={label}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  justifyContent: "center",
-                }}
-              >
-                <div
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "2px",
-                    backgroundColor: color,
-                    flexShrink: 0,
-                  }}
-                />
-                <span style={{ fontSize: "11px", color: "#999999" }}>
-                  {label}
-                </span>
+          {/* Pie Charts - Collapse/Expand */}
+          {macroExpanded && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", marginTop: "12px", animation: "fadeIn 0.3s ease" }}>
+              <style>{`
+                @keyframes fadeIn {
+                  from {
+                    opacity: 0;
+                    max-height: 0;
+                  }
+                  to {
+                    opacity: 1;
+                    max-height: 300px;
+                  }
+                }
+              `}</style>
+              {/* Consumed Macros Pie Chart */}
+              <div>
+                <p style={{ fontSize: "12px", fontWeight: 600, color: "#999999", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: "12px", textAlign: "center" }}>Consumed Macros</p>
+                <div style={{ width: "100%", height: "220px" }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={hasData ? donutData : [{ name: "Empty", value: 1, color: "#E8E4DC" }]}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={hasData ? ({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%` : undefined}
+                        outerRadius={70}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {(hasData ? donutData : [{ name: "Empty", value: 1, color: "#E8E4DC" }]).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      {hasData && <Tooltip
+                        formatter={(value) => `${value} cal`}
+                        contentStyle={{ backgroundColor: "#FFFFFF", border: "1px solid #E8E4DC", borderRadius: "8px" }}
+                      />}
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            ))}
-          </div>
-        </DashboardCard>
+
+              {/* Goal Macros Pie Chart (only show if goals available) */}
+              {goals && (
+                <div>
+                  <p style={{ fontSize: "12px", fontWeight: 600, color: "#999999", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: "12px", textAlign: "center" }}>Goal Macros</p>
+                  <div style={{ width: "100%", height: "220px" }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={goalMacroBreakdownData.some(d => d.value > 0) ? goalMacroBreakdownData : [{ name: "Empty", value: 1, color: "#E8E4DC" }]}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={goalMacroBreakdownData.some(d => d.value > 0) ? ({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%` : undefined}
+                          outerRadius={70}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {(goalMacroBreakdownData.some(d => d.value > 0) ? goalMacroBreakdownData : [{ name: "Empty", value: 1, color: "#E8E4DC" }]).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        {goalMacroBreakdownData.some(d => d.value > 0) && <Tooltip
+                          formatter={(value) => `${value} cal`}
+                          contentStyle={{ backgroundColor: "#FFFFFF", border: "1px solid #E8E4DC", borderRadius: "8px" }}
+                        />}
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Card: Week Progress */}
         <DashboardCard>
