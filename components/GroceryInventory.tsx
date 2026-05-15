@@ -41,6 +41,7 @@ interface GroceryInventoryProps {
 export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: GroceryInventoryProps) {
   const { data: session } = useSession();
   const [isInventoryExpanded, setIsInventoryExpanded] = useState(false);
+  const [sliderValues, setSliderValues] = useState<Record<string, number>>({});
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: string; name: string }>({
     isOpen: false,
     id: '',
@@ -525,7 +526,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
                   })}
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0px', marginTop: '2px' }}>
                 <button
                   onClick={() => handleAdjustClick(grocery.id, grocery.foodName, grocery.quantityBought, grocery.unit, grocery.percentConsumed)}
                   style={{
@@ -675,8 +676,10 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
                 type="range"
                 min="0"
                 max="100"
-                value={grocery.percentConsumed}
-                onChange={(e) => onUpdate(grocery.id, parseFloat(e.target.value))}
+                value={sliderValues[grocery.id] ?? grocery.percentConsumed}
+                onChange={(e) => setSliderValues((prev) => ({ ...prev, [grocery.id]: parseFloat(e.target.value) }))}
+                onTouchEnd={(e) => onUpdate(grocery.id, parseFloat((e.target as HTMLInputElement).value))}
+                onPointerUp={(e) => onUpdate(grocery.id, parseFloat((e.target as HTMLInputElement).value))}
                 style={{
                   flex: 1,
                   height: '12px',
@@ -685,12 +688,15 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
                   outline: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',
-                  background: `linear-gradient(to right, #8B7FB8 0%, #8B7FB8 ${grocery.percentConsumed}%, #E8E4DC ${grocery.percentConsumed}%, #E8E4DC 100%)`
+                  background: `linear-gradient(to right, #8B7FB8 0%, #8B7FB8 ${sliderValues[grocery.id] ?? grocery.percentConsumed}%, #E8E4DC ${sliderValues[grocery.id] ?? grocery.percentConsumed}%, #E8E4DC 100%)`
                 } as any}
               />
               <style>{`
                 input[type='range'] {
                   -webkit-appearance: none;
+                  -webkit-touch-callout: none;
+                  -webkit-user-select: none;
+                  -moz-user-select: none;
                 }
 
                 input[type='range']::-webkit-slider-thumb {
@@ -719,7 +725,7 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
                 }
               `}</style>
               <span style={{ fontSize: '12px', fontWeight: 600, color: '#2C2C2A', minWidth: '50px', textAlign: 'right' }}>
-                {Math.round(grocery.percentConsumed)}%
+                {Math.round(sliderValues[grocery.id] ?? grocery.percentConsumed)}%
               </span>
             </div>
           </div>
