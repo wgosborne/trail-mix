@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { FiSettings } from 'react-icons/fi';
 
 export function TabNavigation() {
   const pathname = usePathname();
@@ -9,7 +10,7 @@ export function TabNavigation() {
   const tabs = [
     { label: 'Intake', href: '/groceries', icon: '◉', color: '#8B7FB8' },
     { label: 'Dashboard', href: '/groceries/dashboard', icon: '▦', color: '#D67BB8' },
-    { label: 'Settings', href: '/groceries/settings', icon: '⚙', color: '#5B7FD4' },
+    { label: 'Settings', href: '/groceries/settings', color: '#5B7FD4' },
   ];
 
   return (
@@ -63,10 +64,11 @@ export function TabNavigation() {
                   justifyContent: 'center',
                   height: '32px',
                   width: '32px',
-                  transition: 'color 0.2s ease'
+                  transition: 'color 0.2s ease',
+                  color: isActive ? tab.color : '#999999'
                 }}
               >
-                {tab.icon}
+                {tab.label === 'Settings' ? <FiSettings size={24} color={isActive ? tab.color : '#999999'} /> : tab.icon}
               </span>
               <span
                 style={{
