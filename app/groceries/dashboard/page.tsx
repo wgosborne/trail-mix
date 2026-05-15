@@ -1,13 +1,14 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NutritionDashboardPro } from '@/components/NutritionDashboardPro';
 import { getCached, setCached } from '@/lib/cache';
+import { useGuestGroceries } from '@/hooks/useGuestGroceries';
 
 export default function DashboardTab() {
   const { data: session } = useSession();
-  const [weekStart, setWeekStart] = useState(getCurrentWeekStart());
+  const { weekStart, setWeekStart, excludedDays, toggleExcludedDay } = useGuestGroceries();
 
   // Initialize Strava connection state from cache
   const cachedStatus = getCached<{ isConnected: boolean }>('strava_status');
@@ -16,6 +17,12 @@ export default function DashboardTab() {
   // Read Strava burned calories from cache (populated when user visits Settings)
   const stravaCache = getCached<{ weekTotal: { caloriesBurned: number } }>(`strava_${weekStart}`);
   const [stravaCaloriesBurned, setStravaCaloriesBurned] = useState(stravaCache?.weekTotal?.caloriesBurned ?? 0);
+
+  // Sync Strava calories when week changes
+  useEffect(() => {
+    const cache = getCached<{ weekTotal: { caloriesBurned: number } }>(`strava_${weekStart}`);
+    setStravaCaloriesBurned(cache?.weekTotal?.caloriesBurned ?? 0);
+  }, [weekStart]);
 
   async function handleStravaSync() {
     try {
@@ -56,16 +63,9 @@ export default function DashboardTab() {
         stravaCaloriesBurned={stravaCaloriesBurned}
         isStravaConnected={isStravaConnected}
         onStravaSync={handleStravaSync}
+        excludedDays={excludedDays}
+        onToggleDay={toggleExcludedDay}
       />
     </div>
   );
-}
-
-function getCurrentWeekStart(date: Date = new Date()): string {
-  const d = new Date(date);
-  const dayOfWeek = d.getDay();
-  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const monday = new Date(d);
-  monday.setDate(d.getDate() - daysFromMonday);
-  return monday.toISOString().split('T')[0];
 }

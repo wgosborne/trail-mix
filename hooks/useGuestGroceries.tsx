@@ -25,6 +25,8 @@ interface GuestGroceriesContextType {
   deleteGrocery: (id: string) => void;
   weekStart: string;
   setWeekStart: (week: string) => void;
+  excludedDays: number[];
+  toggleExcludedDay: (dayIndex: number) => void;
 }
 
 const GuestGroceriesContext = createContext<GuestGroceriesContextType | undefined>(undefined);
@@ -32,6 +34,7 @@ const GuestGroceriesContext = createContext<GuestGroceriesContextType | undefine
 export function GuestGroceriesProvider({ children }: { children: React.ReactNode }) {
   const [groceries, setGroceries] = useState<Grocery[]>([]);
   const [weekStart, setWeekStartState] = useState<string>(getCurrentWeekStart());
+  const [excludedDaysByWeek, setExcludedDaysByWeek] = useState<Record<string, number[]>>({});
   const [mounted, setMounted] = useState(false);
 
   // Load from localStorage on mount
@@ -42,6 +45,7 @@ export function GuestGroceriesProvider({ children }: { children: React.ReactNode
         const data = JSON.parse(stored);
         setGroceries(data.groceries || []);
         setWeekStartState(data.weekStart || getCurrentWeekStart());
+        setExcludedDaysByWeek(data.excludedDays || {});
       } catch (e) {
         console.error('Failed to load guest groceries', e);
       }
@@ -54,10 +58,10 @@ export function GuestGroceriesProvider({ children }: { children: React.ReactNode
     if (mounted) {
       localStorage.setItem(
         'trail_mix_guest_groceries',
-        JSON.stringify({ groceries, weekStart })
+        JSON.stringify({ groceries, weekStart, excludedDays: excludedDaysByWeek })
       );
     }
-  }, [groceries, weekStart, mounted]);
+  }, [groceries, weekStart, excludedDaysByWeek, mounted]);
 
   const addGrocery = (grocery: Omit<Grocery, 'id'>) => {
     const id = Math.random().toString(36).substring(7);
@@ -76,9 +80,35 @@ export function GuestGroceriesProvider({ children }: { children: React.ReactNode
     setWeekStartState(week);
   };
 
+  const toggleExcludedDay = (dayIndex: number) => {
+    setExcludedDaysByWeek((prev) => {
+      const current = prev[weekStart] || [];
+      if (current.includes(dayIndex)) {
+        return {
+          ...prev,
+          [weekStart]: current.filter((d) => d !== dayIndex),
+        };
+      } else {
+        return {
+          ...prev,
+          [weekStart]: [...current, dayIndex],
+        };
+      }
+    });
+  };
+
   return (
     <GuestGroceriesContext.Provider
-      value={{ groceries, addGrocery, updateGrocery, deleteGrocery, weekStart, setWeekStart }}
+      value={{
+        groceries,
+        addGrocery,
+        updateGrocery,
+        deleteGrocery,
+        weekStart,
+        setWeekStart,
+        excludedDays: excludedDaysByWeek[weekStart] || [],
+        toggleExcludedDay,
+      }}
     >
       {children}
     </GuestGroceriesContext.Provider>
@@ -95,9 +125,9 @@ export function useGuestGroceries() {
 
 function getCurrentWeekStart(date: Date = new Date()): string {
   const d = new Date(date);
-  const dayOfWeek = d.getDay();
+  const dayOfWeek = d.getUTCDay();
   const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const monday = new Date(d);
-  monday.setDate(d.getDate() - daysFromMonday);
+  monday.setUTCDate(d.getUTCDate() - daysFromMonday);
   return monday.toISOString().split('T')[0];
 }
