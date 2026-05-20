@@ -29,11 +29,12 @@ export async function POST(request: NextRequest) {
             },
             {
               type: 'text',
-              text: `You are a grocery receipt parser for any store (Kroger, Aldi, Walmart, etc.). Extract every product from this receipt with best-effort accuracy.
+              text: `You are a grocery receipt parser for any store (Kroger, Aldi, Walmart, etc.). Extract the store name and every product from this receipt with best-effort accuracy.
 
 EXTRACTION RULES:
-1. Scan the entire receipt for all product/item lines (ignore totals, taxes, payment info)
-2. For each item, extract:
+1. Find the store name at the top of the receipt (e.g., "ALDI", "KROGER", "WHOLE FOODS", etc.)
+2. Scan the entire receipt for all product/item lines (ignore totals, taxes, payment info)
+3. For each item, extract:
    - "name": Product name/description (clean, readable, no quantity/unit in the name)
    - "quantity": Number from the product description or item line (required, at least 1)
    - "unit": Unit of measure if visible (oz, lbs, g, count, ct, ea, lb, gallon, etc.)
@@ -49,6 +50,7 @@ IMPORTANT - Handle OCR challenges:
 
 Return ONLY valid JSON:
 {
+  "storeName": "ALDI",
   "items": [
     { "name": "Product Name", "quantity": 1, "unit": "count" }
   ]
@@ -59,8 +61,9 @@ SPECIAL CASES:
 - Quantity must be a positive number; default to 1 if not readable
 - Unit can be empty string "" if not clearly visible
 - Name should be readable and clean (the user will review and can fix typos)
+- storeName must be a string (e.g., "ALDI", "KROGER", "WALMART"); if not found, use "Unknown"
 
-If no items found, return: { "items": [] }
+If no items found, return: { "storeName": "Unknown", "items": [] }
 Otherwise, return ALL items found, even if text is unclear.`,
             },
           ],
@@ -94,6 +97,11 @@ Otherwise, return ALL items found, even if text is unclear.`,
     // Ensure items array exists
     if (!Array.isArray(parsed.items)) {
       parsed.items = [];
+    }
+
+    // Ensure storeName exists
+    if (!parsed.storeName || typeof parsed.storeName !== 'string') {
+      parsed.storeName = 'Unknown';
     }
 
     // Filter and normalize items - be lenient, only require name

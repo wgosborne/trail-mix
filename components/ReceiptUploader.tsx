@@ -35,6 +35,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [extractedItems, setExtractedItems] = useState<ParsedItem[]>([]);
+  const [storeName, setStoreName] = useState<string>('');
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
   const [nutritionStatus, setNutritionStatus] = useState<string>('');
   const [reviewMode, setReviewMode] = useState(false);
@@ -67,6 +68,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
 
         const data = await response.json();
         let items = data.items || [];
+        const store = data.storeName || 'Unknown';
 
         if (items.length === 0) {
           setError('No grocery items detected. Try a clearer, straight-on photo with good lighting.');
@@ -75,6 +77,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
         }
 
         setExtractedItems(items);
+        setStoreName(store);
         setReviewMode(true);
         setLoading(false);
       } catch (error) {
@@ -126,7 +129,8 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
         const item = extractedItems[i];
         setNutritionStatus(`Getting macros for ${item.name}...`);
 
-        const options = await searchNutritionOptions(item.name, item.quantity, item.unit);
+        const itemNameWithStore = storeName && storeName !== 'Unknown' ? `${storeName} ${item.name}` : item.name;
+        const options = await searchNutritionOptions(itemNameWithStore, item.quantity, item.unit);
 
         itemsWithNutrition.push({
           ...item,
@@ -155,6 +159,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
   const handleReset = () => {
     setPreview(null);
     setExtractedItems([]);
+    setStoreName('');
     setCurrentItemIndex(0);
     setError(null);
     setReviewMode(false);
@@ -193,7 +198,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
         )}
 
         <p style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
-          Found {extractedItems.length} items. Review and correct any misread names below, then continue.
+          Store: <strong>{storeName}</strong> • Found {extractedItems.length} items. Review and correct any misread names below, then continue.
         </p>
 
         <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '16px', border: '1px solid #E8E4DC', borderRadius: '6px', padding: '12px' }}>
