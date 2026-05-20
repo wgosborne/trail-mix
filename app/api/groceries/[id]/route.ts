@@ -26,7 +26,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    const { percentConsumed, foodName, totalCalories, proteinG, carbsG, fatG, fiberG, weekStart: updateWeekStart } = validationResult.data;
+    const { percentConsumed, quantityBought, foodName, totalCalories, proteinG, carbsG, fatG, fiberG, weekStart: updateWeekStart } = validationResult.data;
 
     // Get the grocery before updating to access foodName, unit, and current state
     const groceryBefore = await db
@@ -53,6 +53,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       updates.consumedByWeek = consumedByWeek;
     }
 
+    if (quantityBought !== undefined) updates.quantityBought = quantityBought.toString();
     if (foodName !== undefined) updates.foodName = foodName.trim();
     if (totalCalories !== undefined) updates.totalCalories = totalCalories ? totalCalories.toString() : null;
     if (proteinG !== undefined) updates.proteinG = proteinG ? proteinG.toString() : null;
@@ -103,6 +104,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       fiberG: grocery.fiberG ? Number(grocery.fiberG) : null,
       dateAdded: grocery.dateAdded,
       weekStart: grocery.weekStart,
+      consumedByWeek: grocery.consumedByWeek,
     });
   } catch (error) {
     console.error('Error updating grocery:', error);

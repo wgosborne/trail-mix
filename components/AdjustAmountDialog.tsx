@@ -9,7 +9,7 @@ interface AdjustAmountDialogProps {
   unit: string;
   currentPercentConsumed: number;
   isLoading: boolean;
-  onConfirm: (newPercent: number) => void;
+  onConfirm: (newQuantity: number, percentConsumed: number) => void;
   onCancel: () => void;
 }
 
@@ -23,34 +23,31 @@ export function AdjustAmountDialog({
   onConfirm,
   onCancel,
 }: AdjustAmountDialogProps) {
-  const initialRemaining = parseFloat((quantityBought * (1 - currentPercentConsumed / 100)).toFixed(2));
-  const [remaining, setRemaining] = useState(initialRemaining);
+  const [actualQuantity, setActualQuantity] = useState(quantityBought.toString());
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
-      setRemaining(parseFloat((quantityBought * (1 - currentPercentConsumed / 100)).toFixed(2)));
+      setActualQuantity(quantityBought.toString());
       setError('');
     }
-  }, [isOpen, quantityBought, currentPercentConsumed]);
+  }, [isOpen, quantityBought]);
 
   if (!isOpen) return null;
 
-  const computedPercent = Math.min(100, Math.max(0, Math.round(((quantityBought - remaining) / quantityBought) * 100)));
-
   const handleChange = (val: string) => {
+    setActualQuantity(val);
     const num = parseFloat(val);
-    setRemaining(isNaN(num) ? 0 : num);
-    if (!isNaN(num) && num > quantityBought) {
-      setError(`Can't exceed purchased amount (${quantityBought} ${unit})`);
-    } else if (!isNaN(num) && num < 0) {
-      setError('Amount cannot be negative');
+    if (!isNaN(num) && num <= 0) {
+      setError('Quantity must be greater than 0');
+    } else if (isNaN(num)) {
+      setError('');
     } else {
       setError('');
     }
   };
 
-  const canConfirm = !error && !isNaN(remaining);
+  const canConfirm = !error && !isNaN(parseFloat(actualQuantity)) && parseFloat(actualQuantity) > 0;
 
   return (
     <div
@@ -77,22 +74,21 @@ export function AdjustAmountDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#2C2C2A', marginBottom: '6px' }}>
-          Adjust Amount
+          Adjust Quantity
         </h2>
         <p style={{ fontSize: '13px', color: '#999999', marginBottom: '20px' }}>
-          How much <strong style={{ color: '#2C2C2A' }}>{itemName}</strong> do you have left?
+          How much <strong style={{ color: '#2C2C2A' }}>{itemName}</strong> do you actually have?
           <br />
-          <span style={{ fontSize: '12px' }}>Purchased: {quantityBought} {unit}</span>
+          <span style={{ fontSize: '12px' }}>Originally: {quantityBought} {unit}</span>
         </p>
 
         <div style={{ marginBottom: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <input
               type="number"
-              min={0}
-              max={quantityBought}
+              min={0.01}
               step={0.01}
-              value={remaining}
+              value={actualQuantity}
               onChange={(e) => handleChange(e.target.value)}
               style={{
                 flex: 1,
@@ -114,7 +110,11 @@ export function AdjustAmountDialog({
         </div>
 
         <p style={{ fontSize: '13px', color: '#5B7FD4', fontWeight: 600, marginBottom: '24px' }}>
-          ~ {computedPercent}% consumed
+          {(() => {
+            const actual = parseFloat(actualQuantity);
+            const percentRemaining = isNaN(actual) ? 0 : Math.round((actual / quantityBought) * 100);
+            return `${percentRemaining}% remaining`;
+          })()}
         </p>
 
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
@@ -140,7 +140,11 @@ export function AdjustAmountDialog({
             Cancel
           </button>
           <button
-            onClick={() => canConfirm && onConfirm(computedPercent)}
+            onClick={() => {
+              if (canConfirm) {
+                onConfirm(parseFloat(actualQuantity), currentPercentConsumed);
+              }
+            }}
             disabled={isLoading || !canConfirm}
             style={{
               padding: '12px 20px',
@@ -159,7 +163,7 @@ export function AdjustAmountDialog({
               justifyContent: 'center',
             }}
           >
-            {isLoading ? 'Saving...' : 'Set Amount'}
+            {isLoading ? 'Saving...' : 'Update'}
           </button>
         </div>
       </div>

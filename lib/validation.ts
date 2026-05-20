@@ -31,6 +31,9 @@ export const groceryUpdateSchema = z.object({
     .min(0, 'Percent consumed must be 0 or greater')
     .max(100, 'Percent consumed cannot exceed 100')
     .optional(),
+  quantityBought: z.number()
+    .positive('Quantity must be greater than 0')
+    .optional(),
   foodName: z.string()
     .min(1, 'Food name is required')
     .max(255, 'Food name must be 255 characters or less')

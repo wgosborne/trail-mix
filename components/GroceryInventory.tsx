@@ -103,11 +103,32 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
     });
   };
 
-  const handleConfirmAdjust = (newPercent: number) => {
+  const handleConfirmAdjust = async (newQuantity: number, percentConsumed: number) => {
     setAdjustDialog((prev) => ({ ...prev, isLoading: true }));
-    onUpdate(adjustDialog.id, newPercent);
-    showSuccess(`Updated ${adjustDialog.name} to ${newPercent}% consumed`);
-    setAdjustDialog({ isOpen: false, id: '', name: '', quantityBought: 0, unit: '', percentConsumed: 0, isLoading: false });
+    try {
+      const response = await fetch(`/api/groceries/${adjustDialog.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quantityBought: newQuantity,
+          percentConsumed,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        showError(error.error || 'Failed to adjust quantity');
+        setAdjustDialog((prev) => ({ ...prev, isLoading: false }));
+        return;
+      }
+
+      onUpdate(adjustDialog.id, percentConsumed);
+      showSuccess(`Updated ${adjustDialog.name} to ${newQuantity} ${adjustDialog.unit}`);
+      setAdjustDialog({ isOpen: false, id: '', name: '', quantityBought: 0, unit: '', percentConsumed: 0, isLoading: false });
+    } catch (error) {
+      showError('Failed to adjust quantity');
+      setAdjustDialog((prev) => ({ ...prev, isLoading: false }));
+    }
   };
 
   const handleCancelAdjust = () => {

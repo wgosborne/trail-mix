@@ -29,38 +29,39 @@ export async function POST(request: NextRequest) {
             },
             {
               type: 'text',
-              text: `You are a Kroger receipt parser. Extract every grocery product from this receipt with accurate quantities and units.
+              text: `You are a grocery receipt parser for any store (Kroger, Aldi, Walmart, etc.). Extract every product from this receipt with best-effort accuracy.
 
 EXTRACTION RULES:
-1. Find EVERY product/item in the "Items" or "Groceries" section
+1. Scan the entire receipt for all product/item lines (ignore totals, taxes, payment info)
 2. For each item, extract:
-   - "name": Product description (remove quantity/unit from name)
-   - "quantity": Number from the product description or receipt (required)
-   - "unit": Unit of measure (oz, lbs, g, count, ct, ea, etc.)
+   - "name": Product name/description (clean, readable, no quantity/unit in the name)
+   - "quantity": Number from the product description or item line (required, at least 1)
+   - "unit": Unit of measure if visible (oz, lbs, g, count, ct, ea, lb, gallon, etc.)
 
-IMPORTANT - Extract quantity from product names:
-- "Tyson Frozen Chicken, 18 oz" → quantity: 18, unit: "oz", name: "Tyson Frozen Chicken"
-- "Mission Tortillas, 8 ct" → quantity: 8, unit: "ct", name: "Mission Tortillas"
-- "Simply Orange, 1 gallon" → quantity: 1, unit: "gallon", name: "Simply Orange"
-- "Eggs, 1 dozen" → quantity: 12, unit: "count", name: "Eggs"
-- "Milk, 1 gallon" → quantity: 1, unit: "gallon", name: "Milk"
-- If no unit/quantity in name, default to: quantity: 1, unit: "count" (ea)
+IMPORTANT - Handle OCR challenges:
+- If text is unclear/blurry, do your BEST to read it (don't skip items)
+- Preserve brand names and product types as clearly as possible
+- Extract quantity from product descriptions:
+  - "Tyson Frozen Chicken, 18 oz" → quantity: 18, unit: "oz", name: "Tyson Frozen Chicken"
+  - "Eggs, 1 dz" → quantity: 12, unit: "count", name: "Eggs"
+  - "Milk" (no size shown) → quantity: 1, unit: "count", name: "Milk"
+  - "Apples 3 lb" → quantity: 3, unit: "lbs", name: "Apples"
 
 Return ONLY valid JSON:
 {
   "items": [
-    { "name": "Product Name Only", "quantity": 18, "unit": "oz" },
-    { "name": "Another Product", "quantity": 1, "unit": "count" }
+    { "name": "Product Name", "quantity": 1, "unit": "count" }
   ]
 }
 
 SPECIAL CASES:
-- Quantity is the number (not including the word "pack", "box", etc.)
-- Unit is the abbreviation (oz, lbs, g, ct, ea, count, gallon, etc.)
-- Name should be clean and readable (no quantity/unit info)
+- If an item appears twice on receipt, extract it twice (user may have bought multiples)
+- Quantity must be a positive number; default to 1 if not readable
+- Unit can be empty string "" if not clearly visible
+- Name should be readable and clean (the user will review and can fix typos)
 
 If no items found, return: { "items": [] }
-Otherwise, return ALL items with proper quantity/unit extraction.`,
+Otherwise, return ALL items found, even if text is unclear.`,
             },
           ],
         },
