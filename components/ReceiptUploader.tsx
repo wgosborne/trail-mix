@@ -458,7 +458,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
         {loading ? (
           nutritionStatus ? `${nutritionStatus}` : 'Processing receipt...'
         ) : (
-          'Click to upload or take photo'
+          'Upload Receipt'
         )}
       </button>
 
@@ -468,7 +468,6 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
         accept="image/*"
         onChange={handleFileSelect}
         style={{ display: 'none' }}
-        capture="environment"
       />
 
       {error && (
