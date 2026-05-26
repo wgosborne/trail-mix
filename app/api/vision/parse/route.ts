@@ -5,11 +5,13 @@ const client = new Anthropic();
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { imageBase64 } = body;
+  const { imageBase64, mimeType } = body;
 
   if (!imageBase64) {
     return NextResponse.json({ error: 'Image required' }, { status: 400 });
   }
+
+  const mediaType = (mimeType || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
 
   try {
     const message = await client.messages.create({
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
               type: 'image',
               source: {
                 type: 'base64',
-                media_type: 'image/jpeg',
+                media_type: mediaType,
                 data: imageBase64,
               },
             },

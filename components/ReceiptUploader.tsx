@@ -59,7 +59,7 @@ export function ReceiptUploader({ onItemsExtracted }: ReceiptUploaderProps) {
       try {
         const response = await fetch('/api/vision/parse', {
           method: 'POST',
-          body: JSON.stringify({ imageBase64: base64 }),
+          body: JSON.stringify({ imageBase64: base64, mimeType: file.type || 'image/jpeg' }),
         });
 
         if (!response.ok) {
