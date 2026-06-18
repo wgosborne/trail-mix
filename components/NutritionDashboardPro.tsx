@@ -6,6 +6,28 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { WeekNavigator } from "./WeekNavigator";
 import { getCached, setCached } from "@/lib/cache";
 
+function renderPieLabel(props: any) {
+  const { cx, cy, midAngle, outerRadius, percent, name, color } = props;
+  const RADIAN = Math.PI / 180;
+  const radius = outerRadius + 15;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill={color || "#2C2C2A"}
+      textAnchor={x > cx ? "start" : "end"}
+      dominantBaseline="central"
+      fontSize="12"
+      fontWeight="500"
+    >
+      {name} {((percent || 0) * 100).toFixed(0)}%
+    </text>
+  );
+}
+
 interface NutritionData {
   week: { start: string; end: string };
   totals: {
@@ -1061,13 +1083,13 @@ export function NutritionDashboardPro({
                 <p style={{ fontSize: "12px", fontWeight: 600, color: "#999999", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: "12px", textAlign: "center" }}>Consumed Macros</p>
                 <div style={{ width: "100%", height: "220px" }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart margin={{ left: 30, right: 30, top: 30, bottom: 30 }}>
                       <Pie
                         data={hasData ? donutData : [{ name: "Empty", value: 1, color: "#E8E4DC" }]}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={hasData ? ({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%` : undefined}
+                        label={hasData ? renderPieLabel : undefined}
                         outerRadius={70}
                         fill="#8884d8"
                         dataKey="value"
@@ -1091,13 +1113,13 @@ export function NutritionDashboardPro({
                   <p style={{ fontSize: "12px", fontWeight: 600, color: "#999999", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: "12px", textAlign: "center" }}>Goal Macros</p>
                   <div style={{ width: "100%", height: "220px" }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
+                      <PieChart margin={{ left: 30, right: 30, top: 30, bottom: 30 }}>
                         <Pie
                           data={goalMacroBreakdownData.some(d => d.value > 0) ? goalMacroBreakdownData : [{ name: "Empty", value: 1, color: "#E8E4DC" }]}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={goalMacroBreakdownData.some(d => d.value > 0) ? ({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%` : undefined}
+                          label={goalMacroBreakdownData.some(d => d.value > 0) ? renderPieLabel : undefined}
                           outerRadius={70}
                           fill="#8884d8"
                           dataKey="value"

@@ -10,6 +10,28 @@ import { getMacroTags, getTagColor } from '@/lib/macro-tags';
 import { clearCache } from '@/lib/cache';
 import { useSession } from 'next-auth/react';
 
+function renderPieLabel(props: any) {
+  const { cx, cy, midAngle, outerRadius, percent, name, color } = props;
+  const RADIAN = Math.PI / 180;
+  const radius = outerRadius + 15;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill={color || "#2C2C2A"}
+      textAnchor={x > cx ? "start" : "end"}
+      dominantBaseline="central"
+      fontSize="12"
+      fontWeight="500"
+    >
+      {name} {((percent || 0) * 100).toFixed(0)}%
+    </text>
+  );
+}
+
 interface Grocery {
   id: string;
   foodName: string;
@@ -433,13 +455,13 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
                 <p style={{ fontSize: '12px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '12px', textAlign: 'center' }}>Inventory Macros</p>
                 <div style={{ width: '100%', height: '220px' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart margin={{ left: 30, right: 30, top: 30, bottom: 30 }}>
                       <Pie
                         data={macroBreakdownData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                        label={renderPieLabel}
                         outerRadius={70}
                         fill="#8884d8"
                         dataKey="value"
@@ -463,13 +485,13 @@ export function GroceryInventory({ groceries, onUpdate, onDelete, weekStart }: G
                   <p style={{ fontSize: '12px', fontWeight: 600, color: '#999999', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '12px', textAlign: 'center' }}>Goal Macros</p>
                   <div style={{ width: '100%', height: '220px' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
+                      <PieChart margin={{ left: 30, right: 30, top: 30, bottom: 30 }}>
                         <Pie
                           data={goalMacroBreakdownData}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }: any) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                          label={renderPieLabel}
                           outerRadius={70}
                           fill="#8884d8"
                           dataKey="value"
